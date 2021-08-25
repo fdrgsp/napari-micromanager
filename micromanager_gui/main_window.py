@@ -67,6 +67,7 @@ class _MainUI:
     min_val_lineEdit: QtW.QLineEdit
     px_size_doubleSpinBox: QtW.QDoubleSpinBox
 
+    props_Button: QtW.QPushButton
     illumination_Button: QtW.QPushButton
 
     def setup_ui(self):
