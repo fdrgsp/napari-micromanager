@@ -11,6 +11,7 @@ from qtpy import uic
 from qtpy.QtCore import QSize, QTimer
 from qtpy.QtGui import QIcon
 
+from ._illumination import Illumination
 from ._saving import save_sequence
 from ._util import event_indices, extend_array_for_index
 from .explore_sample import ExploreSample
@@ -139,14 +140,17 @@ class MainWindow(QtW.QWidget, _MainUI):
         self.snap_Button.clicked.connect(self.snap)
         self.live_Button.clicked.connect(self.toggle_live)
 
-        # self.ill = Illumination(self._mmc)
-        # self.illumination_Button.clicked.connect(self.ill)
+        self.illumination_Button.clicked.connect(self.ill)
 
         # connect comboBox
         self.objective_comboBox.currentIndexChanged.connect(self.change_objective)
         self.bit_comboBox.currentIndexChanged.connect(self.bit_changed)
         self.bin_comboBox.currentIndexChanged.connect(self.bin_changed)
         self.snap_channel_comboBox.currentTextChanged.connect(self._channel_changed)
+
+    def ill(self):
+        illum = Illumination(self._mmc)
+        return illum.show()
 
     def _on_config_set(self, groupName: str, configName: str):
         if groupName == self._get_channel_group():
