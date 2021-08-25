@@ -66,6 +66,8 @@ class _MainUI:
     min_val_lineEdit: QtW.QLineEdit
     px_size_doubleSpinBox: QtW.QDoubleSpinBox
 
+    illumination_Button: QtW.QPushButton
+
     def setup_ui(self):
         uic.loadUi(self.UI_FILE, self)  # load QtDesigner .ui file
 
@@ -136,6 +138,9 @@ class MainWindow(QtW.QWidget, _MainUI):
 
         self.snap_Button.clicked.connect(self.snap)
         self.live_Button.clicked.connect(self.toggle_live)
+
+        # self.ill = Illumination(self._mmc)
+        # self.illumination_Button.clicked.connect(self.ill)
 
         # connect comboBox
         self.objective_comboBox.currentIndexChanged.connect(self.change_objective)
@@ -264,7 +269,9 @@ class MainWindow(QtW.QWidget, _MainUI):
     def _refresh_objective_options(self):
         if self.objective_dev_name in self._mmc.getLoadedDevices():
             self.objective_comboBox.clear()
-            self.objective_comboBox.addItems(self._mmc.getStateLabels(self.objective_dev_name))
+            self.objective_comboBox.addItems(
+                self._mmc.getStateLabels(self.objective_dev_name)
+            )
 
     def _refresh_channel_list(self, channel_group: str = None):
         if channel_group is None:

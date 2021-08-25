@@ -226,10 +226,9 @@ class PropBrowser(Container):
 
 
 if __name__ == "__main__":
-    from micromanager_gui._core._mmcore_plus import MMCorePlus
+    from pymmcore_plus import CMMCorePlus
 
-    mmcore = MMCorePlus()
-    mmcore.loadSystemConfiguration()
+    mmcore = CMMCorePlus()
+    # mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
     pb = PropBrowser(mmcore)
-
     pb.show(run=True)
