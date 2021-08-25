@@ -99,7 +99,7 @@ class MainWindow(QtW.QWidget, _MainUI):
         self.viewer = viewer
         self.streaming_timer = None
 
-        self.objective_dev_name = "TINosePiece"
+        self.objective_dev_name = "Objective"
 
         # create connection to mmcore server or process-local variant
         self._mmc = RemoteMMCore() if remote else CMMCorePlus()
