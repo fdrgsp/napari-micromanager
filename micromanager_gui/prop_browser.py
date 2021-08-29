@@ -230,5 +230,6 @@ if __name__ == "__main__":
 
     mmcore = CMMCorePlus()
     # mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
+    mmcore.loadSystemConfiguration("micromanager_gui/demo_config.cfg")
     pb = PropBrowser(mmcore)
     pb.show(run=True)
