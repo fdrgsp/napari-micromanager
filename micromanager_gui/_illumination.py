@@ -31,6 +31,8 @@ class Illumination(Container):
                     if idx == 0
                 ][0]
 
+                print(cfg, dev_name)
+
                 for prop in self._mmc.getDevicePropertyNames(dev_name):
                     has_range = self._mmc.hasPropertyLimits(dev_name, prop)
                     lower_lim = self._mmc.getPropertyLowerLimit(dev_name, prop)
@@ -52,7 +54,7 @@ class Illumination(Container):
                                 "min": lower_lim,
                             },
                         )
-                        def sld(dev_name, prop, slider_float = self._mmc.getProperty(dev_name, prop)):
+                        def sld(dev_name, prop, slider_float = float(self._mmc.getProperty(dev_name, prop))):
                             self._mmc.setProperty(dev_name, prop, slider_float)
                             print(prop, self._mmc.getProperty(dev_name, prop))
 
@@ -63,8 +65,8 @@ class Illumination(Container):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     mmcore = RemoteMMCore()
-    # mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
-    mmcore.loadSystemConfiguration("micromanager_gui/demo_config_test.cfg")
+    mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
+    # mmcore.loadSystemConfiguration("micromanager_gui/demo_config_test.cfg")
     cls = Illumination(mmcore)
     cls.make_magicgui()
     sys.exit(app.exec_())
