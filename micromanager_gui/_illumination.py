@@ -56,7 +56,7 @@ class Illumination(Container):
                                 "min": lower_lim,
                             },
                         )
-                        def sld(dev_name, prop, slider_float):
+                        def sld(dev_name, prop, slider_float = self._mmc.getProperty(dev_name, prop)):
                             self._mmc.setProperty(dev_name, prop, slider_float)
                             print(prop, self._mmc.getProperty(dev_name, prop))
 
