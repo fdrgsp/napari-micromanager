@@ -40,8 +40,8 @@ class Illumination(Container):
                     lower_lim = self._mmc.getPropertyLowerLimit(dev_name, prop)
                     upper_lim = self._mmc.getPropertyUpperLimit(dev_name, prop)
 
-                    # if has_range and 'intensity' in str(prop).lower():
-                    if has_range and "exposure" in str(prop).lower():
+                    if has_range and 'intensity' in str(prop).lower():
+                    # if has_range and "exposure" in str(prop).lower():
                         # print(dev_name, prop, has_range, lower_lim, upper_lim)
 
                         @magicgui(
