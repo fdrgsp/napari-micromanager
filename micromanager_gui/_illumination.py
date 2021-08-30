@@ -19,8 +19,6 @@ class Illumination(Container):
         for cfg in self._mmc.getAvailableConfigGroups():
             cfg_lower = cfg.lower()
 
-            print("cfg:", cfg_lower)
-
             if cfg_lower in self.light_list:
                 cfg_groups_options = self._mmc.getAvailableConfigs(cfg)
                 cfg_groups_options_keys = (
@@ -32,8 +30,6 @@ class Illumination(Container):
                     for idx, k in enumerate(cfg_groups_options_keys.keys())
                     if idx == 0
                 ][0]
-
-                print("   dev_name:", dev_name)
 
                 for prop in self._mmc.getDevicePropertyNames(dev_name):
                     has_range = self._mmc.hasPropertyLimits(dev_name, prop)
