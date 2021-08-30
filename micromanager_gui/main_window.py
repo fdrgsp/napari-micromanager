@@ -11,12 +11,12 @@ from qtpy import uic
 from qtpy.QtCore import QSize, QTimer
 from qtpy.QtGui import QIcon
 
+from ._illumination import Illumination
 from ._saving import save_sequence
 from ._util import event_indices, extend_array_for_index
 from .explore_sample import ExploreSample
 from .multid_widget import MultiDWidget, SequenceMeta
 from .prop_browser import PropBrowser
-from ._illumination import Illumination
 
 if TYPE_CHECKING:
     import napari.layers
@@ -157,7 +157,7 @@ class MainWindow(QtW.QWidget, _MainUI):
 
     def illumination(self):
         ill = Illumination(self._mmc)
-        return ill.show(run=True)
+        return ill.make_magicgui()
 
     def _on_config_set(self, groupName: str, configName: str):
         if groupName == self._get_channel_group():
