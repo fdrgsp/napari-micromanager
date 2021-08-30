@@ -16,6 +16,7 @@ from ._util import event_indices, extend_array_for_index
 from .explore_sample import ExploreSample
 from .multid_widget import MultiDWidget, SequenceMeta
 from .prop_browser import PropBrowser
+from ._illumination import Illumination
 
 if TYPE_CHECKING:
     import napari.layers
@@ -142,6 +143,7 @@ class MainWindow(QtW.QWidget, _MainUI):
         self.live_Button.clicked.connect(self.toggle_live)
 
         self.props_Button.clicked.connect(self.properties)
+        self.illumination_Button.clicked.connect(self.illumination)
 
         # connect comboBox
         self.objective_comboBox.currentIndexChanged.connect(self.change_objective)
@@ -152,6 +154,10 @@ class MainWindow(QtW.QWidget, _MainUI):
     def properties(self):
         pb = PropBrowser(self._mmc)
         return pb.show(run=True)
+
+    def illumination(self):
+        ill = Illumination(self._mmc)
+        return ill.show(run=True)
 
     def _on_config_set(self, groupName: str, configName: str):
         if groupName == self._get_channel_group():

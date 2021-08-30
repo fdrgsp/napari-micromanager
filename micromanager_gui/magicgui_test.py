@@ -6,55 +6,77 @@ from magicgui.widgets import Container
 from pymmcore_plus import RemoteMMCore
 
 
-# WHY mmc.getDeviceType(dev) does g9ve a number and not a type?
-class DeviceType(IntEnum):
-    UnknownType = getattr(pymmcore, "UnknownType")
-    AnyType = getattr(pymmcore, "AnyType")
-    CameraDevice = getattr(pymmcore, "CameraDevice")
-    ShutterDevice = getattr(pymmcore, "ShutterDevice")
-    StateDevice = getattr(pymmcore, "StateDevice")
-    StageDevice = getattr(pymmcore, "StageDevice")
-    XYStageDevice = getattr(pymmcore, "XYStageDevice")
-    SerialDevice = getattr(pymmcore, "SerialDevice")
-    GenericDevice = getattr(pymmcore, "GenericDevice")
-    AutoFocusDevice = getattr(pymmcore, "AutoFocusDevice")
-    CoreDevice = getattr(pymmcore, "CoreDevice")
-    ImageProcessorDevice = getattr(pymmcore, "ImageProcessorDevice")
-    SignalIODevice = getattr(pymmcore, "SignalIODevice")
-    MagnifierDevice = getattr(pymmcore, "MagnifierDevice")
-    SLMDevice = getattr(pymmcore, "SLMDevice")
-    HubDevice = getattr(pymmcore, "HubDevice")
-    GalvoDevice = getattr(pymmcore, "GalvoDevice")
-
-
 mmc = RemoteMMCore()
-mmc.loadSystemConfiguration("micromanager_gui/demo_config.cfg")
+mmc.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
 
+light_list = ['dia', 'epi', 'lumencor']
 
 c = Container(labels=False)
+for cfg in mmc.getAvailableConfigGroups():
+    cfg_lower = cfg.lower()
+    if cfg_lower in light_list:
+        cfg_groups_options = mmc.getAvailableConfigs(cfg)
+        cfg_groups_options_keys = (
+            mmc.getConfigData(cfg, cfg_groups_options[0])
+        ).dict()
 
-for dev in mmc.getLoadedDevices():
-    dev_type = DeviceType(mmc.getDeviceType(dev))
-    for prop in mmc.getDevicePropertyNames(dev):
-        has_range = mmc.hasPropertyLimits(dev, prop)
-        lower_lim = mmc.getPropertyLowerLimit(dev, prop)
-        upper_lim = mmc.getPropertyUpperLimit(dev, prop)
-        if has_range:
-            print(dev, dev_type, prop, has_range, lower_lim, upper_lim)
+        dev_name = [k for idx, k in enumerate(cfg_groups_options_keys.keys()) if idx == 0][0]
 
-            @magicgui(
-                auto_call=True,
-                layout="vertical",
-                slider_float={
-                    "label": f"{dev}_{prop}",
-                    "widget_type": "FloatSlider",
-                    "max": upper_lim,
-                    "min": lower_lim,
-                },
-            )
-            def sl(slider_float):
-                print(slider_float)
+        for prop in mmc.getDevicePropertyNames(dev_name):
+            has_range = mmc.hasPropertyLimits(dev_name, prop)
+            lower_lim = mmc.getPropertyLowerLimit(dev_name, prop)
+            upper_lim = mmc.getPropertyUpperLimit(dev_name, prop)
 
-            c.append(sl)
+            if has_range and 'intensity' in str(prop).lower():
+                # print(dev_name, prop, has_range, lower_lim, upper_lim)
+
+                @magicgui(
+                    auto_call=True,
+                    layout="vertical",
+                    dev_name={'bind': dev_name},
+                    prop={'bind': prop},
+                    slider_float={
+                        "label": f"{dev_name}_{prop}",
+                        "widget_type": "FloatSlider",
+                        "max": upper_lim,
+                        "min": lower_lim,
+                    },
+                )
+                def sl(dev_name,prop,slider_float=10):
+                    mmc.setProperty(dev_name,prop,slider_float)
+                    print(prop, mmc.getProperty(dev_name,prop))
+
+                c.append(sl)
 
 c.show(run=True)
+
+
+
+
+# c = Container(labels=False)
+
+# for dev in mmc.getLoadedDevices():
+#     dev_type = DeviceType(mmc.getDeviceType(dev))
+#     for prop in mmc.getDevicePropertyNames(dev):
+#         has_range = mmc.hasPropertyLimits(dev, prop)
+#         lower_lim = mmc.getPropertyLowerLimit(dev, prop)
+#         upper_lim = mmc.getPropertyUpperLimit(dev, prop)
+#         if has_range:
+#             print(dev, dev_type, prop, has_range, lower_lim, upper_lim)
+
+#             @magicgui(
+#                 auto_call=True,
+#                 layout="vertical",
+#                 slider_float={
+#                     "label": f"{dev}_{prop}",
+#                     "widget_type": "FloatSlider",
+#                     "max": upper_lim,
+#                     "min": lower_lim,
+#                 },
+#             )
+#             def sl(slider_float):
+#                 print(slider_float)
+
+#             c.append(sl)
+
+# c.show(run=True)
