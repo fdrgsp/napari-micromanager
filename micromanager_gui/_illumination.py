@@ -37,7 +37,9 @@ class Illumination(Container):
                     upper_lim = self._mmc.getPropertyUpperLimit(dev_name, prop)
                     is_float = isinstance(upper_lim, float)
 
-                    if has_range and "intensity" in str(prop).lower():
+                    if has_range and (
+                        "intensity" in str(prop).lower() or "power" in str(prop).lower()
+                    ):
                         if is_float:
                             slider_type = "FloatSlider"
                             slider_value = float(self._mmc.getProperty(dev_name, prop))
