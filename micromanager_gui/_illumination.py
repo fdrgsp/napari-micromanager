@@ -5,6 +5,8 @@ from magicgui.widgets import Container
 from pymmcore_plus import RemoteMMCore
 from qtpy.QtWidgets import QApplication
 
+LIGHT_LIST = ["dia", "epi", "lumencor"]  # name of the group config in mm
+
 
 class Illumination(Container):
     def __init__(self, mmcore: RemoteMMCore):
@@ -12,15 +14,12 @@ class Illumination(Container):
 
         self._mmc = mmcore
 
-        self.light_list = ["dia", "epi", "lumencor"]
-        # self.light_list = ["dia", "epi", "lumencor", "dia_fake", "epi_fake"]
-
     def make_magicgui(self):
         c = Container(labels=False)
         for cfg in self._mmc.getAvailableConfigGroups():
             cfg_lower = cfg.lower()
 
-            if cfg_lower in self.light_list:
+            if cfg_lower in LIGHT_LIST:
                 cfg_groups_options = self._mmc.getAvailableConfigs(cfg)
                 cfg_groups_options_keys = (
                     self._mmc.getConfigData(cfg, cfg_groups_options[0])
@@ -32,8 +31,6 @@ class Illumination(Container):
                     if idx == 0
                 ][0]
 
-                # print(cfg, dev_name)
-
                 for prop in self._mmc.getDevicePropertyNames(dev_name):
                     has_range = self._mmc.hasPropertyLimits(dev_name, prop)
                     lower_lim = self._mmc.getPropertyLowerLimit(dev_name, prop)
@@ -41,9 +38,6 @@ class Illumination(Container):
                     is_float = isinstance(upper_lim, float)
 
                     if has_range and "intensity" in str(prop).lower():
-                        # if has_range and ("exposure" in str(prop).lower()):
-                        # print(dev_name, prop, has_range, lower_lim, upper_lim)
-                        # print(prop, is_float)
                         if is_float:
                             slider_type = "FloatSlider"
                             slider_value = float(self._mmc.getProperty(dev_name, prop))
@@ -75,7 +69,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     mmcore = RemoteMMCore()
     mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
-    # mmcore.loadSystemConfiguration("micromanager_gui/demo_config_test.cfg")
     cls = Illumination(mmcore)
     cls.make_magicgui()
     sys.exit(app.exec_())
