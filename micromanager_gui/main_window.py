@@ -219,7 +219,7 @@ class MainWindow(QtW.QWidget, _MainUI):
             seq = event.sequence
             _image = image[(np.newaxis,) * len(seq.shape)]
             layer = self.viewer.add_image(_image, name=layer_name, blending="additive")
-
+            
             # dimensions labels
             labels = [i for i in seq.axis_order if i in event.index] + ["y", "x"]
             self.viewer.dims.axis_labels = labels
