@@ -64,13 +64,13 @@ class Illumination(Container):
                             print(prop, self._mmc.getProperty(dev_name, prop))
 
                         c.append(sld)
-        c.show()
+        return c
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     mmcore = RemoteMMCore()
-    mmcore.loadSystemConfiguration("micromanager_gui/s15_Nikon_Ti1.cfg")
+    mmcore.loadSystemConfiguration("micromanager_gui/demo_config.cfg")
     cls = Illumination(mmcore)
-    cls.make_magicgui()
+    cls.show(run=True)
     sys.exit(app.exec_())
