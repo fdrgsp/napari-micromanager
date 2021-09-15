@@ -11,11 +11,11 @@ from qtpy import uic
 from qtpy.QtCore import QSize, QTimer
 from qtpy.QtGui import QIcon
 
-from ._illumination import Illumination
 from ._saving import save_sequence
 from ._util import blockSignals, event_indices, extend_array_for_index
 from .explore_sample import ExploreSample
 from .multid_widget import MultiDWidget, SequenceMeta
+from .prop_browser import PropBrowser
 
 if TYPE_CHECKING:
     import napari.layers
@@ -66,6 +66,7 @@ class _MainUI:
     max_val_lineEdit: QtW.QLineEdit
     min_val_lineEdit: QtW.QLineEdit
     px_size_doubleSpinBox: QtW.QDoubleSpinBox
+    props_Button: QtW.QPushButton
 
     illumination_Button: QtW.QPushButton
 
@@ -142,7 +143,7 @@ class MainWindow(QtW.QWidget, _MainUI):
         self.snap_Button.clicked.connect(self.snap)
         self.live_Button.clicked.connect(self.toggle_live)
 
-        self.illumination_Button.clicked.connect(self.illumination)
+        self.props_Button.clicked.connect(self.properties)
 
         # connect comboBox
         self.objective_comboBox.currentIndexChanged.connect(self.change_objective)
@@ -153,9 +154,9 @@ class MainWindow(QtW.QWidget, _MainUI):
         # refresh options in case a config is already loaded by another remote
         self._refresh_options()
 
-    def illumination(self):
-        ill = Illumination(self._mmc)
-        return ill.make_illumination_magicgui()
+    def properties(self):
+        pb = PropBrowser(self._mmc)
+        return pb.show(run=True)
 
     def _on_config_set(self, groupName: str, configName: str):
         if groupName == self._get_channel_group():
