@@ -11,6 +11,7 @@ from qtpy import uic
 from qtpy.QtCore import QSize, QTimer
 from qtpy.QtGui import QIcon
 
+from ._illumination import Illumination
 from ._saving import save_sequence
 from ._util import blockSignals, event_indices, extend_array_for_index
 from .explore_sample import ExploreSample
@@ -68,6 +69,8 @@ class _MainUI:
     px_size_doubleSpinBox: QtW.QDoubleSpinBox
     props_Button: QtW.QPushButton
 
+    illumination_Button: QtW.QPushButton
+
     def setup_ui(self):
         uic.loadUi(self.UI_FILE, self)  # load QtDesigner .ui file
 
@@ -97,6 +100,9 @@ class MainWindow(QtW.QWidget, _MainUI):
 
         self.viewer = viewer
         self.streaming_timer = None
+
+        self.objective_dev_name = "TINosePiece"
+        # self.objective_dev_name = "Objective"
 
         # create connection to mmcore server or process-local variant
         self._mmc = RemoteMMCore() if remote else CMMCorePlus()
@@ -378,15 +384,15 @@ class MainWindow(QtW.QWidget, _MainUI):
         self._mmc.setPosition(zdev, 0)
         self._mmc.waitForDevice(zdev)
         self._mmc.setProperty(
-            "Objective", "Label", self.objective_comboBox.currentText()
+            self.objective_dev_name, "Label", self.objective_comboBox.currentText()
         )
-        self._mmc.waitForDevice("Objective")
+        self._mmc.waitForDevice(self.objective_dev_name)
         self._mmc.setPosition(zdev, currentZ)
         self._mmc.waitForDevice(zdev)
 
         # define and set pixel size Config
         self._mmc.deletePixelSizeConfig(self._mmc.getCurrentPixelSizeConfig())
-        curr_obj_name = self._mmc.getProperty("Objective", "Label")
+        curr_obj_name = self._mmc.getProperty(self.objective_dev_name, "Label")
         self._mmc.definePixelSizeConfig(curr_obj_name)
         self._mmc.setPixelSizeConfig(curr_obj_name)
 
