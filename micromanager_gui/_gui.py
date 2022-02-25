@@ -103,8 +103,7 @@ class MicroManagerWidget(QtW.QWidget):
         wdg.setMinimumHeight(50)
         wdg_layout = QtW.QGridLayout()
         wdg_layout.setContentsMargins(5, 5, 5, 5)
-        wdg_layout.setHorizontalSpacing(0)
-        wdg_layout.setVerticalSpacing(0)
+        wdg_layout.setHorizontalSpacing(8)
 
         wdg_layout.addWidget(self.mm_objectives, 0, 0)
         wdg_layout.addWidget(self.mm_pb, 0, 1)
@@ -118,8 +117,7 @@ class MicroManagerWidget(QtW.QWidget):
         wdg = QtW.QGroupBox()
         wdg_layout = QtW.QGridLayout()
         wdg_layout.setContentsMargins(5, 5, 5, 5)
-        wdg_layout.setHorizontalSpacing(0)
-        wdg_layout.setVerticalSpacing(0)
+        wdg_layout.setHorizontalSpacing(8)
 
         wdg_layout.addWidget(self.mm_shutters, 0, 0)
         wdg_layout.addWidget(self.mm_illumination, 0, 1)

@@ -54,6 +54,7 @@ class MainWindow(MicroManagerWidget):
 
         self.cfg = self.mm_configuration
         self.obj = self.mm_objectives
+        self.shutter = self.mm_shutters
         self.ill = self.mm_illumination
         self.pb = self.mm_pb
         self.cam = self.mm_camera
@@ -86,6 +87,7 @@ class MainWindow(MicroManagerWidget):
         self.available_focus_devs = []
         self.objectives_device = None
         self.objectives_cfg = None
+        self.shutter_list = []
 
         # disable gui
         self._set_enabled(False)
@@ -166,6 +168,13 @@ class MainWindow(MicroManagerWidget):
         else:
             self.stages.Z_groupBox.setEnabled(False)
 
+        if self._mmc.getShutterDevice():
+            self.shutter.shutter_comboBox.setEnabled(enabled)
+            self.shutter.shutter_btn.setEnabled(enabled)
+        else:
+            self.shutter.shutter_comboBox.setEnabled(False)
+            self.shutter.shutter_btn.setEnabled(False)
+
         self.cam_group.setEnabled(True)
         self.stages_coll.setEnabled(True)
         self.pb.properties_Button.setEnabled(enabled)
@@ -207,6 +216,8 @@ class MainWindow(MicroManagerWidget):
 
         self.objectives_device = None
         self.objectives_cfg = None
+        self.available_focus_devs = []
+        self.shutter_list = []
 
         self._mmc.unloadAllDevices()  # unload all devicies
         # disable gui
@@ -220,11 +231,11 @@ class MainWindow(MicroManagerWidget):
         self._set_enabled(True)
 
     def _refresh_options(self):
-        # self._refresh_camera_options()
         self._refresh_objective_options()
         self._refresh_channel_list()
         self._refresh_positions()
         self._refresh_xyz_devices()
+        self._refresh_shutter_device()
 
     def update_viewer(self, data=None):
         if data is None:
@@ -382,6 +393,16 @@ class MainWindow(MicroManagerWidget):
             self.tab.exp_spinBox.setValue(exposure)
         if self.streaming_timer:
             self.streaming_timer.setInterval(int(exposure))
+
+    # shutters
+    def _refresh_shutter_device(self):
+        self.shutter.shutter_comboBox.clear()
+        self.shutter_list.clear()
+        for d in self._mmc.getLoadedDevices():
+            if self._mmc.getDeviceType(d) == DeviceType.ShutterDevice:
+                self.shutter_list.append(d)
+        if self.shutter_list:
+            self.shutter.shutter_comboBox.addItems(self.shutter_list)
 
     # illumination
     def illumination(self):
