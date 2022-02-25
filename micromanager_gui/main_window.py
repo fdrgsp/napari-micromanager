@@ -455,6 +455,9 @@ class MainWindow(MicroManagerWidget):
             if k[0] == "Multi Shutter"
         ]
 
+        if not multishutter_list:
+            return
+
         for d, p, v in multishutter_list:
             self._mmc.setProperty(d, p, v)
 
