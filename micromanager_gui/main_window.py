@@ -421,13 +421,13 @@ class MainWindow(MicroManagerWidget):
 
     def _close_shutter(self):
         self._mmc.setShutterOpen(False)
-        self.shutter.shutter_btn.setText("Close")
-        self.shutter.shutter_btn.setStyleSheet("background-color: green;")
+        self.shutter.shutter_btn.setText("Open")
+        self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
 
     def _open_shutter(self):
         self._mmc.setShutterOpen(True)
-        self.shutter.shutter_btn.setText("Open")
-        self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
+        self.shutter.shutter_btn.setText("Close")
+        self.shutter.shutter_btn.setStyleSheet("background-color: green;")
 
     def _on_shutter_cbox_changed(self):
         sht = self.shutter.shutter_comboBox.currentText()
