@@ -235,9 +235,10 @@ class MainWindow(MicroManagerWidget):
         self._refresh_xyz_devices()
         self._refresh_shutter_device()
 
-    def update_viewer(self, data=None):
+    def update_viewer(self, data=None, shutter: bool = False):
 
-        self._close_shutter()
+        if shutter:
+            self._close_shutter()
 
         if data is None:
             try:
@@ -284,10 +285,11 @@ class MainWindow(MicroManagerWidget):
         # snap in a thread so we don't freeze UI when using process local mmc
         create_worker(
             self._mmc.snapImage,
-            _connect={"finished": lambda: self.update_viewer(self._mmc.getImage())},
+            _connect={
+                "finished": lambda: self.update_viewer(self._mmc.getImage(), True)
+            },
             _start_thread=True,
         )
-
         self._open_shutter()
 
     def start_live(self):
@@ -419,13 +421,13 @@ class MainWindow(MicroManagerWidget):
 
     def _close_shutter(self):
         self._mmc.setShutterOpen(False)
-        self.shutter.shutter_btn.setText("Is Closed")
-        self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
+        self.shutter.shutter_btn.setText("Close")
+        self.shutter.shutter_btn.setStyleSheet("background-color: green;")
 
     def _open_shutter(self):
         self._mmc.setShutterOpen(True)
-        self.shutter.shutter_btn.setText("Is Open")
-        self.shutter.shutter_btn.setStyleSheet("background-color: green;")
+        self.shutter.shutter_btn.setText("Open")
+        self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
 
     def _on_shutter_cbox_changed(self):
         sht = self.shutter.shutter_comboBox.currentText()
