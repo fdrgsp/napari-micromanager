@@ -30,7 +30,8 @@ class MMShuttersWidget(QtW.QWidget):
         self.main_layout.addWidget(self.shutter_comboBox, 0, 1)
 
         # pushbutton
-        self.shutter_btn = QtW.QPushButton(text="Open")
+        self.shutter_btn = QtW.QPushButton(text="Is Closed")
+        self.shutter_btn.setStyleSheet("background-color: magenta;")
         self.shutter_btn.setMinimumWidth(80)
         self.shutter_btn.setMaximumWidth(80)
         self.main_layout.addWidget(self.shutter_btn, 0, 2)
