@@ -85,7 +85,6 @@ class MainWindow(MicroManagerWidget):
         self.available_focus_devs = []
         self.objectives_device = None
         self.objectives_cfg = None
-        # self.shutter_list = []
 
         # disable gui
         self._set_enabled(False)
@@ -119,8 +118,6 @@ class MainWindow(MicroManagerWidget):
         self.ill.illumination_Button.clicked.connect(self.illumination)
         self.pb.properties_Button.clicked.connect(self._show_prop_browser)
 
-        # self.shutter.shutter_btn.clicked.connect(self._on_shutter_btn_clicked)
-
         # connect comboBox
         self.obj.objective_comboBox.currentIndexChanged.connect(self.change_objective)
         self.tab.snap_channel_comboBox.currentTextChanged.connect(self._channel_changed)
@@ -130,9 +127,6 @@ class MainWindow(MicroManagerWidget):
         self.stages.focus_device_comboBox.currentTextChanged.connect(
             self._set_focus_device
         )
-        # self.shutter.shutter_comboBox.currentIndexChanged.connect(
-        #     self._on_shutter_cbox_changed
-        # )
 
         # connect spinboxes
         self.tab.exp_spinBox.valueChanged.connect(self._update_exp)
@@ -218,7 +212,7 @@ class MainWindow(MicroManagerWidget):
         self.objectives_device = None
         self.objectives_cfg = None
         self.available_focus_devs = []
-        # self.shutter_list = []
+        self.shutter.shutter_list = []
 
         self._mmc.unloadAllDevices()  # unload all devicies
         # disable gui
