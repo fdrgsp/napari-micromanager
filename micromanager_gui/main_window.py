@@ -45,10 +45,16 @@ class MainWindow(MicroManagerWidget):
         remote=False,
         mmc: CMMCorePlus | RemoteMMCore = None,
     ):
-        super().__init__()
+
+        # create connection to mmcore server or process-local variant
+        if mmc is not None:
+            self._mmc = mmc
+        else:
+            self._mmc = RemoteMMCore() if remote else CMMCorePlus.instance()
+
+        super().__init__(self._mmc)
 
         self.viewer = viewer
-        self._mmc = RemoteMMCore() if remote else CMMCorePlus()
 
         self.create_gui()  # create gui from _main_gui.py
 
@@ -60,12 +66,6 @@ class MainWindow(MicroManagerWidget):
         self.cam = self.mm_camera
         self.stages = self.mm_xyz_stages
         self.tab = self.mm_tab
-
-        # create connection to mmcore server or process-local variant
-        if mmc is not None:
-            self._mmc = mmc
-        else:
-            self._mmc = RemoteMMCore() if remote else CMMCorePlus.instance()
 
         adapter_path = find_micromanager()
         if not adapter_path:
@@ -87,7 +87,7 @@ class MainWindow(MicroManagerWidget):
         self.available_focus_devs = []
         self.objectives_device = None
         self.objectives_cfg = None
-        self.shutter_list = []
+        # self.shutter_list = []
 
         # disable gui
         self._set_enabled(False)
@@ -121,7 +121,7 @@ class MainWindow(MicroManagerWidget):
         self.ill.illumination_Button.clicked.connect(self.illumination)
         self.pb.properties_Button.clicked.connect(self._show_prop_browser)
 
-        self.shutter.shutter_btn.clicked.connect(self._on_shutter_btn_clicked)
+        # self.shutter.shutter_btn.clicked.connect(self._on_shutter_btn_clicked)
 
         # connect comboBox
         self.obj.objective_comboBox.currentIndexChanged.connect(self.change_objective)
@@ -132,9 +132,9 @@ class MainWindow(MicroManagerWidget):
         self.stages.focus_device_comboBox.currentTextChanged.connect(
             self._set_focus_device
         )
-        self.shutter.shutter_comboBox.currentIndexChanged.connect(
-            self._on_shutter_cbox_changed
-        )
+        # self.shutter.shutter_comboBox.currentIndexChanged.connect(
+        #     self._on_shutter_cbox_changed
+        # )
 
         # connect spinboxes
         self.tab.exp_spinBox.valueChanged.connect(self._update_exp)
@@ -215,7 +215,7 @@ class MainWindow(MicroManagerWidget):
         self.objectives_device = None
         self.objectives_cfg = None
         self.available_focus_devs = []
-        self.shutter_list = []
+        # self.shutter_list = []
 
         self._mmc.unloadAllDevices()  # unload all devicies
         # disable gui
@@ -233,12 +233,12 @@ class MainWindow(MicroManagerWidget):
         self._refresh_channel_list()
         self._refresh_positions()
         self._refresh_xyz_devices()
-        self._refresh_shutter_device()
+        self.shutter._refresh_shutter_device()
 
     def update_viewer(self, data=None, shutter: bool = False):
 
         if shutter:
-            self._close_shutter()
+            self.shutter._close_shutter()
 
         if data is None:
             try:
@@ -290,7 +290,7 @@ class MainWindow(MicroManagerWidget):
             },
             _start_thread=True,
         )
-        self._open_shutter()
+        self.shutter._open_shutter()
 
     def start_live(self):
         self._mmc.startContinuousSequenceAcquisition(self.tab.exp_spinBox.value())
@@ -299,7 +299,7 @@ class MainWindow(MicroManagerWidget):
         self.streaming_timer.start(int(self.tab.exp_spinBox.value()))
         self.tab.live_Button.setText("Stop")
 
-        self._open_shutter()
+        self.shutter._open_shutter()
 
     def stop_live(self):
         self._mmc.stopSequenceAcquisition()
@@ -309,7 +309,7 @@ class MainWindow(MicroManagerWidget):
         self.tab.live_Button.setText("Live")
         self.tab.live_Button.setIcon(CAM_ICON)
 
-        self._close_shutter()
+        self.shutter._close_shutter()
 
     def toggle_live(self, event=None):
         if self.streaming_timer is None:
@@ -324,11 +324,11 @@ class MainWindow(MicroManagerWidget):
 
             self.start_live()
             self.tab.live_Button.setIcon(CAM_STOP_ICON)
-            self._open_shutter()
+            self.shutter._open_shutter()
         else:
             self.stop_live()
             self.tab.live_Button.setIcon(CAM_ICON)
-            self._close_shutter()
+            self.shutter._close_shutter()
 
     def _on_mda_started(self, sequence: useq.MDASequence):
         """ "create temp folder and block gui when mda starts."""
@@ -406,78 +406,78 @@ class MainWindow(MicroManagerWidget):
             self.streaming_timer.setInterval(int(exposure))
 
     # shutters
-    def _refresh_shutter_device(self):
-        self.shutter.shutter_comboBox.clear()
-        self.shutter_list.clear()
-        for d in self._mmc.getLoadedDevices():
-            if self._mmc.getDeviceType(d) == DeviceType.ShutterDevice:
-                self.shutter_list.append(d)
-        if self.shutter_list:
-            self.shutter.shutter_comboBox.addItems(self.shutter_list)
-            self._mmc.setShutterOpen(False)
-            self.shutter.shutter_btn.setEnabled(True)
-        else:
-            self.shutter.shutter_btn.setEnabled(False)
+    # def _refresh_shutter_device(self):
+    #     self.shutter.shutter_comboBox.clear()
+    #     self.shutter_list.clear()
+    #     for d in self._mmc.getLoadedDevices():
+    #         if self._mmc.getDeviceType(d) == DeviceType.ShutterDevice:
+    #             self.shutter_list.append(d)
+    #     if self.shutter_list:
+    #         self.shutter.shutter_comboBox.addItems(self.shutter_list)
+    #         self._mmc.setShutterOpen(False)
+    #         self.shutter.shutter_btn.setEnabled(True)
+    #     else:
+    #         self.shutter.shutter_btn.setEnabled(False)
 
-    def _close_shutter(self):
-        self._mmc.setShutterOpen(False)
-        self.shutter.shutter_btn.setText("Open")
-        self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
+    # def _close_shutter(self):
+    #     self._mmc.setShutterOpen(False)
+    #     self.shutter.shutter_btn.setText("Open")
+    #     self.shutter.shutter_btn.setStyleSheet("background-color: magenta;")
 
-    def _open_shutter(self):
-        self._mmc.setShutterOpen(True)
-        self.shutter.shutter_btn.setText("Close")
-        self.shutter.shutter_btn.setStyleSheet("background-color: green;")
+    # def _open_shutter(self):
+    #     self._mmc.setShutterOpen(True)
+    #     self.shutter.shutter_btn.setText("Close")
+    #     self.shutter.shutter_btn.setStyleSheet("background-color: green;")
 
-    def _on_shutter_cbox_changed(self):
-        sht = self.shutter.shutter_comboBox.currentText()
-        self._mmc.setShutterDevice(sht)
-        self._close_shutter()
+    # def _on_shutter_cbox_changed(self):
+    #     sht = self.shutter.shutter_comboBox.currentText()
+    #     self._mmc.setShutterDevice(sht)
+    #     self._close_shutter()
 
-    def _on_shutter_btn_clicked(self):
-        sht = self.shutter.shutter_comboBox.currentText()
-        current_sth_state = self._mmc.getShutterOpen(sht)
-        ch_group = self._mmc.getChannelGroup()
+    # def _on_shutter_btn_clicked(self):
+    #     sht = self.shutter.shutter_comboBox.currentText()
+    #     current_sth_state = self._mmc.getShutterOpen(sht)
+    #     ch_group = self._mmc.getChannelGroup()
 
-        if sht == "Multi Shutter" and self._mmc.getCurrentConfig(ch_group):
-            self._multishutter_from_channel()  # TEST IF IS NECESSARY
-        if current_sth_state:  # if is open
-            self._close_shutter()
-        else:  # if is closed
-            self._open_shutter()
+    #     if sht == "Multi Shutter" and self._mmc.getCurrentConfig(ch_group):
+    #         self._multishutter_from_channel()  # TEST IF IS NECESSARY
+    #     if current_sth_state:  # if is open
+    #         self._close_shutter()
+    #     else:  # if is closed
+    #         self._open_shutter()
 
-    def _multishutter_from_channel(self):
+    # def _multishutter_from_channel(self):
 
-        channel_group = self._mmc.getChannelGroup()
-        current_channel = self._mmc.getCurrentConfig(channel_group)
+    #     channel_group = self._mmc.getChannelGroup()
+    #     current_channel = self._mmc.getCurrentConfig(channel_group)
 
-        multishutter_list = [
-            (k[0], k[1], k[2])
-            for k in self._mmc.getConfigData(channel_group, current_channel)
-            if k[0] == "Multi Shutter"
-        ]
+    #     multishutter_list = [
+    #         (k[0], k[1], k[2])
+    #         for k in self._mmc.getConfigData(channel_group, current_channel)
+    #         if k[0] == "Multi Shutter"
+    #     ]
 
-        if not multishutter_list:
-            return
+    #     if not multishutter_list:
+    #         return
 
-        for d, p, v in multishutter_list:
-            self._mmc.setProperty(d, p, v)
+    #     for d, p, v in multishutter_list:
+    #         self._mmc.setProperty(d, p, v)
 
-    def _shutter_from_channel(self, group, channel):
+    # def _shutter_from_channel(self, group, channel):
 
-        shutter_list = [
-            (k[0], k[1], k[2])
-            for k in self._mmc.getConfigData(group, channel)
-            if self._mmc.getDeviceType(k[0]) == DeviceType.ShutterDevice
-        ]
+    #     shutter_list = [
+    #         (k[0], k[1], k[2])
+    #         for k in self._mmc.getConfigData(group, channel)
+    #         if self._mmc.getDeviceType(k[0]) == DeviceType.ShutterDevice
+    #     ]
 
-        if not shutter_list:
-            return
+    #     if not shutter_list:
+    #         return
 
-        if len(shutter_list) > 1:
-            self.shutter.shutter_comboBox.setCurrentText("Multi Shutter")
-        else:
-            self.shutter.shutter_comboBox.setCurrentText(shutter_list[0])
+    #     if len(shutter_list) > 1:
+    #         self.shutter.shutter_comboBox.setCurrentText("Multi Shutter")
+    #     else:
+    #         self.shutter.shutter_comboBox.setCurrentText(shutter_list[0])
 
     # illumination
     def illumination(self):
@@ -528,20 +528,20 @@ class MainWindow(MicroManagerWidget):
             self.tab.snap_channel_comboBox.setCurrentText(current)
 
         if current:
-            self._shutter_from_channel(channel_group, current)
+            self.shutter._shutter_from_channel(channel_group, current)
 
     def _on_config_set(self, groupName: str, configName: str):
         if groupName == self._mmc.getOrGuessChannelGroup():
             with blockSignals(self.tab.snap_channel_comboBox):
                 self.tab.snap_channel_comboBox.setCurrentText(configName)
 
-            self._shutter_from_channel(groupName, configName)
-            self._close_shutter()
+            self.shutter._shutter_from_channel(groupName, configName)
+            self.shutter._close_shutter()
 
     def _channel_changed(self, newChannel: str):
         self._mmc.setConfig(self._mmc.getChannelGroup(), newChannel)
-        self._shutter_from_channel(self._mmc.getChannelGroup(), newChannel)
-        self._close_shutter()
+        self.shutter._shutter_from_channel(self._mmc.getChannelGroup(), newChannel)
+        self.shutter._close_shutter()
 
     # objectives
     def _refresh_objective_options(self):
@@ -643,7 +643,7 @@ class MainWindow(MicroManagerWidget):
         if self.objectives_device == "":
             return
 
-        self._close_shutter()
+        self.shutter._close_shutter()
 
         zdev = self._mmc.getFocusDevice()
 

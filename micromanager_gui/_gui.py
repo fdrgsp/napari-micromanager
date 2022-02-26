@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from qtpy import QtWidgets as QtW
 from qtpy.QtCore import Qt
 from superqt import QCollapsible
@@ -13,17 +15,20 @@ from ._gui_objects._shutters_widget import MMShuttersWidget
 from ._gui_objects._tab_widget import MMTabWidget
 from ._gui_objects._xyz_stages import MMStagesWidget
 
+if TYPE_CHECKING:
+    from pymmcore_plus import CMMCorePlus
+
 
 class MicroManagerWidget(QtW.QWidget):
-    # class MicroManagerWidget(QtW.QMainWindow):
-    def __init__(self):
+    def __init__(self, mmc: CMMCorePlus = None):
         super().__init__()
+        self._mmc = mmc
 
         # sub_widgets
         self.mm_configuration = MMConfigurationWidget()
         self.mm_objectives = MMObjectivesWidget()
         self.mm_illumination = MMIlluminationWidget()
-        self.mm_shutters = MMShuttersWidget()
+        self.mm_shutters = MMShuttersWidget(self._mmc)
         self.mm_pb = MMPropertyBrowserWidget()
         self.mm_camera = MMCameraWidget()
         self.mm_xyz_stages = MMStagesWidget()
