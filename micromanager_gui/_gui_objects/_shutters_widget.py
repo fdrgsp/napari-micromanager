@@ -1,10 +1,5 @@
-from typing import TYPE_CHECKING
-
-from pymmcore_plus import DeviceType
+from pymmcore_plus import CMMCorePlus, DeviceType
 from qtpy import QtWidgets as QtW
-
-if TYPE_CHECKING:
-    from pymmcore_plus import CMMCorePlus
 
 
 class MMShuttersWidget(QtW.QWidget):
