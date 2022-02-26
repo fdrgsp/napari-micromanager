@@ -7,6 +7,7 @@ class MMShuttersWidget(QtW.QWidget):
     Contains the following objects:
 
     shutter_comboBox: QtW.QComboBox
+    shutter_btn: QtW.QPushButton
     """
 
     def __init__(self, mmc: CMMCorePlus = None):
