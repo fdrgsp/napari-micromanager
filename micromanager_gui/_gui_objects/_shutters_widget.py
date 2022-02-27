@@ -1,5 +1,12 @@
-from pymmcore_plus import CMMCorePlus, DeviceType
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from pymmcore_plus import DeviceType
 from qtpy import QtWidgets as QtW
+
+if TYPE_CHECKING:
+    from pymmcore_plus import CMMCorePlus, RemoteMMCore
 
 
 class MMShuttersWidget(QtW.QWidget):
@@ -10,7 +17,7 @@ class MMShuttersWidget(QtW.QWidget):
     shutter_btn: QtW.QPushButton
     """
 
-    def __init__(self, mmc: CMMCorePlus = None):
+    def __init__(self, mmc: CMMCorePlus | RemoteMMCore = None):
         super().__init__()
         self._mmc = mmc
         self.setup_gui()
