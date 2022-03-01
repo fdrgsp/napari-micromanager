@@ -218,6 +218,7 @@ class MainWindow(MicroManagerWidget):
         cfg = self.cfg_wdg.cfg_LineEdit.text()
         if cfg == "":
             cfg = "MMConfig_demo.cfg"
+        self.cfg_wdg.cfg_LineEdit.setText(cfg)
         self._mmc.loadSystemConfiguration(cfg)
 
     def _refresh_options(self):
