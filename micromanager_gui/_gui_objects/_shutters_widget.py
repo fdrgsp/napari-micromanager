@@ -17,12 +17,17 @@ class MMShuttersWidget(QtW.QWidget):
     shutter_btn: QtW.QPushButton
     """
 
-    def __init__(self, mmc: CMMCorePlus | RemoteMMCore = None):
+    def __init__(self, mmc: CMMCorePlus | RemoteMMCore):
         super().__init__()
         self._mmc = mmc
         self.setup_gui()
 
         self.shutter_list = []
+
+        sig = self._mmc.events
+        sig.configSet.connect(self._on_channel_changed)
+        sig.propertyChanged.connect(self._on_property_changed)
+        sig.systemConfigurationLoaded.connect(self._refresh_shutter_device)
 
         # connect pushbutton
         self.shutter_btn.clicked.connect(self._on_shutter_btn_clicked)
@@ -48,7 +53,7 @@ class MMShuttersWidget(QtW.QWidget):
         self.main_layout.addWidget(self.shutter_comboBox, 0, 1)
 
         # pushbutton
-        self.shutter_btn = QtW.QPushButton(text="Open")
+        self.shutter_btn = QtW.QPushButton(text="Closed")
         self.shutter_btn.setStyleSheet("background-color: magenta;")
         self.shutter_btn.setMinimumWidth(80)
         self.shutter_btn.setMaximumWidth(80)
@@ -56,14 +61,22 @@ class MMShuttersWidget(QtW.QWidget):
 
         self.setLayout(self.main_layout)
 
+    def _on_property_changed(self, dev_name: str, prop_name: str, value: str):
+        if dev_name == self._mmc.getShutterDevice():
+            self.shutter_comboBox.setCurrentText(self._mmc.getShutterDevice())
+
+    def _on_channel_changed(self, channel_group: str, channel_preset: str):
+        if channel_group == self._mmc.getChannelGroup():
+            self._shutter_from_channel(channel_group, channel_preset)
+
     def _close_shutter(self):
         self._mmc.setShutterOpen(False)
-        self.shutter_btn.setText("Open")
+        self.shutter_btn.setText("Closed")
         self.shutter_btn.setStyleSheet("background-color: magenta;")
 
     def _open_shutter(self):
         self._mmc.setShutterOpen(True)
-        self.shutter_btn.setText("Close")
+        self.shutter_btn.setText("Opened")
         self.shutter_btn.setStyleSheet("background-color: green;")
 
     def _refresh_shutter_device(self):
@@ -82,10 +95,7 @@ class MMShuttersWidget(QtW.QWidget):
     def _on_shutter_btn_clicked(self):
         sht = self.shutter_comboBox.currentText()
         current_sth_state = self._mmc.getShutterOpen(sht)
-        ch_group = self._mmc.getChannelGroup()
 
-        if sht == "Multi Shutter" and self._mmc.getCurrentConfig(ch_group):
-            self._multishutter_from_channel()  # TEST IF IS NECESSARY
         if current_sth_state:  # if is open
             self._close_shutter()
         else:  # if is closed
@@ -96,25 +106,7 @@ class MMShuttersWidget(QtW.QWidget):
         self._mmc.setShutterDevice(sht)
         self._close_shutter()
 
-    def _multishutter_from_channel(self):
-
-        channel_group = self._mmc.getChannelGroup()
-        current_channel = self._mmc.getCurrentConfig(channel_group)
-
-        multishutter_list = [
-            (k[0], k[1], k[2])
-            for k in self._mmc.getConfigData(channel_group, current_channel)
-            if k[0] == "Multi Shutter"
-        ]
-
-        if not multishutter_list:
-            return
-
-        for d, p, v in multishutter_list:
-            self._mmc.setProperty(d, p, v)
-
     def _shutter_from_channel(self, group, channel):
-
         shutter_list = [
             (k[0], k[1], k[2])
             for k in self._mmc.getConfigData(group, channel)
@@ -128,6 +120,22 @@ class MMShuttersWidget(QtW.QWidget):
             self.shutter_comboBox.setCurrentText("Multi Shutter")
         else:
             self.shutter_comboBox.setCurrentText(shutter_list[0])
+
+    # def _multishutter_from_channel(self):
+    #     channel_group = self._mmc.getChannelGroup()
+    #     current_channel = self._mmc.getCurrentConfig(channel_group)
+
+    #     multishutter_list = [
+    #         (k[0], k[1], k[2])
+    #         for k in self._mmc.getConfigData(channel_group, current_channel)
+    #         if k[0] == "Multi Shutter"
+    #     ]
+
+    #     if not multishutter_list:
+    #         return
+
+    #     for d, p, v in multishutter_list:
+    #         self._mmc.setProperty(d, p, v)
 
 
 if __name__ == "__main__":

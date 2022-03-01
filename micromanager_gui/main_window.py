@@ -225,7 +225,6 @@ class MainWindow(MicroManagerWidget):
         self._refresh_channel_list()
         self._refresh_positions()
         self._refresh_xyz_devices()
-        self.shutter_wdg._refresh_shutter_device()
 
     def update_viewer(self, data=None, shutter: bool = False):
         if data is None:
@@ -272,6 +271,14 @@ class MainWindow(MicroManagerWidget):
 
     def snap(self):
         self.stop_live()
+
+        ch_group = self._mmc.getChannelGroup()
+        if ch_group:
+            self._mmc.setConfig(
+                ch_group, self.tab_wdg.snap_channel_comboBox.currentText()
+            )
+        else:
+            return
 
         # snap in a thread so we don't freeze UI when using process local mmc
         create_worker(
@@ -515,7 +522,7 @@ class MainWindow(MicroManagerWidget):
                 self.obj_wdg.objective_comboBox.setCurrentIndex(current_obj)
             else:
                 self.obj_wdg.objective_comboBox.setCurrentText(current_obj)
-            self._update_pixel_size()
+            self._update_pixel_size(self.cam_wdg.px_size_doubleSpinBox.value())
             return
 
     def _update_pixel_size(self, value: float = None):
@@ -538,11 +545,9 @@ class MainWindow(MicroManagerWidget):
         if match:
             mag = int(match.groups()[0])
 
-            # if self.cam.px_size_doubleSpinBox.value() == 1.0:
             if value == 1.0:
                 return
 
-            # image_pixel_size = self.cam.px_size_doubleSpinBox.value() / mag
             image_pixel_size = value / mag
             px_cgf_name = f"px_size_{curr_obj}"
             # set image pixel sixe (x,y) for the newly created pixel size config
@@ -559,6 +564,8 @@ class MainWindow(MicroManagerWidget):
 
         if self.objectives_device == "":
             return
+
+        self.shutter_wdg._close_shutter()
 
         zdev = self._mmc.getFocusDevice()
 
@@ -581,7 +588,7 @@ class MainWindow(MicroManagerWidget):
         self._mmc.setPosition(zdev, currentZ)
         self._mmc.waitForDevice(zdev)
 
-        self._update_pixel_size()
+        self._update_pixel_size(self.cam_wdg.px_size_doubleSpinBox.value())
 
     # stages
     def _refresh_positions(self):
