@@ -227,7 +227,9 @@ class MainWindow(MicroManagerWidget):
         self._refresh_positions()
         self._refresh_xyz_devices()
 
-    def update_viewer(self, data=None, shutter: bool = False):
+    # def update_viewer(self, data=None, shutter: bool = False):
+    def update_viewer(self, data=None):
+
         if data is None:
             try:
                 data = self._mmc.getLastImage()
@@ -240,13 +242,15 @@ class MainWindow(MicroManagerWidget):
         except KeyError:
             preview_layer = self.viewer.add_image(data, name="preview")
 
-        if shutter:
-            self.shutter_wdg._close_shutter()
-
         self.update_max_min()
 
         if self.streaming_timer is None:
             self.viewer.reset_view()
+
+        if self._mmc.getShutterOpen():
+            self.shutter_wdg._set_shutter_wdg_to_opened()
+        else:
+            self.shutter_wdg._set_shutter_wdg_to_closed()
 
     def update_max_min(self, event=None):
 
@@ -273,23 +277,22 @@ class MainWindow(MicroManagerWidget):
     def snap(self):
         self.stop_live()
 
-        ch_group = self._mmc.getChannelGroup()
-        if ch_group:
+        if ch_group := self._mmc.getChannelGroup():
             self._mmc.setConfig(
                 ch_group, self.tab_wdg.snap_channel_comboBox.currentText()
             )
         else:
             return
 
+        if self._mmc.getAutoShutter():
+            self.shutter_wdg._set_shutter_wdg_to_opened()
+
         # snap in a thread so we don't freeze UI when using process local mmc
         create_worker(
             self._mmc.snapImage,
-            _connect={
-                "finished": lambda: self.update_viewer(self._mmc.getImage(), True)
-            },
+            _connect={"finished": lambda: self.update_viewer(self._mmc.getImage())},
             _start_thread=True,
         )
-        self.shutter_wdg._open_shutter()
 
     def start_live(self):
         self._mmc.startContinuousSequenceAcquisition(self.tab_wdg.exp_spinBox.value())
@@ -319,11 +322,15 @@ class MainWindow(MicroManagerWidget):
 
             self.start_live()
             self.tab_wdg.live_Button.setIcon(CAM_STOP_ICON)
-            self.shutter_wdg._open_shutter()
+
+            if self._mmc.getAutoShutter() or self._mmc.getShutterOpen():
+                self.shutter_wdg._set_shutter_wdg_to_opened()
         else:
             self.stop_live()
             self.tab_wdg.live_Button.setIcon(CAM_ICON)
-            self.shutter_wdg._close_shutter()
+
+            if not self._mmc.getAutoShutter() or not self._mmc.getShutterOpen():
+                self.shutter_wdg._set_shutter_wdg_to_closed()
 
     def _on_mda_started(self, sequence: useq.MDASequence):
         """ "create temp folder and block gui when mda starts."""
@@ -566,8 +573,6 @@ class MainWindow(MicroManagerWidget):
 
         if self.objectives_device == "":
             return
-
-        self.shutter_wdg._close_shutter()
 
         zdev = self._mmc.getFocusDevice()
 
