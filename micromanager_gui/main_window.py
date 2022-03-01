@@ -325,12 +325,14 @@ class MainWindow(MicroManagerWidget):
 
             if self._mmc.getAutoShutter() or self._mmc.getShutterOpen():
                 self.shutter_wdg._set_shutter_wdg_to_opened()
+                self.shutter_wdg.shutter_checkbox.setEnabled(False)
         else:
             self.stop_live()
             self.tab_wdg.live_Button.setIcon(CAM_ICON)
 
             if not self._mmc.getAutoShutter() or not self._mmc.getShutterOpen():
                 self.shutter_wdg._set_shutter_wdg_to_closed()
+                self.shutter_wdg.shutter_checkbox.setEnabled(True)
 
     def _on_mda_started(self, sequence: useq.MDASequence):
         """ "create temp folder and block gui when mda starts."""
