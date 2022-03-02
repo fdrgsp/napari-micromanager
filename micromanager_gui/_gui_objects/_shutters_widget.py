@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pymmcore_plus import DeviceType
 from qtpy import QtWidgets as QtW
 
 from .. import _core
 
-if TYPE_CHECKING:
-    from pymmcore_plus import CMMCorePlus, RemoteMMCore
-
 
 class MMShuttersWidget(QtW.QWidget):
     """A Widget to control shutters."""
 
-    def __init__(self, mmc: CMMCorePlus | RemoteMMCore):
+    def __init__(self):
         super().__init__()
         self._mmc = _core.get_core_singleton()
         self.setup_gui()

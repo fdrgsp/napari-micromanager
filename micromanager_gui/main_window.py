@@ -46,7 +46,7 @@ class MainWindow(MicroManagerWidget):
 
         self.viewer = viewer
 
-        super().__init__(self._mmc)
+        super().__init__()
 
         adapter_path = find_micromanager()
         if not adapter_path:
