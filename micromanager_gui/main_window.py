@@ -46,8 +46,6 @@ class MainWindow(MicroManagerWidget):
 
         self.viewer = viewer
 
-        super().__init__()
-
         adapter_path = find_micromanager()
         if not adapter_path:
             raise RuntimeError(
@@ -171,9 +169,7 @@ class MainWindow(MicroManagerWidget):
         self._refresh_xyz_devices()
         self.shutter_wdg._refresh_shutter_device()
 
-    # def update_viewer(self, data=None, shutter: bool = False):
     def update_viewer(self, data=None):
-
         if data is None:
             try:
                 data = self._mmc.getLastImage()
