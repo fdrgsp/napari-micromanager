@@ -5,21 +5,18 @@ from typing import TYPE_CHECKING
 from pymmcore_plus import DeviceType
 from qtpy import QtWidgets as QtW
 
+from .. import _core
+
 if TYPE_CHECKING:
     from pymmcore_plus import CMMCorePlus, RemoteMMCore
 
 
 class MMShuttersWidget(QtW.QWidget):
-    """
-    Contains the following objects:
-
-    shutter_comboBox: QtW.QComboBox
-    shutter_btn: QtW.QPushButton
-    """
+    """A Widget to control shutters."""
 
     def __init__(self, mmc: CMMCorePlus | RemoteMMCore):
         super().__init__()
-        self._mmc = mmc
+        self._mmc = _core.get_core_singleton()
         self.setup_gui()
 
         self.shutter_list = []
@@ -30,14 +27,9 @@ class MMShuttersWidget(QtW.QWidget):
         sig.propertyChanged.connect(self._on_property_changed)
         sig.systemConfigurationLoaded.connect(self._refresh_shutter_device)
 
-        # connect pushbutton
         self.shutter_btn.clicked.connect(self._on_shutter_btn_clicked)
 
-        # connect chackbox
         self.shutter_checkbox.toggled.connect(self._on_shutter_checkbox_toggled)
-
-        # connect combobox
-        # self.shutter_comboBox.currentIndexChanged.connect(self._on_shutter_cbox_changed)
 
     def setup_gui(self):
 
@@ -45,22 +37,18 @@ class MMShuttersWidget(QtW.QWidget):
         self.main_layout.setSpacing(5)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # label
         self.shutter_label = QtW.QLabel(text="Shutters:")
         self.shutter_label.setMaximumWidth(80)
         self.shutter_label.setMinimumWidth(80)
         self.main_layout.addWidget(self.shutter_label)
 
-        # combobox
         self.shutter_comboBox = QtW.QComboBox()
         self.shutter_comboBox.setMinimumWidth(150)
         self.main_layout.addWidget(self.shutter_comboBox)
 
-        # checkbox
         self.shutter_checkbox = QtW.QCheckBox(text="Auto")
         self.main_layout.addWidget(self.shutter_checkbox)
 
-        # pushbutton
         self.shutter_btn = QtW.QPushButton(text="Closed")
         self.shutter_btn.setStyleSheet("background-color: magenta;")
         self.shutter_btn.setMinimumWidth(70)
@@ -124,10 +112,10 @@ class MMShuttersWidget(QtW.QWidget):
         sht = self.shutter_comboBox.currentText()
         current_sth_state = self._mmc.getShutterOpen(sht)
 
-        if current_sth_state:  # if is open
+        if current_sth_state:
             self._close_shutter_on_btn_pressed()
-        else:  # if is closed
-            self._open_shutteron_btn_pressed()
+        else:
+            self._open_shutter_on_btn_pressed()
 
     def _close_shutter_on_btn_pressed(self):
         current_sht = self.shutter_comboBox.currentText()
@@ -135,7 +123,7 @@ class MMShuttersWidget(QtW.QWidget):
         self.shutter_btn.setText("Closed")
         self.shutter_btn.setStyleSheet("background-color: magenta;")
 
-    def _open_shutteron_btn_pressed(self):
+    def _open_shutter_on_btn_pressed(self):
         current_sht = self.shutter_comboBox.currentText()
         self._mmc.setShutterOpen(current_sht, True)
         self.shutter_btn.setText("Opened")
@@ -158,27 +146,6 @@ class MMShuttersWidget(QtW.QWidget):
             self.shutter_comboBox.setCurrentText("Multi Shutter")
         else:
             self.shutter_comboBox.setCurrentText(shutter_list[0])
-
-    # def _on_shutter_cbox_changed(self):
-    #     sht = self.shutter_comboBox.currentText()
-    #     self._mmc.setShutterDevice(sht)
-    #     self._close_shutter()
-
-    # def _multishutter_from_channel(self):
-    #     channel_group = self._mmc.getChannelGroup()
-    #     current_channel = self._mmc.getCurrentConfig(channel_group)
-
-    #     multishutter_list = [
-    #         (k[0], k[1], k[2])
-    #         for k in self._mmc.getConfigData(channel_group, current_channel)
-    #         if k[0] == "Multi Shutter"
-    #     ]
-
-    #     if not multishutter_list:
-    #         return
-
-    #     for d, p, v in multishutter_list:
-    #         self._mmc.setProperty(d, p, v)
 
 
 if __name__ == "__main__":
