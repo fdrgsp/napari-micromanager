@@ -162,23 +162,6 @@ class MultiDWidget(QtW.QWidget, _MultiDUI):
         else:
             self.stack_groupBox.setEnabled(enabled)
 
-        if not self._mmc.getChannelGroup():
-            self.channel_groupBox.setEnabled(False)
-        else:
-            self.channel_groupBox.setEnabled(enabled)
-
-        if not self._mmc.getXYStageDevice():
-            self.stage_pos_groupBox.setChecked(False)
-            self.stage_pos_groupBox.setEnabled(False)
-        else:
-            self.stage_pos_groupBox.setEnabled(enabled)
-
-        if not self._mmc.getFocusDevice():
-            self.stack_groupBox.setChecked(False)
-            self.stack_groupBox.setEnabled(False)
-        else:
-            self.stack_groupBox.setEnabled(enabled)
-
     def _set_top(self):
         self.z_top_doubleSpinBox.setValue(self._mmc.getZPosition())
 
