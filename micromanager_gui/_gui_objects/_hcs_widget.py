@@ -12,8 +12,6 @@ from qtpy.QtWidgets import (
     QLabel,
     QPushButton,
     QRubberBand,
-    QSizePolicy,
-    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
@@ -87,17 +85,37 @@ class MainWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setGeometry(0, 0, 580, 320)
+        self._create_main_wdg()
 
-        self._create_wdg()
-
-    def _create_wdg(self):
-
-        self.setLayout(QHBoxLayout())
+    def _create_main_wdg(self):
+        # QGraphicsScene and QGraphicsView
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(10, 0, 10, 0)
+        self.setLayout(layout)
         self.scene = GraphicsScene()
         self.view = QGraphicsView(self.scene, self)
+        self.view.setMinimumSize(400, 260)
+
+        # well plate selector combo and clear selection QPushButton
+        upper_wdg = QWidget()
+        upper_wdg_layout = QHBoxLayout()
+        wp_combo_wdg = self._create_wp_combo_selector()
+        clear_button = QPushButton(text="Clear Selection")
+        clear_button.clicked.connect(self.scene._clear_selection)
+        calibrate_button = QPushButton(text="Calibrate Stage")
+        upper_wdg_layout.addWidget(wp_combo_wdg)
+        upper_wdg_layout.addWidget(clear_button)
+        upper_wdg_layout.addWidget(calibrate_button)
+        upper_wdg.setLayout(upper_wdg_layout)
+
+        # add widgets
+        self.layout().addWidget(upper_wdg)
         self.layout().addWidget(self.view)
 
+        self._draw_well_plate(6)
+
+    def _create_wp_combo_selector(self):
         combo_wdg = QWidget()
         wp_combo_layout = QHBoxLayout()
         wp_combo_layout.setContentsMargins(0, 0, 0, 0)
@@ -105,10 +123,11 @@ class MainWidget(QWidget):
 
         combo_label = QLabel()
         combo_label.setText("Well Plate:")
+        combo_label.setMaximumWidth(75)
 
         wp_combo = QComboBox()
         wp_combo.setGeometry(215, 10, 100, 100)
-        items = ["6", "12", "24", "48", "96"]
+        items = ["6", "12", "24", "48", "96", "Custom"]
         wp_combo.addItems(items)
         wp_combo.currentTextChanged.connect(self._on_combo_changed)
 
@@ -116,30 +135,14 @@ class MainWidget(QWidget):
         wp_combo_layout.addWidget(wp_combo)
         combo_wdg.setLayout(wp_combo_layout)
 
-        main = QWidget()
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        clear_button = QPushButton(text="Clear Selection")
-        clear_button.clicked.connect(self.scene._clear_selection)
-        calibrate_button = QPushButton(text="Calibrate Stage")
-        pos_list_button = QPushButton(text="Get Position List")
-        verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        main_layout.addWidget(combo_wdg)
-        main_layout.addWidget(clear_button)
-        main_layout.addWidget(calibrate_button)
-        main_layout.addWidget(pos_list_button)
-        main_layout.addSpacerItem(verticalSpacer)
-
-        main.setLayout(main_layout)
-
-        self.layout().addWidget(main)
-
-        self._draw_well_plate(6)
+        return combo_wdg
 
     def _on_combo_changed(self, value: str):
+
+        if value == "Custom":
+            print("Not yet implemented!")
+            return
+
         self.scene.clear()
         self._draw_well_plate(int(value))
 
