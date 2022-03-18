@@ -10,10 +10,8 @@ from qtpy.QtWidgets import (
 )
 
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
-
-# from ._plate import Plate
-# from ._graphics_scene import GraphicsScene
-from micromanager_gui._gui_objects._hcs_widget._plate import Plate
+from micromanager_gui._gui_objects._hcs_widget._well import Well
+from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 
 
 class MainWidget(QWidget):
@@ -48,7 +46,7 @@ class MainWidget(QWidget):
         self.layout().addWidget(upper_wdg)
         self.layout().addWidget(self.view)
 
-        self._draw_well_plate(6)
+        self.wp_combo.addItems(WellPlate().plates)
 
     def _create_wp_combo_selector(self):
         combo_wdg = QWidget()
@@ -60,70 +58,49 @@ class MainWidget(QWidget):
         combo_label.setText("Well Plate:")
         combo_label.setMaximumWidth(75)
 
-        wp_combo = QComboBox()
-        wp_combo.setGeometry(215, 10, 100, 100)
-        items = ["6", "12", "24", "48", "96", "Custom"]
-        wp_combo.addItems(items)
-        wp_combo.currentTextChanged.connect(self._on_combo_changed)
+        self.wp_combo = QComboBox()
+        self.wp_combo.setGeometry(215, 10, 100, 100)
+        self.wp_combo.currentTextChanged.connect(self._on_combo_changed)
 
         wp_combo_layout.addWidget(combo_label)
-        wp_combo_layout.addWidget(wp_combo)
+        wp_combo_layout.addWidget(self.wp_combo)
         combo_wdg.setLayout(wp_combo_layout)
 
         return combo_wdg
 
+    def _get_combo_values(self) -> list:
+        return [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
+
     def _on_combo_changed(self, value: str):
 
-        if value == "Custom":
-            print("Not yet implemented!")
-            return
-
         self.scene.clear()
-        self._draw_well_plate(int(value))
+        self._draw_well_plate(value)
 
-    def _get_draw_parameters(self, wells: int):
-        if wells == 6:
-            rows = 2
-            cols = 3
-            dm = 115
-            text_size = 20
-        elif wells == 12:
-            rows = 3
-            cols = 4
-            dm = 75
-            text_size = 18
-        elif wells == 24:
-            rows = 4
-            cols = 6
-            dm = 55
-            text_size = 16
-        elif wells == 48:
-            rows = 6
-            cols = 8
-            dm = 35
-            text_size = 14
-        elif wells == 96:
-            rows = 8
-            cols = 12
-            dm = 25
-            text_size = 10
+    def _draw_well_plate(self, well_plate: str):
+        current_wp_combo_items = self._get_combo_values()
+        wp = WellPlate.set_format(well_plate)
+        if set(wp.plates) != set(current_wp_combo_items):
+            self.wp_combo.clear()
+            self.wp_combo.addItems(wp.plates)
 
-        return rows, cols, dm, text_size
+        wells = wp.get_n_wells()
+        rows = wp.get_n_rows()
+        cols = wp.get_n_columns()
+        dm = wp.get_drawing_diameter()
+        text_size = wp.get_text_size()
 
-    def _draw_well_plate(self, wells: int):
-        rows, cols, dm, text_size = self._get_draw_parameters(wells)
         self._create_well_plate(rows, cols, dm, text_size, wells)
 
     def _create_well_plate(
         self, rows: int, cols: int, dm: int, text_size: int, wells: int
     ):
-        x, y, gap = (25, 5, 5) if wells in {12, 48} else (5, 5, 5)
+        x, y, gap = (25, 5, 5) if wells in {12} else (5, 5, 5)
         for row in range(rows):
             for col in range(cols):
-                self.scene.addItem(Plate(x, y, dm, row, col, text_size))
+                self.scene.addItem(Well(x, y, dm, row, col, text_size))
                 x += dm + gap
             y += dm + gap
-            x = 25 if wells in {12, 48} else 5
+            x = 25 if wells in {12} else 5
 
         # height = 5 + (dm * rows) + (gap * (rows - 1))
         # width = 5 + (dm * cols) + (gap * (cols - 1))

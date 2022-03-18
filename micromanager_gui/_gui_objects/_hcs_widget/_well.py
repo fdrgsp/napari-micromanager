@@ -7,7 +7,7 @@ from qtpy.QtWidgets import QGraphicsItem
 ALPHABET = string.ascii_uppercase
 
 
-class Plate(QGraphicsItem):
+class Well(QGraphicsItem):
     def __init__(self, x, y, dm, row, col, text_size):
         super().__init__()
 
