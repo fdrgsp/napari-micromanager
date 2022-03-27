@@ -115,15 +115,15 @@ class MainWidget(QWidget):
         # dm = wp.get_drawing_diameter()
         # text_size = wp.get_text_size()
 
-        self._create_well_plate(wp.rows, wp.cols, dm, text_size, wells)
+        self._create_well_plate(wp.rows, wp.cols, dm, text_size, wells, wp.circular)
 
     def _create_well_plate(
-        self, rows: int, cols: int, dm: int, text_size: int, wells: int
+        self, rows: int, cols: int, dm: int, text_size: int, wells: int, circular: bool
     ):
         x, y, gap = (25, 5, 5) if wells in {12, 48} else (5, 5, 5)
         for row in range(rows):
             for col in range(cols):
-                self.scene.addItem(Well(x, y, dm, row, col, text_size))
+                self.scene.addItem(Well(x, y, dm, row, col, text_size, circular))
                 x += dm + gap
             y += dm + gap
             x = 25 if wells in {12, 48} else 5

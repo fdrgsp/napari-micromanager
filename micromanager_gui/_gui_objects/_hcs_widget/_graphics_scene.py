@@ -10,8 +10,8 @@ class GraphicsScene(QGraphicsScene):
         self.unselected = QBrush(Qt.green)
         self.selected = QBrush(Qt.magenta)
 
-        self.ellipse_pos = 0
-        self.new_ellipse_pos = 0
+        self.well_pos = 0
+        self.new_well_pos = 0
 
         self._selected_wells = []
 
@@ -25,13 +25,13 @@ class GraphicsScene(QGraphicsScene):
         for item in self._selected_wells:
             item.setBrush(self.selected)
 
-        if ellipse := self.itemAt(self.originCropPoint, QTransform()):
-            if ellipse.isSelected():
-                ellipse.setBrush(self.unselected)
-                ellipse.setSelected(False)
+        if well := self.itemAt(self.originCropPoint, QTransform()):
+            if well.isSelected():
+                well.setBrush(self.unselected)
+                well.setSelected(False)
             else:
-                ellipse.setBrush(self.selected)
-                ellipse.setSelected(True)
+                well.setBrush(self.selected)
+                well.setSelected(True)
 
     def mouseMoveEvent(self, event):
         self.currentQRubberBand.setGeometry(QRect(self.originQPoint, event.screenPos()))

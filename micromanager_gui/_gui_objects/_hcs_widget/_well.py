@@ -8,7 +8,7 @@ ALPHABET = string.ascii_uppercase
 
 
 class Well(QGraphicsItem):
-    def __init__(self, x, y, dm, row, col, text_size):
+    def __init__(self, x, y, dm, row, col, text_size, circular):
         super().__init__()
 
         self._x = x
@@ -17,27 +17,31 @@ class Well(QGraphicsItem):
         self._row = row
         self._col = col
         self._text_size = text_size
+        self.circular = circular
 
         self.text_x = self._x + (self._dm / 2) - 8
         self.text_y = self._y + (self._dm / 2) + 5
 
         self.brush = QBrush(Qt.green)
-        self.ellipse = QRectF(self._x, self._y, self._dm, self._dm)
+        self.well_shape = QRectF(self._x, self._y, self._dm, self._dm)
 
         self.setFlag(self.ItemIsSelectable, True)
 
     def boundingRect(self):
-        return self.ellipse
+        return self.well_shape
 
     def paint(self, painter=None, style=None, widget=None):
         painter.setBrush(self.brush)
-        painter.drawEllipse(self.ellipse)
+        if self.circular:
+            painter.drawEllipse(self.well_shape)
+        else:
+            painter.drawRect(self.well_shape)
 
         font = QFont("Helvetica", self._text_size)
         font.setWeight(QFont.Bold)
         painter.setFont(font)
         well_name = f"{ALPHABET[self._row]}{self._col + 1}"
-        painter.drawText(self.ellipse, well_name, QTextOption(Qt.AlignCenter))
+        painter.drawText(self.well_shape, well_name, QTextOption(Qt.AlignCenter))
 
     def setBrush(self, brush: QColor = QBrush(Qt.green)):
         self.brush = brush
