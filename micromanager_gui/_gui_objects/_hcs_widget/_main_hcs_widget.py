@@ -26,7 +26,6 @@ class MainWidget(QWidget):
         self._create_main_wdg()
 
     def _create_main_wdg(self):
-        # QGraphicsScene and QGraphicsView
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(10, 0, 10, 0)
@@ -94,43 +93,44 @@ class MainWidget(QWidget):
             self.wp_combo.clear()
             self.wp_combo.addItems(plates)
 
-        wells = wp.get_n_wells()
+        max_w = 350
+        max_h = 240
+        size_y = max_h / wp.rows
+        size_x = size_y if wp.circular else (max_w / wp.cols)
+        text_size = size_y / 2.5
 
-        if wells == 6:
-            dm = 115
-            text_size = 20
-        elif wells == 12:
-            dm = 75
-            text_size = 18
-        elif wells == 24:
-            dm = 55
-            text_size = 16
-        elif wells == 96:
-            dm = 25
-            text_size = 10
+        width = size_x * wp.cols
 
-        # wells = wp.get_n_wells()
-        # rows = wp.get_n_rows()
-        # cols = wp.get_n_columns()
-        # dm = wp.get_drawing_diameter()
-        # text_size = wp.get_text_size()
+        if width != self.scene.width() and self.scene.width() > 0:
+            start_x = (self.scene.width() - width) / 2
+            print(start_x)
+        else:
+            start_x = 0
 
-        self._create_well_plate(wp.rows, wp.cols, dm, text_size, wells, wp.circular)
+        self._create_well_plate(
+            wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
+        )
 
     def _create_well_plate(
-        self, rows: int, cols: int, dm: int, text_size: int, wells: int, circular: bool
+        self,
+        rows: int,
+        cols: int,
+        start_x: int,
+        size_x: int,
+        size_y: int,
+        text_size: int,
+        circular: bool,
     ):
-        x, y, gap = (25, 5, 5) if wells in {12, 48} else (5, 5, 5)
+        x = start_x
+        y = 0
         for row in range(rows):
             for col in range(cols):
-                self.scene.addItem(Well(x, y, dm, row, col, text_size, circular))
-                x += dm + gap
-            y += dm + gap
-            x = 25 if wells in {12, 48} else 5
-
-        # height = 5 + (dm * rows) + (gap * (rows - 1))
-        # width = 5 + (dm * cols) + (gap * (cols - 1))
-        # print(f'width: {width}, height: {height}')
+                self.scene.addItem(
+                    Well(x, y, size_x, size_y, row, col, text_size, circular)
+                )
+                x += size_x
+            y += size_y
+            x = start_x
 
 
 if __name__ == "__main__":
