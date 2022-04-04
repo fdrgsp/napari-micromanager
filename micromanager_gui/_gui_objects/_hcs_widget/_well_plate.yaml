@@ -68,3 +68,13 @@ standard 384:
     well_spacing_y: 4.500
     well_size_x: 4.000
     well_size_y: 4.000
+
+slide:
+    id: "standard 384"
+    circular: False
+    rows: 1
+    cols: 1
+    well_spacing_x: 0
+    well_spacing_y:
+    well_size_x: 350
+    well_size_y: 50

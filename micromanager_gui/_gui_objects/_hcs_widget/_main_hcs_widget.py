@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import yaml
 from qtpy.QtWidgets import (
@@ -13,14 +14,15 @@ from qtpy.QtWidgets import (
 )
 
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
+from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well import Well
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 
 PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 
 
-class MainWidget(QWidget):
-    def __init__(self):
+class HCSWidget(QWidget):
+    def __init__(self, parent: Optional[QWidget] = None):
         super().__init__()
 
         self._create_main_wdg()
@@ -38,17 +40,21 @@ class MainWidget(QWidget):
         upper_wdg = QWidget()
         upper_wdg_layout = QHBoxLayout()
         wp_combo_wdg = self._create_wp_combo_selector()
+        custom_plate = QPushButton(text="Custom Plate")
+        custom_plate.clicked.connect(self._update_plate_yaml)
         clear_button = QPushButton(text="Clear Selection")
         clear_button.clicked.connect(self.scene._clear_selection)
-        calibrate_button = QPushButton(text="Calibrate Stage")
         upper_wdg_layout.addWidget(wp_combo_wdg)
+        upper_wdg_layout.addWidget(custom_plate)
         upper_wdg_layout.addWidget(clear_button)
-        upper_wdg_layout.addWidget(calibrate_button)
         upper_wdg.setLayout(upper_wdg_layout)
+
+        calibrate_button = QPushButton(text="Calibrate Stage")
 
         # add widgets
         self.layout().addWidget(upper_wdg)
         self.layout().addWidget(self.view)
+        self.layout().addWidget(calibrate_button)
 
         plates = self._plates_names_from_database()
         self.wp_combo.addItems(plates)
@@ -103,7 +109,6 @@ class MainWidget(QWidget):
 
         if width != self.scene.width() and self.scene.width() > 0:
             start_x = (self.scene.width() - width) / 2
-            print(start_x)
         else:
             start_x = 0
 
@@ -126,17 +131,21 @@ class MainWidget(QWidget):
         for row in range(rows):
             for col in range(cols):
                 self.scene.addItem(
-                    Well(x, y, size_x, size_y, row, col, text_size, circular)
+                    Well(x, y, size_x, size_y, row, col, text_size, circular, "gray")
                 )
                 x += size_x
             y += size_y
             x = start_x
+
+    def _update_plate_yaml(self):
+        self.plate = UpdateYaml(self)
+        self.plate.show()
 
 
 if __name__ == "__main__":
     import sys
 
     app = QApplication(sys.argv)
-    win = MainWidget()
+    win = HCSWidget()
     win.show()
     sys.exit(app.exec_())

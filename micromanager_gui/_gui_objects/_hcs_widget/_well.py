@@ -1,20 +1,29 @@
 import string
 
 from qtpy.QtCore import QRectF, Qt
-from qtpy.QtGui import QBrush, QColor, QFont, QTextOption
+from qtpy.QtGui import QBrush, QColor, QFont, QPen, QTextOption
 from qtpy.QtWidgets import QGraphicsItem
 
 ALPHABET = string.ascii_uppercase
 
 
 class Well(QGraphicsItem):
-    # def __init__(self, x, y, dm, row, col, text_size, circular):
-    def __init__(self, x, y, size_x, size_y, row, col, text_size, circular):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        size_x: float,
+        size_y: float,
+        row: int,
+        col: int,
+        text_size: int,
+        circular: bool,
+        text_color: str = "black",
+    ):
         super().__init__()
 
         self._x = x
         self._y = y
-        # self._dm = dm
 
         self._size_x = size_x
         self._size_y = size_y
@@ -26,8 +35,8 @@ class Well(QGraphicsItem):
 
         self.text_x = self._x + (self._size_x / 2) - 8
         self.text_y = self._y + (self._size_x / 2) + 5
-        # self.text_x = self._x + (self._dm / 2) - 8
-        # self.text_y = self._y + (self._dm / 2) + 5
+
+        self.text_color = text_color
 
         self.brush = QBrush(Qt.green)
         self.well_shape = QRectF(self._x, self._y, self._size_x, self._size_y)
@@ -46,6 +55,8 @@ class Well(QGraphicsItem):
 
         font = QFont("Helvetica", self._text_size)
         font.setWeight(QFont.Bold)
+        pen = QPen(QColor(self.text_color))
+        painter.setPen(pen)
         painter.setFont(font)
         well_name = f"{ALPHABET[self._row]}{self._col + 1}"
         painter.drawText(self.well_shape, well_name, QTextOption(Qt.AlignCenter))

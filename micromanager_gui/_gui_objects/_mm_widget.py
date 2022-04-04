@@ -6,6 +6,7 @@ from superqt import QCollapsible
 
 from ._camera_widget import MMCameraWidget
 from ._config_widget import MMConfigurationWidget
+from ._hcs_widget._main_hcs_widget import HCSWidget
 from ._mda_widget import MultiDWidget
 from ._objective_widget import MMObjectivesWidget
 from ._sample_explorer_widget import ExploreSample
@@ -30,6 +31,7 @@ class MicroManagerWidget(QtW.QWidget):
         self.shutter_wdg = MMShuttersWidget()
         self.mda = MultiDWidget()
         self.explorer = ExploreSample()
+        self.hcs = HCSWidget(self)
 
         self.create_gui()
 
@@ -83,6 +85,7 @@ class MicroManagerWidget(QtW.QWidget):
 
         self.tab_wdg.tabWidget.addTab(self.mda, "Multi-D Acquisition")
         self.tab_wdg.tabWidget.addTab(self.explorer, "Sample Explorer")
+        self.tab_wdg.tabWidget.addTab(self.hcs, "HCS")
 
         # add tab widget
         self.main_layout.addWidget(self.tab_wdg)
