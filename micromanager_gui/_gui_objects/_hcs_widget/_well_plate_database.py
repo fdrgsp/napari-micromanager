@@ -66,14 +66,3 @@ class PlateFromDatabase(WellPlate):
             self.well_spacing_y = plate.get("well_spacing_y")
             self.well_size_x = plate.get("well_size_x")
             self.well_size_y = plate.get("well_size_y")
-
-            # print(
-            #     f"{self.id}\n",
-            #     f"  circular: {self.circular}\n",
-            #     f"  rows: {self.rows}\n",
-            #     f"  cols: {self.cols}\n",
-            #     f"  well_spacing_x: {self.well_spacing_x} mm\n",
-            #     f"  well_spacing_y: {self.well_spacing_y} mm\n",
-            #     f"  well_size_x: {self.well_size_x} mm\n",
-            #     f"  well_size_y: {self.well_size_y} mm",
-            # )

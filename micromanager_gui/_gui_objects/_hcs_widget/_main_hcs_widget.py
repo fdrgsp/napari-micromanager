@@ -12,6 +12,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.utils import signals_blocked
 
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
@@ -34,6 +35,7 @@ class HCSWidget(QWidget):
         self.setLayout(layout)
         self.scene = GraphicsScene()
         self.view = QGraphicsView(self.scene, self)
+        self.view.setStyleSheet("background:grey;")
         self.view.setMinimumSize(400, 260)
 
         # well plate selector combo and clear selection QPushButton
@@ -56,7 +58,12 @@ class HCSWidget(QWidget):
         self.layout().addWidget(self.view)
         self.layout().addWidget(calibrate_button)
 
+        self._update_wp_combo()
+
+    def _update_wp_combo(self):
         plates = self._plates_names_from_database()
+        plates.sort()
+        self.wp_combo.clear()
         self.wp_combo.addItems(plates)
 
     def _create_wp_combo_selector(self):
@@ -80,11 +87,13 @@ class HCSWidget(QWidget):
         return combo_wdg
 
     def _plates_names_from_database(self) -> list:
-        with open(PLATE_DATABASE) as file:
+        with open(
+            PLATE_DATABASE,
+        ) as file:
             return list(yaml.safe_load(file))
 
-    def _get_combo_values(self) -> list:
-        return [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
+    # def _get_combo_values(self) -> list:
+    #     return [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
 
     def _on_combo_changed(self, value: str):
 
@@ -92,12 +101,12 @@ class HCSWidget(QWidget):
         self._draw_well_plate(value)
 
     def _draw_well_plate(self, well_plate: str):
-        current_wp_combo_items = self._get_combo_values()
+        # current_wp_combo_items = self._get_combo_values()
         wp = WellPlate.set_format(well_plate)
-        plates = self._plates_names_from_database()
-        if set(plates) != set(current_wp_combo_items):
-            self.wp_combo.clear()
-            self.wp_combo.addItems(plates)
+        # plates = self._plates_names_from_database()
+        # if set(plates) != set(current_wp_combo_items):
+        #     self.wp_combo.clear()
+        #     self.wp_combo.addItems(plates)
 
         max_w = 350
         max_h = 240
@@ -139,7 +148,18 @@ class HCSWidget(QWidget):
 
     def _update_plate_yaml(self):
         self.plate = UpdateYaml(self)
+        self.plate.yaml_updated.connect(
+            self._update_wp_combo_from_yaml
+        )  # UpdateYaml() signal
         self.plate.show()
+
+    def _update_wp_combo_from_yaml(self, new_plate: dict):
+        plates = self._plates_names_from_database()
+        plates.sort()
+        with signals_blocked(self.wp_combo):
+            self.wp_combo.clear()
+            self.wp_combo.addItems(plates)
+        self.wp_combo.setCurrentText(list(new_plate.keys())[0])
 
 
 if __name__ == "__main__":

@@ -2,9 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDoubleSpinBox,
     QGridLayout,
     QHBoxLayout,
@@ -20,6 +21,9 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class UpdateYaml(QWidget):
+
+    yaml_updated = Signal(dict)
+
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__()
 
@@ -79,6 +83,9 @@ class UpdateYaml(QWidget):
         main_layout.addWidget(self._well_size_y_label, 6, 0)
         main_layout.addWidget(self._well_size_y, 6, 1)
 
+        self.circular_checkbox = QCheckBox(text="circular")
+        main_layout.addWidget(self.circular_checkbox, 7, 0)
+
         btn_wdg = QWidget()
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(5, 0, 5, 0)
@@ -90,7 +97,7 @@ class UpdateYaml(QWidget):
         btn_layout.addWidget(self._cancel_btn)
         btn_layout.addWidget(self._ok_btn)
         btn_wdg.setLayout(btn_layout)
-        main_layout.addWidget(btn_wdg, 7, 0, 1, 2)
+        main_layout.addWidget(btn_wdg, 8, 0, 1, 2)
 
         self.setLayout(main_layout)
 
@@ -107,8 +114,8 @@ class UpdateYaml(QWidget):
 
         with open(PLATE_DATABASE, "w") as file:
             new = {
-                "test": {
-                    "circular": self._well_size_x.value() == self._well_size_y.value(),
+                f"{self._id.text()}": {
+                    "circular": self.circular_checkbox.isChecked(),
                     "id": self._id.text(),
                     "cols": self._cols.value(),
                     "rows": self._rows.value(),
@@ -120,6 +127,7 @@ class UpdateYaml(QWidget):
             }
             f.update(new)
             yaml.dump(f, file)
+            self.yaml_updated.emit(new)
 
         self._close()
 
