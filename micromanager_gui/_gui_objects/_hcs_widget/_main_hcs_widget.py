@@ -92,21 +92,13 @@ class HCSWidget(QWidget):
         ) as file:
             return list(yaml.safe_load(file))
 
-    # def _get_combo_values(self) -> list:
-    #     return [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
-
     def _on_combo_changed(self, value: str):
 
         self.scene.clear()
         self._draw_well_plate(value)
 
     def _draw_well_plate(self, well_plate: str):
-        # current_wp_combo_items = self._get_combo_values()
         wp = WellPlate.set_format(well_plate)
-        # plates = self._plates_names_from_database()
-        # if set(plates) != set(current_wp_combo_items):
-        #     self.wp_combo.clear()
-        #     self.wp_combo.addItems(plates)
 
         max_w = 350
         max_h = 240
@@ -159,7 +151,8 @@ class HCSWidget(QWidget):
         with signals_blocked(self.wp_combo):
             self.wp_combo.clear()
             self.wp_combo.addItems(plates)
-        self.wp_combo.setCurrentText(list(new_plate.keys())[0])
+        if new_plate:
+            self.wp_combo.setCurrentText(list(new_plate.keys())[0])
 
 
 if __name__ == "__main__":

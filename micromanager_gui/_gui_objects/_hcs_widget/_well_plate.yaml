@@ -1,80 +1,63 @@
-# Well Plates Database
-# each object has to contain the following properties:
-#    id: plate name
-#    circular: bool
-#    rows: number of plate rows
-#    cols: number of plate columns
-#    well_spacing_x: well to well spacing along the x dimension
-#    well_spacing_y: well to well spacing along the y dimension
-#    well_size_x: size of the well along the x dimension (radius if circular)
-#    well_size_y: size of the well along the y dimension (radius if circular)
-
-standard 6:
-    id: "standard 6"
-    circular: true
-    rows: 2
-    cols: 3
-    well_spacing_x: 39.120
-    well_spacing_y: 39.120
-    well_size_x: 34.8
-    well_size_y: 34.8
-
-standard 12:
-    id: "standard 12"
-    circular: true
-    rows: 3
-    cols: 4
-    well_spacing_x: 26.010
-    well_spacing_y: 26.010
-    well_size_x: 22.110
-    well_size_y: 22.110
-
-standard 24:
-    id: "standard 24"
-    circular: true
-    rows: 4
-    cols: 6
-    well_spacing_x: 19.300
-    well_spacing_y: 19.300
-    well_size_x: 15.540
-    well_size_y: 15.540
-
-standard 48:
-    id: "standard 48"
-    circular: true
-    rows: 6
-    cols: 8
-    well_spacing_x: 13.000
-    well_spacing_y: 13.000
-    well_size_x: 11.370
-    well_size_y: 11.370
-
-standard 96:
-    id: "standard 96"
-    circular: true
-    rows: 8
-    cols: 12
-    well_spacing_x: 9.000
-    well_spacing_y: 9.000
-    well_size_x: 6.400
-    well_size_y: 6.400
-
-standard 384:
-    id: "standard 384"
-    circular: false
-    rows: 16
-    cols: 24
-    well_spacing_x: 4.500
-    well_spacing_y: 4.500
-    well_size_x: 4.000
-    well_size_y: 4.000
-
 slide:
-    id: "standard 384"
-    circular: false
-    rows: 1
-    cols: 1
-    well_spacing_x: 0
-    well_spacing_y:
-    well_size_x: 350
-    well_size_y: 50
+  circular: false
+  cols: 1
+  id: slide
+  rows: 1
+  well_size_x: 350.0
+  well_size_y: 50.0
+  well_spacing_x: 0.0
+  well_spacing_y: 0.0
+standard 12:
+  circular: true
+  cols: 4
+  id: standard 12
+  rows: 3
+  well_size_x: 22.11
+  well_size_y: 22.11
+  well_spacing_x: 26.01
+  well_spacing_y: 26.01
+standard 24:
+  circular: true
+  cols: 6
+  id: standard 24
+  rows: 4
+  well_size_x: 15.54
+  well_size_y: 15.54
+  well_spacing_x: 19.3
+  well_spacing_y: 19.3
+standard 384:
+  circular: false
+  cols: 24
+  id: standard 384
+  rows: 16
+  well_size_x: 4.0
+  well_size_y: 4.0
+  well_spacing_x: 4.5
+  well_spacing_y: 4.5
+standard 48:
+  circular: true
+  cols: 8
+  id: standard 48
+  rows: 6
+  well_size_x: 11.37
+  well_size_y: 11.37
+  well_spacing_x: 13.0
+  well_spacing_y: 13.0
+standard 6:
+  circular: true
+  cols: 3
+  id: standard 6
+  rows: 2
+  well_size_x: 34.8
+  well_size_y: 34.8
+  well_spacing_x: 39.12
+  well_spacing_y: 39.12
+standard 96:
+  circular: true
+  cols: 12
+  id: standard 96
+  rows: 8
+  well_size_x: 6.4
+  well_size_y: 6.4
+  well_spacing_x: 9.0
+  well_spacing_y: 9.0
