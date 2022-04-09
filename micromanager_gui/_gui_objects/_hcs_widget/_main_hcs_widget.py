@@ -104,8 +104,8 @@ class HCSWidget(QWidget):
     def _draw_well_plate(self, well_plate: str):
         wp = WellPlate.set_format(well_plate)
 
-        max_w = 400
-        max_h = 280
+        max_w = self.view.width() - 50
+        max_h = self.view.height() - 50
         size_y = max_h / wp.rows
         size_x = size_y if wp.circular else (max_w / wp.cols)
         text_size = size_y / 2.5
@@ -114,6 +114,7 @@ class HCSWidget(QWidget):
 
         if width != self.scene.width() and self.scene.width() > 0:
             start_x = (self.scene.width() - width) / 2
+            start_x = max(start_x, 0)
         else:
             start_x = 0
 
@@ -152,12 +153,12 @@ class HCSWidget(QWidget):
 
     def _clear_values(self):
         self.plate._circular_checkbox.setChecked(False),
-        self.plate._id.setText(""),
-        self.plate._cols.setValue(0),
-        self.plate._rows.setValue(0),
-        self.plate._well_size_x.setValue(0.0),
-        self.plate._well_size_y.setValue(0.0),
-        self.plate._well_spacing_x.setValue(0.0),
+        self.plate._id.setText("")
+        self.plate._cols.setValue(0)
+        self.plate._rows.setValue(0)
+        self.plate._well_size_x.setValue(0.0)
+        self.plate._well_size_y.setValue(0.0)
+        self.plate._well_spacing_x.setValue(0.0)
         self.plate._well_spacing_y.setValue(0.0)
 
     def _update_wp_combo_from_yaml(self, new_plate):
