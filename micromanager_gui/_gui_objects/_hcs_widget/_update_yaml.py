@@ -116,13 +116,10 @@ class UpdateYaml(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(5, 5, 5, 0)
         btn_layout.setSpacing(5)
-        self._close_btn = QPushButton(text="Close")
-        self._close_btn.clicked.connect(self._close)
         self._delete_btn = QPushButton(text="Delete")
         self._delete_btn.clicked.connect(self._delete_plate)
         self._ok_btn = QPushButton(text="Add/Update")
         self._ok_btn.clicked.connect(self._update_plate_yaml)
-        btn_layout.addWidget(self._close_btn)
         btn_layout.addWidget(self._ok_btn)
         btn_layout.addWidget(self._delete_btn)
         btn_wdg.setLayout(btn_layout)
@@ -198,9 +195,6 @@ class UpdateYaml(QDialog):
 
         match = self.plate_table.findItems(self._id.text(), Qt.MatchExactly)
         self.plate_table.item(match[0].row(), 0).setSelected(True)
-
-    def _close(self):
-        self.close()
 
     def _delete_plate(self):
 
