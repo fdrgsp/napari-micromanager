@@ -32,7 +32,7 @@ class HCSWidget(QWidget):
 
     def _create_main_wdg(self):
         layout = QVBoxLayout()
-        layout.setSpacing(0)
+        layout.setSpacing(5)
         layout.setContentsMargins(10, 0, 10, 0)
         self.setLayout(layout)
         self.scene = GraphicsScene()
@@ -98,16 +98,14 @@ class HCSWidget(QWidget):
             return list(yaml.safe_load(file))
 
     def _on_combo_changed(self, value: str):
-        print(value)
         self.scene.clear()
         self._draw_well_plate(value)
-        print("draw")
 
     def _draw_well_plate(self, well_plate: str):
         wp = WellPlate.set_format(well_plate)
 
-        max_w = 350
-        max_h = 240
+        max_w = 400
+        max_h = 280
         size_y = max_h / wp.rows
         size_x = size_y if wp.circular else (max_w / wp.cols)
         text_size = size_y / 2.5

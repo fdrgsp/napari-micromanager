@@ -33,9 +33,6 @@ class Well(QGraphicsItem):
         self._text_size = text_size
         self.circular = circular
 
-        self.text_x = self._x + (self._size_x / 2) - 8
-        self.text_y = self._y + (self._size_x / 2) + 5
-
         self.text_color = text_color
 
         self.brush = QBrush(Qt.green)
