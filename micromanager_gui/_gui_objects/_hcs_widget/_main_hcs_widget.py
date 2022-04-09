@@ -24,7 +24,7 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 
 class HCSWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__()
+        super().__init__(parent)
 
         self._create_main_wdg()
 
@@ -93,9 +93,10 @@ class HCSWidget(QWidget):
             return list(yaml.safe_load(file))
 
     def _on_combo_changed(self, value: str):
-
+        print(value)
         self.scene.clear()
         self._draw_well_plate(value)
+        print("draw")
 
     def _draw_well_plate(self, well_plate: str):
         wp = WellPlate.set_format(well_plate)
@@ -144,8 +145,19 @@ class HCSWidget(QWidget):
             self._update_wp_combo_from_yaml
         )  # UpdateYaml() signal
         self.plate.show()
+        self._clear_values()
 
-    def _update_wp_combo_from_yaml(self, new_plate: dict):
+    def _clear_values(self):
+        self.plate._circular_checkbox.setChecked(False),
+        self.plate._id.setText(""),
+        self.plate._cols.setValue(0),
+        self.plate._rows.setValue(0),
+        self.plate._well_size_x.setValue(0.0),
+        self.plate._well_size_y.setValue(0.0),
+        self.plate._well_spacing_x.setValue(0.0),
+        self.plate._well_spacing_y.setValue(0.0)
+
+    def _update_wp_combo_from_yaml(self, new_plate):
         plates = self._plates_names_from_database()
         plates.sort()
         with signals_blocked(self.wp_combo):
@@ -153,6 +165,10 @@ class HCSWidget(QWidget):
             self.wp_combo.addItems(plates)
         if new_plate:
             self.wp_combo.setCurrentText(list(new_plate.keys())[0])
+        else:
+            items = [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
+            self.wp_combo.setCurrentText(items[0])
+            self._draw_well_plate(items[0])
 
 
 if __name__ == "__main__":

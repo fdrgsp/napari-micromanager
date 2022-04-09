@@ -7,6 +7,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QDialog,
     QDoubleSpinBox,
     QGridLayout,
     QHBoxLayout,
@@ -23,18 +24,27 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
-class UpdateYaml(QWidget):
+class UpdateYaml(QDialog):
 
     yaml_updated = Signal(object)
 
     def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__()
+        super().__init__(parent)
 
         self._create_gui()
+        self.setMinimumSize(450, 250)
 
         self._update_table()
 
-        self._update_values(1, 0)
+        if self.plate_table.rowCount():
+            self._update_values(1, 0)
+
+        self.setWindowFlags(
+            Qt.WindowType.Window
+            | Qt.WindowType.WindowTitleHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.WindowCloseButtonHint
+        )
 
     def _create_gui(self):
 
@@ -214,7 +224,21 @@ class UpdateYaml(QWidget):
             match = self.plate_table.findItems(plate_name, Qt.MatchExactly)
             self.plate_table.removeRow(match[0].row())
 
-        print("DELETE -> ", plate_names, selected_rows)
+        if self.plate_table.rowCount():
+            self.plate_table.setCurrentCell(0, 0)
+            self._update_values(0, 0)
+        else:
+            self._clear_values()
+
+    def _clear_values(self):
+        self._id.setText("")
+        self._rows.setValue(0)
+        self._cols.setValue(0)
+        self._well_spacing_x.setValue(0.0)
+        self._well_spacing_y.setValue(0.0)
+        self._well_size_x.setValue(0.0)
+        self._well_size_y.setValue(0.0)
+        self._circular_checkbox.setChecked(False)
 
 
 if __name__ == "__main__":
