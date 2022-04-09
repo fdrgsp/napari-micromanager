@@ -9,6 +9,8 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
@@ -57,6 +59,9 @@ class HCSWidget(QWidget):
         self.layout().addWidget(upper_wdg)
         self.layout().addWidget(self.view)
         self.layout().addWidget(calibrate_button)
+
+        verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layout().addItem(verticalSpacer)
 
         self._update_wp_combo()
 
