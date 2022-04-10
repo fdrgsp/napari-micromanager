@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -9,6 +10,7 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSpacerItem,
     QVBoxLayout,
@@ -22,6 +24,7 @@ from micromanager_gui._gui_objects._hcs_widget._well import Well
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 
 PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
+AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class HCSWidget(QWidget):
@@ -30,11 +33,29 @@ class HCSWidget(QWidget):
 
         self._create_main_wdg()
 
-    def _create_main_wdg(self):
+        self._update_wp_combo()
+
+    def _create_main_wdg(self):  # sourcery skip: class-extract-method
+
         layout = QVBoxLayout()
-        layout.setSpacing(5)
-        layout.setContentsMargins(10, 0, 10, 0)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 10, 0, 10)
         self.setLayout(layout)
+
+        scroll = QScrollArea()
+        scroll.setAlignment(AlignCenter)
+        widgets = self._widgets()
+        scroll.setWidget(widgets)
+        layout.addWidget(scroll)
+
+    def _widgets(self):
+
+        wdg = QWidget()
+        wdg_layout = QVBoxLayout()
+        wdg_layout.setSpacing(10)
+        wdg_layout.setContentsMargins(10, 10, 10, 10)
+        wdg.setLayout(wdg_layout)
+
         self.scene = GraphicsScene()
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
@@ -54,22 +75,19 @@ class HCSWidget(QWidget):
         upper_wdg.setLayout(upper_wdg_layout)
 
         calibrate_button = QPushButton(text="Calibrate Stage")
+        position_list_button = QPushButton(text="Create Positons List")
 
         # add widgets
-        self.layout().addWidget(upper_wdg)
-        self.layout().addWidget(self.view)
-        self.layout().addWidget(calibrate_button)
+        wdg_layout.addWidget(upper_wdg)
+        wdg_layout.addWidget(self.view)
+
+        wdg_layout.addWidget(calibrate_button)
+        wdg_layout.addWidget(position_list_button)
 
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.layout().addItem(verticalSpacer)
+        wdg_layout.addItem(verticalSpacer)
 
-        self._update_wp_combo()
-
-    def _update_wp_combo(self):
-        plates = self._plates_names_from_database()
-        plates.sort()
-        self.wp_combo.clear()
-        self.wp_combo.addItems(plates)
+        return wdg
 
     def _create_wp_combo_selector(self):
         combo_wdg = QWidget()
@@ -90,6 +108,12 @@ class HCSWidget(QWidget):
         combo_wdg.setLayout(wp_combo_layout)
 
         return combo_wdg
+
+    def _update_wp_combo(self):
+        plates = self._plates_names_from_database()
+        plates.sort()
+        self.wp_combo.clear()
+        self.wp_combo.addItems(plates)
 
     def _plates_names_from_database(self) -> list:
         with open(
