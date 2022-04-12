@@ -1,10 +1,10 @@
-slide:
+coverslip 22x22:
   circular: false
   cols: 1
-  id: slide
+  id: coverslip 22x22
   rows: 1
-  well_size_x: 350.0
-  well_size_y: 50.0
+  well_size_x: 22.0
+  well_size_y: 22.0
   well_spacing_x: 0.0
   well_spacing_y: 0.0
 standard 12:

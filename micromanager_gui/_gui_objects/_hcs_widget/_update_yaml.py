@@ -125,13 +125,7 @@ class UpdateYaml(QDialog):
         btn_wdg.setLayout(btn_layout)
         main_layout.addWidget(btn_wdg, 8, 0, 1, 3)
 
-        self.plate_table = QTableWidget()
-        self.plate_table.horizontalHeader().setStretchLastSection(True)
-        self.plate_table.verticalHeader().setVisible(False)
-        self.plate_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.plate_table.setRowCount(1)
-        self.plate_table.setColumnCount(1)
-        self.plate_table.setHorizontalHeaderLabels(["Plate"])
+        self.plate_table = Table()
         self.plate_table.cellClicked.connect(self._update_values)
         main_layout.addWidget(self.plate_table, 0, 2, 8, 1)
 
@@ -233,6 +227,23 @@ class UpdateYaml(QDialog):
         self._well_size_x.setValue(0.0)
         self._well_size_y.setValue(0.0)
         self._circular_checkbox.setChecked(False)
+
+
+class Table(QTableWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.horizontalHeader().setStretchLastSection(True)
+        self.verticalHeader().setVisible(False)
+        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.setRowCount(1)
+        self.setColumnCount(1)
+        self.setHorizontalHeaderLabels(["Plate"])
+
+        self.itemSelectionChanged.connect(self._update)
+
+    def _update(self):
+        self.cellClicked.emit(self.currentRow(), 0)
 
 
 if __name__ == "__main__":

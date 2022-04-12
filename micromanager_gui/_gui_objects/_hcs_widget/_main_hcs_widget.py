@@ -44,11 +44,11 @@ class HCSWidget(QWidget):
 
         scroll = QScrollArea()
         scroll.setAlignment(AlignCenter)
-        widgets = self._widgets()
+        widgets = self._view_scene_widgets()
         scroll.setWidget(widgets)
         layout.addWidget(scroll)
 
-    def _widgets(self):
+    def _view_scene_widgets(self):
 
         wdg = QWidget()
         wdg_layout = QVBoxLayout()
@@ -131,7 +131,11 @@ class HCSWidget(QWidget):
         max_w = 490
         max_h = 290
         size_y = max_h / wp.rows
-        size_x = size_y if wp.circular else (max_w / wp.cols)
+        size_x = (
+            size_y
+            if wp.circular or wp.well_size_x == wp.well_size_y
+            else (max_w / wp.cols)
+        )
         text_size = size_y / 2.5
 
         width = size_x * wp.cols
