@@ -32,8 +32,6 @@ class HCSWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-
         self._create_main_wdg()
 
         self._update_wp_combo()
@@ -46,7 +44,6 @@ class HCSWidget(QWidget):
         self.setLayout(layout)
 
         scroll = QScrollArea()
-        scroll.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         scroll.setAlignment(AlignCenter)
         widgets = self._view_scene_widgets()
         scroll.setWidget(widgets)
@@ -66,7 +63,6 @@ class HCSWidget(QWidget):
         self._width = 500
         self._height = 300
         self.view.setMinimumSize(self._width, self._height)
-        self.view.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # well plate selector combo and clear selection QPushButton
         upper_wdg = QWidget()
@@ -112,7 +108,6 @@ class HCSWidget(QWidget):
         combo_label.setMaximumWidth(75)
 
         self.wp_combo = QComboBox()
-        self.wp_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
         self.wp_combo.currentTextChanged.connect(self._on_combo_changed)
 
         wp_combo_layout.addWidget(combo_label)
