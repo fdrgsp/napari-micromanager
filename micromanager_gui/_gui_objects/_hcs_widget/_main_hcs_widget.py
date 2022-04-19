@@ -9,6 +9,7 @@ from qtpy.QtWidgets import (
     QGraphicsView,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
@@ -71,28 +72,28 @@ class HCSWidget(QWidget):
         upper_wdg = QWidget()
         upper_wdg_layout = QHBoxLayout()
         wp_combo_wdg = self._create_wp_combo_selector()
-        # custom_plate = QPushButton(text="Custom Plate")
-        # custom_plate.clicked.connect(self._update_plate_yaml)
-        # clear_button = QPushButton(text="Clear Selection")
-        # clear_button.clicked.connect(self.scene._clear_selection)
+        custom_plate = QPushButton(text="Custom Plate")
+        custom_plate.clicked.connect(self._update_plate_yaml)
+        clear_button = QPushButton(text="Clear Selection")
+        clear_button.clicked.connect(self.scene._clear_selection)
         upper_wdg_layout.addWidget(wp_combo_wdg)
-        # upper_wdg_layout.addWidget(custom_plate)
-        # upper_wdg_layout.addWidget(clear_button)
+        upper_wdg_layout.addWidget(custom_plate)
+        upper_wdg_layout.addWidget(clear_button)
         upper_wdg.setLayout(upper_wdg_layout)
 
         self.FOV_selector = SelectFOV()
 
-        # calibrate_button = QPushButton(text="Calibrate Stage")
-        # position_list_button = QPushButton(text="Create Positons List")
+        calibrate_button = QPushButton(text="Calibrate Stage")
+        position_list_button = QPushButton(text="Create Positons List")
 
         # add widgets
         wdg_layout.addWidget(upper_wdg)
         wdg_layout.addWidget(self.view)
 
-        # wdg_layout.addWidget(self.FOV_selector)
+        wdg_layout.addWidget(self.FOV_selector)
 
-        # wdg_layout.addWidget(calibrate_button)
-        # wdg_layout.addWidget(position_list_button)
+        wdg_layout.addWidget(calibrate_button)
+        wdg_layout.addWidget(position_list_button)
 
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         wdg_layout.addItem(verticalSpacer)
@@ -161,9 +162,7 @@ class HCSWidget(QWidget):
             wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
         )
 
-        # self.FOV_selector._load_plate_info(
-        # wp.well_size_x, wp.well_size_y, wp.circular
-        # )
+        self.FOV_selector._load_plate_info(wp.well_size_x, wp.well_size_y, wp.circular)
 
     def _create_well_plate(
         self,
