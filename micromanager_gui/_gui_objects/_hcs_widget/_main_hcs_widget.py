@@ -150,6 +150,8 @@ class HCSWidget(QWidget):
             wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
         )
 
+        # add here for _generate_FOV.py
+
     def _create_well_plate(
         self,
         rows: int,
