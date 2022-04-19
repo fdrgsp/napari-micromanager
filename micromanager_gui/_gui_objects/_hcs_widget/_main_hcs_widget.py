@@ -9,7 +9,6 @@ from qtpy.QtWidgets import (
     QGraphicsView,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
@@ -32,6 +31,8 @@ class HCSWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+
         self._create_main_wdg()
 
         self._update_wp_combo()
@@ -44,6 +45,7 @@ class HCSWidget(QWidget):
         self.setLayout(layout)
 
         scroll = QScrollArea()
+        scroll.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         scroll.setAlignment(AlignCenter)
         widgets = self._view_scene_widgets()
         scroll.setWidget(widgets)
@@ -60,34 +62,37 @@ class HCSWidget(QWidget):
         self.scene = GraphicsScene()
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
-        self.view.setMinimumSize(500, 300)
+        self._width = 500
+        self._height = 300
+        self.view.setMinimumSize(self._width, self._height)
+        self.view.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         # well plate selector combo and clear selection QPushButton
         upper_wdg = QWidget()
         upper_wdg_layout = QHBoxLayout()
         wp_combo_wdg = self._create_wp_combo_selector()
-        custom_plate = QPushButton(text="Custom Plate")
-        custom_plate.clicked.connect(self._update_plate_yaml)
-        clear_button = QPushButton(text="Clear Selection")
-        clear_button.clicked.connect(self.scene._clear_selection)
+        # custom_plate = QPushButton(text="Custom Plate")
+        # custom_plate.clicked.connect(self._update_plate_yaml)
+        # clear_button = QPushButton(text="Clear Selection")
+        # clear_button.clicked.connect(self.scene._clear_selection)
         upper_wdg_layout.addWidget(wp_combo_wdg)
-        upper_wdg_layout.addWidget(custom_plate)
-        upper_wdg_layout.addWidget(clear_button)
+        # upper_wdg_layout.addWidget(custom_plate)
+        # upper_wdg_layout.addWidget(clear_button)
         upper_wdg.setLayout(upper_wdg_layout)
 
         self.FOV_selector = SelectFOV()
 
-        calibrate_button = QPushButton(text="Calibrate Stage")
-        position_list_button = QPushButton(text="Create Positons List")
+        # calibrate_button = QPushButton(text="Calibrate Stage")
+        # position_list_button = QPushButton(text="Create Positons List")
 
         # add widgets
         wdg_layout.addWidget(upper_wdg)
         wdg_layout.addWidget(self.view)
 
-        wdg_layout.addWidget(self.FOV_selector)
+        # wdg_layout.addWidget(self.FOV_selector)
 
-        wdg_layout.addWidget(calibrate_button)
-        wdg_layout.addWidget(position_list_button)
+        # wdg_layout.addWidget(calibrate_button)
+        # wdg_layout.addWidget(position_list_button)
 
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         wdg_layout.addItem(verticalSpacer)
@@ -98,14 +103,15 @@ class HCSWidget(QWidget):
         combo_wdg = QWidget()
         wp_combo_layout = QHBoxLayout()
         wp_combo_layout.setContentsMargins(0, 0, 0, 0)
-        wp_combo_layout.setSpacing(3)
+        wp_combo_layout.setSpacing(0)
 
         combo_label = QLabel()
-        combo_label.setText("Well Plate:")
+        combo_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        combo_label.setText("Plate:")
         combo_label.setMaximumWidth(75)
 
         self.wp_combo = QComboBox()
-        self.wp_combo.setGeometry(215, 10, 100, 100)
+        self.wp_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
         self.wp_combo.currentTextChanged.connect(self._on_combo_changed)
 
         wp_combo_layout.addWidget(combo_label)
@@ -133,8 +139,8 @@ class HCSWidget(QWidget):
     def _draw_well_plate(self, well_plate: str):
         wp = WellPlate.set_format(well_plate)
 
-        max_w = 490
-        max_h = 290
+        max_w = self._width - 10
+        max_h = self._height - 10
         size_y = max_h / wp.rows
         size_x = (
             size_y
@@ -155,7 +161,9 @@ class HCSWidget(QWidget):
             wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
         )
 
-        self.FOV_selector._load_plate_info(wp.well_size_x, wp.well_size_y, wp.circular)
+        # self.FOV_selector._load_plate_info(
+        # wp.well_size_x, wp.well_size_y, wp.circular
+        # )
 
     def _create_well_plate(
         self,

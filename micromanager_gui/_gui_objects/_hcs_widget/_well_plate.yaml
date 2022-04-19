@@ -1,7 +1,7 @@
-coverslip 22x22:
+coverslip 22mm:
   circular: false
   cols: 1
-  id: coverslip 22x22
+  id: coverslip 22mm
   rows: 1
   well_size_x: 22.0
   well_size_y: 22.0

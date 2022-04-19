@@ -13,6 +13,7 @@ from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -42,16 +43,17 @@ class SelectFOV(QWidget):
         self.setLayout(main_layout)
 
         left_wdg = QWidget()
-        left_wdg.setMinimumWidth(220)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
         left_wdg.setLayout(layout)
 
         fov_label = QLabel()
+        fov_label.setMinimumWidth(120)
+        fov_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         fov_label.setText("Selection mode:")
         self.FOV_selection_mode_combo = QComboBox()
-        self.FOV_selection_mode_combo.addItems(["Random", "Centered"])
+        self.FOV_selection_mode_combo.addItems(["Random", "Center"])
         self.FOV_selection_mode_combo.currentTextChanged.connect(
             self._on_FOV_selection_changed
         )
@@ -61,6 +63,8 @@ class SelectFOV(QWidget):
         layout.addWidget(mode)
 
         self.plate_area_label_x = QLabel()
+        self.plate_area_label_x.setMinimumWidth(120)
+        self.plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.plate_area_label_x.setText("Area FOV x (mm):")
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
@@ -72,6 +76,8 @@ class SelectFOV(QWidget):
         layout.addWidget(_plate_area_x)
 
         self.plate_area_label_y = QLabel()
+        self.plate_area_label_y.setMinimumWidth(120)
+        self.plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.plate_area_label_y.setText("Area FOV y (mm):")
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
@@ -83,6 +89,8 @@ class SelectFOV(QWidget):
         layout.addWidget(_plate_area_y)
 
         number_of_FOV_label = QLabel()
+        number_of_FOV_label.setMinimumWidth(120)
+        number_of_FOV_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         number_of_FOV_label.setText("Number of FOV:")
         self.number_of_FOV = QSpinBox()
         self.number_of_FOV.setAlignment(AlignCenter)
@@ -94,7 +102,7 @@ class SelectFOV(QWidget):
         )
         layout.addWidget(nFOV)
 
-        self.random_button = QPushButton(text="Random")
+        self.random_button = QPushButton(text="New Random FOV(s)")
         self.random_button.clicked.connect(self._on_random_button_pressed)
         layout.addWidget(self.random_button)
 
@@ -213,7 +221,7 @@ class SelectFOV(QWidget):
         if self._is_circular:
             self.scene.addEllipse(0, 0, max_size_y, max_size_y, main_pen)
 
-            if mode == "Centered":
+            if mode == "Center":
                 self.scene.clear()
                 self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
                 center_x, center_y = ((max_size_y / 2) - 2.5, (max_size_y / 2) - 2.5)
@@ -237,7 +245,7 @@ class SelectFOV(QWidget):
 
             self.scene.addRect(0, 0, max_size_x, max_size_y, main_pen)
 
-            if mode == "Centered":
+            if mode == "Center":
                 self.scene.clear()
                 self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
                 center_x, center_y = ((max_size_x / 2) - 2.5, (max_size_y / 2) - 2.5)

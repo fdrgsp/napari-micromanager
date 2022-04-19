@@ -36,6 +36,7 @@ class Well(QGraphicsItem):
         self.text_color = text_color
 
         self.brush = QBrush(Qt.green)
+        self.pen = QPen(Qt.black)
         self.well_shape = QRectF(self._x, self._y, self._size_x, self._size_y)
 
         self.setFlag(self.ItemIsSelectable, True)
@@ -45,6 +46,7 @@ class Well(QGraphicsItem):
 
     def paint(self, painter=None, style=None, widget=None):
         painter.setBrush(self.brush)
+        painter.setPen(self.pen)
         if self.circular:
             painter.drawEllipse(self.well_shape)
         else:
