@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 from qtpy.QtCore import QRectF, Qt
+from qtpy.QtGui import QBrush, QPen
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -16,29 +17,22 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.utils import signals_blocked
 
 AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class SelectFOV(QWidget):
-    """
-    well_plate_info must contain:
-      - well_size_x
-      - well_size_y
-      - is_circular: bool
-    """
-
-    def __init__(self, well_plate_info: list):
+    def __init__(self):
         super().__init__()
 
-        self._size_x, self._size_y, self._is_circular = well_plate_info
+        self._size_x = None
+        self._size_y = None
+        self._is_circular = None
 
         self._create_widget()
 
-        if self._is_circular:
-            self.plate_area_y.setEnabled(False)
-
-        self._on_random_button_pressed()
+        self._set_enabled(False)
 
     def _create_widget(self):
 
@@ -71,8 +65,6 @@ class SelectFOV(QWidget):
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
         self.plate_area_x.setMinimum(1)
-        self.plate_area_x.setMaximum(self._size_x)
-        self.plate_area_x.setValue(self._size_x)
         self.plate_area_x.valueChanged.connect(self._on_area_x_changed)
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
             self.plate_area_label_x, self.plate_area_x
@@ -84,8 +76,6 @@ class SelectFOV(QWidget):
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
         self.plate_area_y.setMinimum(1)
-        self.plate_area_y.setMaximum(self._size_y)
-        self.plate_area_y.setValue(self._size_y)
         self.plate_area_y.valueChanged.connect(self._on_area_y_changed)
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
             self.plate_area_label_y, self.plate_area_y
@@ -116,6 +106,13 @@ class SelectFOV(QWidget):
         self.view.setFixedSize(200, 150)
 
         main_layout.addWidget(self.view)
+
+    def _set_enabled(self, enabled: bool):
+        self.FOV_selection_mode_combo.setEnabled(enabled)
+        self.random_button.setEnabled(enabled)
+        self.number_of_FOV.setEnabled(enabled)
+        self.plate_area_x.setEnabled(enabled)
+        self.plate_area_y.setEnabled(enabled)
 
     def _make_QHBoxLayout_wdg_with_label(self, label: QLabel, wdg: QWidget):
         widget = QWidget()
@@ -175,8 +172,27 @@ class SelectFOV(QWidget):
 
         self._set_FOV_and_mode(value, mode, area_x, area_y)
 
-    def _on_random_button_pressed(self):
+    def _load_plate_info(self, size_x, size_y, is_circular):
 
+        self._set_enabled(True)
+
+        self._size_x = size_x
+        self._size_y = size_y
+        self._is_circular = is_circular
+
+        if self._is_circular:
+            self.plate_area_y.setEnabled(False)
+
+        self.plate_area_x.setMaximum(self._size_x)
+        with signals_blocked(self.plate_area_x):
+            self.plate_area_x.setValue(self._size_x)
+        self.plate_area_y.setMaximum(self._size_y)
+        with signals_blocked(self.plate_area_y):
+            self.plate_area_y.setValue(self._size_y)
+
+        self._on_random_button_pressed()
+
+    def _on_random_button_pressed(self):
         self.scene.clear()
         mode = self.FOV_selection_mode_combo.currentText()
         nFOV = self.number_of_FOV.value()
@@ -188,12 +204,20 @@ class SelectFOV(QWidget):
 
         max_size_y = 140
 
+        main_pen = QPen(Qt.magenta)
+        main_pen.setWidth(4)
+        area_pen = QPen(Qt.green)
+        area_pen.setWidth(4)
+        point_brush = QBrush(Qt.black)
+
         if self._is_circular:
-            self.scene.addEllipse(0, 0, max_size_y, max_size_y)
+            self.scene.addEllipse(0, 0, max_size_y, max_size_y, main_pen)
 
             if mode == "Centered":
+                self.scene.clear()
+                self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
                 center_x, center_y = ((max_size_y / 2) - 2.5, (max_size_y / 2) - 2.5)
-                self.scene.addEllipse(center_x, center_y, 5, 5)
+                self.scene.addEllipse(center_x, center_y, 5, 5, brush=point_brush)
                 print(center_x, center_y)
 
             elif mode == "Random":
@@ -201,21 +225,23 @@ class SelectFOV(QWidget):
                 center = (max_size_y - diameter) / 2
 
                 fov_area = QRectF(center, center, diameter, diameter)
-                self.scene.addEllipse(fov_area)
+                self.scene.addEllipse(fov_area, area_pen)
 
                 points = self._random_points_in_circle(nFOV, diameter, center)
                 for p in points:
-                    self.scene.addEllipse(p[0], p[1], 5, 5)
+                    self.scene.addEllipse(p[0], p[1], 5, 5, brush=point_brush)
                     print(p)
 
         else:
             max_size_x = 140 if self._size_x == self._size_y else 190
 
-            self.scene.addRect(0, 0, max_size_x, max_size_y)
+            self.scene.addRect(0, 0, max_size_x, max_size_y, main_pen)
 
             if mode == "Centered":
+                self.scene.clear()
+                self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
                 center_x, center_y = ((max_size_x / 2) - 2.5, (max_size_y / 2) - 2.5)
-                self.scene.addEllipse(center_x, center_y, 5, 5)
+                self.scene.addEllipse(center_x, center_y, 5, 5, brush=point_brush)
                 print(center_x, center_y)
 
             elif mode == "Random":
@@ -225,13 +251,13 @@ class SelectFOV(QWidget):
                 center_y = (max_size_y - size_y) / 2
 
                 fov_area = QRectF(center_x, center_y, size_x, size_y)
-                self.scene.addRect(fov_area)
+                self.scene.addRect(fov_area, area_pen)
 
                 points = self._random_points_in_square(
                     nFOV, size_x, size_y, max_size_x, max_size_y
                 )
                 for p in points:
-                    self.scene.addEllipse(p[0], p[1], 5, 5)
+                    self.scene.addEllipse(p[0], p[1], 5, 5, brush=point_brush)
                     print(p)
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
@@ -264,9 +290,9 @@ class SelectFOV(QWidget):
 if __name__ == "__main__":
     import sys
 
-    info = [10, 10, False]
     app = QApplication(sys.argv)
-    win = SelectFOV(info)
+    win = SelectFOV()
+    win._load_plate_info(10, 10, True)
     win.show()
     sys.exit(app.exec_())
 

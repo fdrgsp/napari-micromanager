@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
 )
 from superqt.utils import signals_blocked
 
+from micromanager_gui._gui_objects._hcs_widget._generate_FOV import SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well import Well
@@ -74,12 +75,16 @@ class HCSWidget(QWidget):
         upper_wdg_layout.addWidget(clear_button)
         upper_wdg.setLayout(upper_wdg_layout)
 
+        self.FOV_selector = SelectFOV()
+
         calibrate_button = QPushButton(text="Calibrate Stage")
         position_list_button = QPushButton(text="Create Positons List")
 
         # add widgets
         wdg_layout.addWidget(upper_wdg)
         wdg_layout.addWidget(self.view)
+
+        wdg_layout.addWidget(self.FOV_selector)
 
         wdg_layout.addWidget(calibrate_button)
         wdg_layout.addWidget(position_list_button)
@@ -150,7 +155,7 @@ class HCSWidget(QWidget):
             wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
         )
 
-        # add here for _generate_FOV.py
+        self.FOV_selector._load_plate_info(wp.well_size_x, wp.well_size_y, wp.circular)
 
     def _create_well_plate(
         self,
