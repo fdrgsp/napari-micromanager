@@ -18,7 +18,7 @@ class Well(QGraphicsItem):
         col: int,
         text_size: int,
         circular: bool,
-        text_color: str = "black",
+        text_color: str = "",
     ):
         super().__init__()
 

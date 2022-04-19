@@ -7,6 +7,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
     QGraphicsView,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -83,13 +84,31 @@ class HCSWidget(QWidget):
         position_list_button = QPushButton(text="Create Positons List")
 
         # add widgets
-        wdg_layout.addWidget(upper_wdg)
-        wdg_layout.addWidget(self.view)
+        view_group = QGroupBox()
+        view_gp_layout = QVBoxLayout()
+        view_gp_layout.setSpacing(0)
+        view_gp_layout.setContentsMargins(10, 0, 10, 10)
+        view_group.setLayout(view_gp_layout)
+        view_gp_layout.addWidget(upper_wdg)
+        view_gp_layout.addWidget(self.view)
+        wdg_layout.addWidget(view_group)
 
-        wdg_layout.addWidget(self.FOV_selector)
+        FOV_group = QGroupBox()
+        FOV_gp_layout = QVBoxLayout()
+        FOV_gp_layout.setSpacing(0)
+        FOV_gp_layout.setContentsMargins(10, 10, 10, 10)
+        FOV_group.setLayout(FOV_gp_layout)
+        FOV_gp_layout.addWidget(self.FOV_selector)
+        wdg_layout.addWidget(FOV_group)
 
-        wdg_layout.addWidget(calibrate_button)
-        wdg_layout.addWidget(position_list_button)
+        cfg_group = QGroupBox()
+        cfg_gp_layout = QVBoxLayout()
+        cfg_gp_layout.setSpacing(5)
+        cfg_gp_layout.setContentsMargins(10, 10, 10, 10)
+        cfg_group.setLayout(cfg_gp_layout)
+        cfg_gp_layout.addWidget(calibrate_button)  # TODO: add icon
+        cfg_gp_layout.addWidget(position_list_button)
+        wdg_layout.addWidget(cfg_group)
 
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         wdg_layout.addItem(verticalSpacer)
@@ -143,7 +162,7 @@ class HCSWidget(QWidget):
             if wp.circular or wp.well_size_x == wp.well_size_y
             else (max_w / wp.cols)
         )
-        text_size = size_y / 2.5
+        text_size = size_y / 2.3
 
         width = size_x * wp.cols
 
@@ -174,7 +193,7 @@ class HCSWidget(QWidget):
         for row in range(rows):
             for col in range(cols):
                 self.scene.addItem(
-                    Well(x, y, size_x, size_y, row, col, text_size, circular, "gray")
+                    Well(x, y, size_x, size_y, row, col, text_size, circular)
                 )
                 x += size_x
             y += size_y
