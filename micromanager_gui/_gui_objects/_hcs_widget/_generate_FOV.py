@@ -306,9 +306,16 @@ class FOVPoints(QGraphicsItem):
 
         self._x = x
         self._y = y
+
         self._size_x = size_x
         self._size_y = size_y
+
         self._mode = mode
+
+        self.point = QRectF(self._x, self._y, self._size_x, self._size_y)
+
+    def boundingRect(self):
+        return self.point
 
     def paint(self, painter=None, style=None, widget=None):
         x, y = self.getCenter()
