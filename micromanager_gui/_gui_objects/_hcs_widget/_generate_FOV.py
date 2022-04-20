@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 from qtpy.QtCore import QRectF, Qt
-from qtpy.QtGui import QBrush, QPen
+from qtpy.QtGui import QPen
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -275,7 +275,8 @@ class SelectFOV(QWidget):
             # random angle
             alpha = 2 * math.pi * random.random()
             # random radius
-            r = (radius - 5) * math.sqrt(random.random())  # -5 because of point size
+            # r = (radius - 5) * math.sqrt(random.random())  # -5 because of point size
+            r = radius * math.sqrt(random.random())  # -5 because of point size
             # calculating coordinates
             x = r * math.cos(alpha) + center + radius
             y = r * math.sin(alpha) + center + radius
@@ -283,10 +284,14 @@ class SelectFOV(QWidget):
         return points
 
     def _random_points_in_square(self, nFOV, size_x, size_y, max_size_x, max_size_y):
-        x_left = ((max_size_x - size_x) / 2) + 5  # left bound
-        x_right = x_left + size_x - 10  # right bound
-        y_up = ((max_size_y - size_y) / 2) + 5  # upper bound
-        y_down = y_up + size_y - 10  # lower bound
+        # x_left = ((max_size_x - size_x) / 2) + 5  # left bound
+        # x_right = x_left + size_x - 10  # right bound
+        # y_up = ((max_size_y - size_y) / 2) + 5  # upper bound
+        # y_down = y_up + size_y - 10  # lower bound
+        x_left = (max_size_x - size_x) / 2  # left bound
+        x_right = x_left + size_x  # right bound
+        y_up = (max_size_y - size_y) / 2  # upper bound
+        y_down = y_up + size_y  # lower bound
         points = []
         for _ in range(nFOV):
             x = np.random.randint(x_left, x_right)
@@ -301,26 +306,21 @@ class FOVPoints(QGraphicsItem):
 
         self._x = x
         self._y = y
-
         self._size_x = size_x
         self._size_y = size_y
-
         self._mode = mode
 
-        self.brush = QBrush(Qt.black)
-        self.point = QRectF(self._x, self._y, self._size_x, self._size_y)
-
-    def boundingRect(self):
-        return self.point
-
     def paint(self, painter=None, style=None, widget=None):
-        painter.setBrush(self.brush)
-        painter.drawEllipse(self.point)
+        x, y = self.getCenter()
+        pen = QPen()
+        pen.setWidth(5)
+        painter.setPen(pen)
+        painter.drawPoint(x, y)
 
     def getCenter(self):
         if self._mode == "Random":
-            xc = self._x + (self._size_x / 2)
-            yc = self._y + (self._size_y / 2)
+            xc = round(self._x + (self._size_x / 2))
+            yc = round(self._y + (self._size_y / 2))
         elif self._mode == "Center":
             xc = self._x
             yc = self._y
