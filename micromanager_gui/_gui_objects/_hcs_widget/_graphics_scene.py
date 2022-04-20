@@ -47,7 +47,7 @@ class GraphicsScene(QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         self.currentQRubberBand.hide()
-        self._print_selected_wells()  # to be removed
+        # self._print_selected_wells()  # to be removed
 
     def _clear_selection(self):
         """clear selection"""
@@ -55,14 +55,17 @@ class GraphicsScene(QGraphicsScene):
             if item.isSelected():
                 item.setSelected(False)
                 item.setBrush(self.unselected)
-        self._print_selected_wells()  # to be removed
+        # self._print_selected_wells()  # to be removed
 
-    def _print_selected_wells(self):  # to be removed
-        print("___________")
-        print("Selected wells:")
-        self._selected_wells = [
-            item.getPos() for item in self.items() if item.isSelected()
-        ]
-        self._selected_wells.sort()
-        for i in self._selected_wells:
-            print(i)
+    def _get_plate_positions(self):
+        return [item.getPos() for item in self.items() if item.isSelected()]
+
+    # def _print_selected_wells(self):  # to be removed
+    #     print("___________")
+    #     print("Selected wells:")
+    #     self._selected_wells = [
+    #         item.getPos() for item in self.items() if item.isSelected()
+    #     ]
+    #     self._selected_wells.sort()
+    #     for i in self._selected_wells:
+    #         print(i)

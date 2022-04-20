@@ -19,7 +19,7 @@ from qtpy.QtWidgets import (
 )
 from superqt.utils import signals_blocked
 
-from micromanager_gui._gui_objects._hcs_widget._generate_FOV import SelectFOV
+from micromanager_gui._gui_objects._hcs_widget._generate_FOV import FOVPoints, SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well import Well
@@ -82,6 +82,7 @@ class HCSWidget(QWidget):
 
         calibrate_button = QPushButton(text="Calibrate Stage")
         position_list_button = QPushButton(text="Create Positons List")
+        position_list_button.clicked.connect(self._generate_pos_list)
 
         # add widgets
         view_group = QGroupBox()
@@ -229,6 +230,29 @@ class HCSWidget(QWidget):
             items = [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
             self.wp_combo.setCurrentText(items[0])
             self._on_combo_changed(items[0])
+
+    def _generate_pos_list(self):
+
+        well_list = self.scene._get_plate_positions()
+
+        if not well_list:
+            print("select at least one well!")
+            return
+
+        well_list.sort()
+        for pos in well_list:
+            print(pos)
+        # TODO: convert in stage coordinates after calibration
+
+        fovs = [
+            item.getCenter()
+            for item in self.FOV_selector.scene.items()
+            if isinstance(item, FOVPoints)
+        ]
+        for fov in fovs:
+            print(fov)
+        # TODO: convert in plate coordinates
+        # TODO: convert in stage coordinates after calibration
 
 
 if __name__ == "__main__":

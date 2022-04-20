@@ -8,6 +8,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
     QDoubleSpinBox,
+    QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,
@@ -220,7 +221,6 @@ class SelectFOV(QWidget):
         main_pen.setWidth(4)
         area_pen = QPen(Qt.green)
         area_pen.setWidth(4)
-        point_brush = QBrush(Qt.black)
 
         if self._is_circular:
             self.scene.addEllipse(0, 0, max_size_y, max_size_y, main_pen)
@@ -229,8 +229,7 @@ class SelectFOV(QWidget):
                 self.scene.clear()
                 self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
                 center_x, center_y = ((max_size_y / 2) - 2.5, (max_size_y / 2) - 2.5)
-                self.scene.addEllipse(center_x, center_y, 5, 5, brush=point_brush)
-                print(center_x, center_y)
+                self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
 
             elif mode == "Random":
                 diameter = (max_size_y * area_x) / self._size_x
@@ -241,8 +240,7 @@ class SelectFOV(QWidget):
 
                 points = self._random_points_in_circle(nFOV, diameter, center)
                 for p in points:
-                    self.scene.addEllipse(p[0], p[1], 5, 5, brush=point_brush)
-                    print(p)
+                    self.scene.addItem(FOVPoints(p[0], p[1], 5, 5, "Random"))
 
         else:
             max_size_x = 140 if self._size_x == self._size_y else 190
@@ -253,8 +251,7 @@ class SelectFOV(QWidget):
                 self.scene.clear()
                 self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
                 center_x, center_y = ((max_size_x / 2) - 2.5, (max_size_y / 2) - 2.5)
-                self.scene.addEllipse(center_x, center_y, 5, 5, brush=point_brush)
-                print(center_x, center_y)
+                self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
 
             elif mode == "Random":
                 size_x = (max_size_x * area_x) / self._size_x
@@ -269,8 +266,7 @@ class SelectFOV(QWidget):
                     nFOV, size_x, size_y, max_size_x, max_size_y
                 )
                 for p in points:
-                    self.scene.addEllipse(p[0], p[1], 5, 5, brush=point_brush)
-                    print(p)
+                    self.scene.addItem(FOVPoints(p[0], p[1], 5, 5, "Random"))
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
         points = []
@@ -299,6 +295,38 @@ class SelectFOV(QWidget):
         return points
 
 
+class FOVPoints(QGraphicsItem):
+    def __init__(self, x: int, y: int, size_x: float, size_y: float, mode: str):
+        super().__init__()
+
+        self._x = x
+        self._y = y
+
+        self._size_x = size_x
+        self._size_y = size_y
+
+        self._mode = mode
+
+        self.brush = QBrush(Qt.black)
+        self.point = QRectF(self._x, self._y, self._size_x, self._size_y)
+
+    def boundingRect(self):
+        return self.point
+
+    def paint(self, painter=None, style=None, widget=None):
+        painter.setBrush(self.brush)
+        painter.drawEllipse(self.point)
+
+    def getCenter(self):
+        if self._mode == "Random":
+            xc = self._x + (self._size_x / 2)
+            yc = self._y + (self._size_y / 2)
+        elif self._mode == "Center":
+            xc = self._x
+            yc = self._y
+        return xc, yc
+
+
 if __name__ == "__main__":
     import sys
 
@@ -307,75 +335,3 @@ if __name__ == "__main__":
     win._load_plate_info(10, 10, True)
     win.show()
     sys.exit(app.exec_())
-
-
-# import math
-# import random
-
-# import matplotlib.pyplot as plt
-# import numpy as np
-
-# circlular = True
-# # circlular = False
-
-# # well diameter
-# well_size_x = 15
-# well_size_y = 15
-# # radius of the circle
-# area_size_x = 13
-# area_size_y = 13
-# # center of the circle (x, y)
-# center_x = 0
-# center_y = 0
-# # number of points
-# n_points = 10
-
-# fig, ax = plt.subplots()
-
-# if circlular:
-#     well_circle = plt.Circle((0, 0), well_size_x, color="m", fill=False)
-#     circle = plt.Circle((0, 0), area_size_x, color="m", fill=False)
-#     ax.add_patch(well_circle)
-#     ax.add_patch(circle)
-
-#     for _ in range(n_points):
-#         # random angle
-#         alpha = 2 * math.pi * random.random()
-#         # random radius
-#         r = area_size_x * math.sqrt(random.random())
-#         # calculating coordinates
-#         x = r * math.cos(alpha) + center_x
-#         y = r * math.sin(alpha) + center_y
-
-#         # print("Random point", (x, y))
-#         ax.plot(x, y, marker="o", markersize=10, color="k")
-
-
-# else:
-#     well_square = plt.Rectangle(
-#         (-well_size_x, well_size_y),
-#         well_size_x * 2,
-#         -well_size_y * 2,
-#         color="g",
-#         fill=False,
-#     )
-#     square = plt.Rectangle(
-#         (-area_size_x, area_size_y),
-#         area_size_x * 2,
-#         -area_size_y * 2,
-#         color="g",
-#         fill=False,
-#     )
-#     ax.add_patch(well_square)
-#     ax.add_patch(square)
-
-#     a = area_size_x  # upper bound
-#     b = -area_size_x  # lower bound
-#     # Random coordinates [b,a) uniform distributed
-#     coordy = (b - a) * np.random.random_sample((n_points,)) + a  # generate random y
-#     coordx = (b - a) * np.random.random_sample((n_points,)) + a  # generate random x
-
-#     for i in range(len(coordx)):
-#         ax.plot(coordx[i], coordy[i], marker="o", markersize=10, color="b")
-
-# plt.show()
