@@ -182,14 +182,16 @@ class SelectFOV(QWidget):
 
     def _load_plate_info(self, size_x, size_y, is_circular):
 
-        self._set_enabled(True)
+        self.FOV_selection_mode_combo.setEnabled(True)
 
         self._size_x = size_x
         self._size_y = size_y
         self._is_circular = is_circular
 
-        if self._is_circular:
-            self.plate_area_y.setEnabled(False)
+        enable = self.FOV_selection_mode_combo.currentText() == "Random"
+        self.random_button.setEnabled(enable)
+        self.number_of_FOV.setEnabled(enable)
+        self.plate_area_x.setEnabled(enable)
 
         self.plate_area_x.setMaximum(self._size_x)
         with signals_blocked(self.plate_area_x):
@@ -197,6 +199,8 @@ class SelectFOV(QWidget):
         self.plate_area_y.setMaximum(self._size_y)
         with signals_blocked(self.plate_area_y):
             self.plate_area_y.setValue(self._size_y)
+
+        self.plate_area_y.setEnabled(not self._is_circular)
 
         self._on_random_button_pressed()
 
