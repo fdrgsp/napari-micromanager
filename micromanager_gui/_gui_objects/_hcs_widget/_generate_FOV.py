@@ -228,7 +228,7 @@ class SelectFOV(QWidget):
             if mode == "Center":
                 self.scene.clear()
                 self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
-                center_x, center_y = ((max_size_y / 2) - 2.5, (max_size_y / 2) - 2.5)
+                center_x, center_y = (max_size_y / 2, max_size_y / 2)
                 self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
 
             elif mode == "Random":
@@ -250,7 +250,7 @@ class SelectFOV(QWidget):
             if mode == "Center":
                 self.scene.clear()
                 self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
-                center_x, center_y = ((max_size_x / 2) - 2.5, (max_size_y / 2) - 2.5)
+                center_x, center_y = (max_size_x / 2, max_size_y / 2)
                 self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
 
             elif mode == "Random":
