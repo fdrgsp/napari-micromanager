@@ -329,8 +329,8 @@ class FOVPoints(QGraphicsItem):
             xc = round(self._x + (self._size_x / 2))
             yc = round(self._y + (self._size_y / 2))
         elif self._mode == "Center":
-            xc = self._x
-            yc = self._y
+            xc = round(self._x)
+            yc = round(self._y)
         return xc, yc
 
 
