@@ -33,6 +33,8 @@ class HCSWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
+        self.wp = None
+
         self._create_main_wdg()
 
         self._update_wp_combo()
@@ -153,19 +155,19 @@ class HCSWidget(QWidget):
         self._draw_well_plate(value)
 
     def _draw_well_plate(self, well_plate: str):
-        wp = WellPlate.set_format(well_plate)
+        self.wp = WellPlate.set_format(well_plate)
 
         max_w = self._width - 10
         max_h = self._height - 10
-        size_y = max_h / wp.rows
+        size_y = max_h / self.wp.rows
         size_x = (
             size_y
-            if wp.circular or wp.well_size_x == wp.well_size_y
-            else (max_w / wp.cols)
+            if self.wp.circular or self.wp.well_size_x == self.wp.well_size_y
+            else (max_w / self.wp.cols)
         )
         text_size = size_y / 2.3
 
-        width = size_x * wp.cols
+        width = size_x * self.wp.cols
 
         if width != self.scene.width() and self.scene.width() > 0:
             start_x = (self.scene.width() - width) / 2
@@ -174,10 +176,18 @@ class HCSWidget(QWidget):
             start_x = 0
 
         self._create_well_plate(
-            wp.rows, wp.cols, start_x, size_x, size_y, text_size, wp.circular
+            self.wp.rows,
+            self.wp.cols,
+            start_x,
+            size_x,
+            size_y,
+            text_size,
+            self.wp.circular,
         )
 
-        self.FOV_selector._load_plate_info(wp.well_size_x, wp.well_size_y, wp.circular)
+        self.FOV_selector._load_plate_info(
+            self.wp.well_size_x, self.wp.well_size_y, self.wp.circular
+        )
 
     def _create_well_plate(
         self,
@@ -239,13 +249,18 @@ class HCSWidget(QWidget):
             print("select at least one well!")
             return
 
+        print(self.wp.getAllInfo())
+
         well_list.sort()
         for pos in well_list:
             print(pos)
         # TODO: convert in stage coordinates after calibration
+        # e.g. ('A1', 0, 0, 48.3, 48.3)
+        # 48.3 and 48.3 are xy coords of the center. After calibration
+        # we can have them expressed in stage coords.
 
         fovs = [
-            item.getCenter()
+            item.getPositionsInfo()
             for item in self.FOV_selector.scene.items()
             if isinstance(item, FOVPoints)
         ]

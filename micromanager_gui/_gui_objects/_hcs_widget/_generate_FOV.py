@@ -229,7 +229,11 @@ class SelectFOV(QWidget):
                 self.scene.clear()
                 self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
                 center_x, center_y = (max_size_y / 2, max_size_y / 2)
-                self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
+                self.scene.addItem(
+                    FOVPoints(
+                        center_x, center_y, 5, 5, "Center", max_size_y, max_size_y
+                    )
+                )
 
             elif mode == "Random":
                 diameter = (max_size_y * area_x) / self._size_x
@@ -240,7 +244,9 @@ class SelectFOV(QWidget):
 
                 points = self._random_points_in_circle(nFOV, diameter, center)
                 for p in points:
-                    self.scene.addItem(FOVPoints(p[0], p[1], 5, 5, "Random"))
+                    self.scene.addItem(
+                        FOVPoints(p[0], p[1], 5, 5, "Random", max_size_y, max_size_y)
+                    )
 
         else:
             max_size_x = 140 if self._size_x == self._size_y else 190
@@ -251,7 +257,11 @@ class SelectFOV(QWidget):
                 self.scene.clear()
                 self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
                 center_x, center_y = (max_size_x / 2, max_size_y / 2)
-                self.scene.addItem(FOVPoints(center_x, center_y, 5, 5, "Center"))
+                self.scene.addItem(
+                    FOVPoints(
+                        center_x, center_y, 5, 5, "Center", max_size_x, max_size_y
+                    )
+                )
 
             elif mode == "Random":
                 size_x = (max_size_x * area_x) / self._size_x
@@ -266,7 +276,9 @@ class SelectFOV(QWidget):
                     nFOV, size_x, size_y, max_size_x, max_size_y
                 )
                 for p in points:
-                    self.scene.addItem(FOVPoints(p[0], p[1], 5, 5, "Random"))
+                    self.scene.addItem(
+                        FOVPoints(p[0], p[1], 5, 5, "Random", max_size_x, max_size_y)
+                    )
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
         points = []
@@ -301,7 +313,16 @@ class SelectFOV(QWidget):
 
 
 class FOVPoints(QGraphicsItem):
-    def __init__(self, x: int, y: int, size_x: float, size_y: float, mode: str):
+    def __init__(
+        self,
+        x: int,
+        y: int,
+        size_x: float,
+        size_y: float,
+        mode: str,
+        max_size_x: float,
+        max_size_y: float,
+    ):
         super().__init__()
 
         self._x = x
@@ -311,6 +332,9 @@ class FOVPoints(QGraphicsItem):
         self._size_y = size_y
 
         self._mode = mode
+
+        self.width = max_size_x
+        self.height = max_size_y
 
         self.point = QRectF(self._x, self._y, self._size_x, self._size_y)
 
@@ -332,6 +356,10 @@ class FOVPoints(QGraphicsItem):
             xc = round(self._x)
             yc = round(self._y)
         return xc, yc
+
+    def getPositionsInfo(self):
+        xc, yc = self.getCenter()
+        return xc, yc, self.width, self.height
 
 
 if __name__ == "__main__":

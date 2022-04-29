@@ -46,6 +46,17 @@ class WellPlate:
     def get_well_size(self) -> Tuple[float, float]:
         return self.well_size_x, self.well_size_y
 
+    def getAllInfo(self):
+        return {
+            "id": self.get_id(),
+            "well_type": self.get_well_type(),
+            "n_wells": self.get_n_wells(),
+            "rows": self.get_n_rows(),
+            "cols": self.get_n_columns(),
+            "well_distance": self.get_well_distance(),
+            "well_size": self.get_well_size(),
+        }
+
 
 class PlateFromDatabase(WellPlate):
     """Standard well plates from the yaml database"""
