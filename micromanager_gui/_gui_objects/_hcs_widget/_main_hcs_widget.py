@@ -47,6 +47,7 @@ class HCSWidget(QWidget):
         self.setLayout(layout)
 
         scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
         scroll.setAlignment(AlignCenter)
         widgets = self._view_scene_widgets()
         scroll.setWidget(widgets)
