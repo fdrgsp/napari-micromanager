@@ -71,6 +71,7 @@ class HCSWidget(QWidget):
         select_plate_tab = self._create_plate_and_fov_tab()
         calibrate_plate_tab = QWidget()
         ch_and_pos_list = ChannelPositionWidget()
+        ch_and_pos_list.position_list_button.clicked.connect(self._generate_pos_list)
 
         tab.addTab(select_plate_tab, "Plate and FOVs")
         tab.addTab(calibrate_plate_tab, "Calibrate Plate")

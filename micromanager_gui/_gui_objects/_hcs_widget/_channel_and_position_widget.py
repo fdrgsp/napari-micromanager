@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from pymmcore_plus import CMMCorePlus
+from pymmcore_plus import CMMCorePlus, DeviceType
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QAbstractSpinBox,
@@ -36,12 +36,14 @@ class ChannelPositionWidget(QWidget):
         self._mmc = mmcore or get_core_singleton()
 
         self.setLayout(QVBoxLayout())
-        ch = self._create_channel_group()
-        self.layout().addWidget(ch)
         z = self._create_stack_groupBox()
         self.layout().addWidget(z)
         pos = self._create_positions_list_wdg()
         self.layout().addWidget(pos)
+        ch = self._create_channel_group()
+        self.layout().addWidget(ch)
+
+        self._mmc.events.systemConfigurationLoaded.connect(self._on_sys_cfg)
 
     def _create_channel_group(self):
 
@@ -71,12 +73,15 @@ class ChannelPositionWidget(QWidget):
         btn_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         min_size = 100
         self.add_ch_Button = QPushButton(text="Add")
+        self.add_ch_Button.clicked.connect(self.add_channel)
         self.add_ch_Button.setMinimumWidth(min_size)
         self.add_ch_Button.setSizePolicy(btn_sizepolicy)
         self.remove_ch_Button = QPushButton(text="Remove")
+        self.remove_ch_Button.clicked.connect(self.remove_channel)
         self.remove_ch_Button.setMinimumWidth(min_size)
         self.remove_ch_Button.setSizePolicy(btn_sizepolicy)
         self.clear_ch_Button = QPushButton(text="Clear")
+        self.clear_ch_Button.clicked.connect(self.clear_channel)
         self.clear_ch_Button.setMinimumWidth(min_size)
         self.clear_ch_Button.setSizePolicy(btn_sizepolicy)
 
@@ -186,9 +191,10 @@ class ChannelPositionWidget(QWidget):
         z_wdg.setLayout(z_layout)
         z_lbl = QLabel(text="Z Stage:")
         z_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        z_combo = QComboBox()
+        self.z_combo = QComboBox()
+        self.update_stage_combo()
         z_layout.addWidget(z_lbl)
-        z_layout.addWidget(z_combo)
+        z_layout.addWidget(self.z_combo)
         step_wdg_layout.addWidget(z_wdg)
 
         s = QWidget()
@@ -208,16 +214,28 @@ class ChannelPositionWidget(QWidget):
         s_layout.addWidget(lbl)
         s_layout.addWidget(self.step_size_doubleSpinBox)
 
-        self.n_images_label = QLabel(text="Number of Images:")
+        self.n_images_label = QLabel(text="Number of Images: 101")
 
         step_wdg_layout.addWidget(s)
         step_wdg_layout.addWidget(self.n_images_label)
         group_layout.addWidget(step_wdg)
 
+        # connect
+        self.zrange_spinBox.valueChanged.connect(self._update_rangearound_label)
+        self.above_doubleSpinBox.valueChanged.connect(self._update_abovebelow_range)
+        self.below_doubleSpinBox.valueChanged.connect(self._update_abovebelow_range)
+        self.z_range_abovebelow_doubleSpinBox.valueChanged.connect(
+            self._update_n_images
+        )
+        self.zrange_spinBox.valueChanged.connect(self._update_n_images)
+        self.step_size_doubleSpinBox.valueChanged.connect(self._update_n_images)
+        self.z_tabWidget.currentChanged.connect(self._update_n_images)
+        group.toggled.connect(self._update_n_images)
+
         return group
 
     def _create_positions_list_wdg(self):
-        group = QGroupBox()
+        group = QGroupBox(title="Positions")
         group.setMinimumHeight(230)
         group_layout = QVBoxLayout()
         group_layout.setSpacing(10)
@@ -230,25 +248,93 @@ class ChannelPositionWidget(QWidget):
         wdg_layout.setContentsMargins(0, 0, 0, 0)
         wdg.setLayout(wdg_layout)
 
-        position_list_button = QPushButton(text="Create Positons List")
-        # position_list_button.clicked.connect(self._generate_pos_list)
-        wdg_layout.addWidget(position_list_button)
+        self.position_list_button = QPushButton(text="Create Positons List")
+        self.clear_positions_button = QPushButton(text="Clear List")
+        self.clear_positions_button.clicked.connect(self.clear_positions)
+
+        wdg_layout.addWidget(self.position_list_button)
+        wdg_layout.addWidget(self.clear_positions_button)
 
         group_layout.addWidget(wdg)
 
         # table
-        stage_tableWidget = QTableWidget()
-        stage_tableWidget.setMinimumHeight(90)
-        hdr = stage_tableWidget.horizontalHeader()
+        self.stage_tableWidget = QTableWidget()
+        self.stage_tableWidget.setMinimumHeight(90)
+        hdr = self.stage_tableWidget.horizontalHeader()
         hdr.setSectionResizeMode(hdr.Stretch)
-        stage_tableWidget.verticalHeader().setVisible(False)
-        stage_tableWidget.setTabKeyNavigation(True)
-        stage_tableWidget.setColumnCount(3)
-        stage_tableWidget.setRowCount(0)
-        stage_tableWidget.setHorizontalHeaderLabels(["X", "Y", "Z"])
-        group_layout.addWidget(stage_tableWidget)
+        self.stage_tableWidget.verticalHeader().setVisible(False)
+        self.stage_tableWidget.setTabKeyNavigation(True)
+        self.stage_tableWidget.setColumnCount(3)
+        self.stage_tableWidget.setRowCount(0)
+        self.stage_tableWidget.setHorizontalHeaderLabels(["X", "Y", "Z"])
+        group_layout.addWidget(self.stage_tableWidget)
 
         return group
+
+    def _on_sys_cfg(self):
+        self.clear_channel()
+        self.clear_positions()
+        self.update_stage_combo()
+
+    def update_stage_combo(self):
+        self.z_combo.clear()
+        self.z_combo.addItems(list(self._mmc.getLoadedDevicesOfType(DeviceType.Stage)))
+
+    def clear_positions(self):
+        self.stage_tableWidget.clearContents()
+        self.stage_tableWidget.setRowCount(0)
+
+    def add_channel(self) -> bool:
+        if len(self._mmc.getLoadedDevices()) <= 1:
+            return False
+
+        channel_group = self._mmc.getChannelGroup()
+        if not channel_group:
+            return
+
+        idx = self.channel_tableWidget.rowCount()
+        self.channel_tableWidget.insertRow(idx)
+
+        # create a combo_box for channels in the table
+        channel_comboBox = QComboBox(self)
+        channel_exp_spinBox = QSpinBox(self)
+        channel_exp_spinBox.setRange(0, 10000)
+        channel_exp_spinBox.setValue(100)
+
+        if channel_group := self._mmc.getChannelGroup():
+            channel_list = list(self._mmc.getAvailableConfigs(channel_group))
+            channel_comboBox.addItems(channel_list)
+
+        self.channel_tableWidget.setCellWidget(idx, 0, channel_comboBox)
+        self.channel_tableWidget.setCellWidget(idx, 1, channel_exp_spinBox)
+        return True
+
+    def remove_channel(self):
+        rows = {r.row() for r in self.channel_tableWidget.selectedIndexes()}
+        for idx in sorted(rows, reverse=True):
+            self.channel_tableWidget.removeRow(idx)
+
+    def clear_channel(self):
+        self.channel_tableWidget.clearContents()
+        self.channel_tableWidget.setRowCount(0)
+
+    def _update_rangearound_label(self, value):
+        self.range_around_label.setText(f"-{value/2} µm <- z -> +{value/2} µm")
+
+    def _update_abovebelow_range(self):
+        self.z_range_abovebelow_doubleSpinBox.setValue(
+            self.above_doubleSpinBox.value() + self.below_doubleSpinBox.value()
+        )
+
+    def _update_n_images(self):
+        step = self.step_size_doubleSpinBox.value()
+        # set what is the range to consider depending on the z_stack mode
+        if self.z_tabWidget.currentIndex() == 0:
+            _range = self.zrange_spinBox.value()
+        if self.z_tabWidget.currentIndex() == 1:
+            _range = self.z_range_abovebelow_doubleSpinBox.value()
+
+        self.n_images_label.setText(f"Number of Images: {round((_range / step) + 1)}")
 
 
 if __name__ == "__main__":
