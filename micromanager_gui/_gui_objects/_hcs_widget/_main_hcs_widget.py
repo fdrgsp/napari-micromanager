@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from qtpy.QtCore import Qt
+from fonticon_mdi6 import MDI6
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -14,11 +15,16 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 from superqt.utils import signals_blocked
 
+from micromanager_gui._gui_objects._hcs_widget._channel_and_position_widget import (
+    ChannelPositionWidget,
+)
 from micromanager_gui._gui_objects._hcs_widget._generate_FOV import FOVPoints, SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
@@ -49,12 +55,30 @@ class HCSWidget(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setAlignment(AlignCenter)
-        widgets = self._view_scene_widgets()
+        widgets = self._add_tab_wdg()
         scroll.setWidget(widgets)
+
         layout.addWidget(scroll)
 
-    def _view_scene_widgets(self):
+        btns = self._create_bottom_wdg()
+        layout.addWidget(btns)
 
+    def _add_tab_wdg(self):
+
+        tab = QTabWidget()
+        tab.setTabPosition(QTabWidget.West)
+
+        select_plate_tab = self._create_plate_and_fov_tab()
+        calibrate_plate_tab = QWidget()
+        ch_and_pos_list = ChannelPositionWidget()
+
+        tab.addTab(select_plate_tab, "Plate and FOVs")
+        tab.addTab(calibrate_plate_tab, "Calibrate Plate")
+        tab.addTab(ch_and_pos_list, "Channel and Positions List")
+
+        return tab
+
+    def _create_plate_and_fov_tab(self):
         wdg = QWidget()
         wdg_layout = QVBoxLayout()
         wdg_layout.setSpacing(10)
@@ -83,10 +107,6 @@ class HCSWidget(QWidget):
 
         self.FOV_selector = SelectFOV()
 
-        calibrate_button = QPushButton(text="Calibrate Stage")
-        position_list_button = QPushButton(text="Create Positons List")
-        position_list_button.clicked.connect(self._generate_pos_list)
-
         # add widgets
         view_group = QGroupBox()
         view_gp_layout = QVBoxLayout()
@@ -105,17 +125,47 @@ class HCSWidget(QWidget):
         FOV_gp_layout.addWidget(self.FOV_selector)
         wdg_layout.addWidget(FOV_group)
 
-        cfg_group = QGroupBox()
-        cfg_gp_layout = QVBoxLayout()
-        cfg_gp_layout.setSpacing(5)
-        cfg_gp_layout.setContentsMargins(10, 10, 10, 10)
-        cfg_group.setLayout(cfg_gp_layout)
-        cfg_gp_layout.addWidget(calibrate_button)  # TODO: add icon
-        cfg_gp_layout.addWidget(position_list_button)
-        wdg_layout.addWidget(cfg_group)
-
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         wdg_layout.addItem(verticalSpacer)
+
+        return wdg
+
+    def _create_bottom_wdg(self):
+
+        wdg = QWidget()
+        wdg.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        wdg_layout = QHBoxLayout()
+        wdg_layout.setAlignment(Qt.AlignVCenter)
+        wdg_layout.setSpacing(10)
+        wdg_layout.setContentsMargins(10, 15, 10, 10)
+        wdg.setLayout(wdg_layout)
+
+        btn_sizepolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        min_width = 130
+        icon_size = 40
+        self.run_Button = QPushButton(text="Run")
+        self.run_Button.setMinimumWidth(min_width)
+        self.run_Button.setStyleSheet("QPushButton { text-align: center; }")
+        self.run_Button.setSizePolicy(btn_sizepolicy)
+        self.run_Button.setIcon(icon(MDI6.play_circle_outline, color=(0, 255, 0)))
+        self.run_Button.setIconSize(QSize(icon_size, icon_size))
+        self.pause_Button = QPushButton("Pause")
+        self.pause_Button.setStyleSheet("QPushButton { text-align: center; }")
+        self.pause_Button.setSizePolicy(btn_sizepolicy)
+        self.pause_Button.setIcon(icon(MDI6.pause_circle_outline, color="green"))
+        self.pause_Button.setIconSize(QSize(icon_size, icon_size))
+        self.cancel_Button = QPushButton("Cancel")
+        self.cancel_Button.setStyleSheet("QPushButton { text-align: center; }")
+        self.cancel_Button.setSizePolicy(btn_sizepolicy)
+        self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))
+        self.cancel_Button.setIconSize(QSize(icon_size, icon_size))
+
+        # spacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # wdg_layout.addItem(spacer)
+        wdg_layout.addWidget(self.run_Button)
+        wdg_layout.addWidget(self.pause_Button)
+        wdg_layout.addWidget(self.cancel_Button)
 
         return wdg
 
