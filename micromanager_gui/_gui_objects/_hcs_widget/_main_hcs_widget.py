@@ -22,6 +22,9 @@ from qtpy.QtWidgets import (
 from superqt.fonticon import icon
 from superqt.utils import signals_blocked
 
+from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
+    PlateCalibration,
+)
 from micromanager_gui._gui_objects._hcs_widget._channel_and_position_widget import (
     ChannelPositionWidget,
 )
@@ -69,15 +72,21 @@ class HCSWidget(QWidget):
         tab.setTabPosition(QTabWidget.West)
 
         select_plate_tab = self._create_plate_and_fov_tab()
-        calibrate_plate_tab = QWidget()
+        self.calibration_tab = PlateCalibration()
         ch_and_pos_list = ChannelPositionWidget()
         ch_and_pos_list.position_list_button.clicked.connect(self._generate_pos_list)
 
         tab.addTab(select_plate_tab, "Plate and FOVs")
-        tab.addTab(calibrate_plate_tab, "Calibrate Plate")
+        tab.addTab(self.calibration_tab, "Plate Calibration")
         tab.addTab(ch_and_pos_list, "Channel and Positions List")
 
+        tab.currentChanged.connect(self._p)
+
         return tab
+
+    def _p(self, tab: int):
+        if tab == 1:
+            self.calibration_tab._update_gui(self.wp_combo.currentText())
 
     def _create_plate_and_fov_tab(self):
         wdg = QWidget()
