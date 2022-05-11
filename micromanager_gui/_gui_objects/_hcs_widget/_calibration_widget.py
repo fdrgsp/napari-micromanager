@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import yaml
+from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
-from qtpy.QtCore import Qt
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -20,6 +21,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 from sympy import Eq, solve, symbols
 
 from micromanager_gui._core import get_core_singleton
@@ -63,16 +65,46 @@ class PlateCalibration(QWidget):
         self.lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         self.combo = QComboBox()
         self.combo.currentTextChanged.connect(self._enable_table)
-
         combo_wdg_layout.addWidget(self.lbl)
         combo_wdg_layout.addWidget(self.combo)
         HSpacer = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Minimum)
         combo_wdg_layout.addItem(HSpacer)
-
         layout.addWidget(combo_wdg)
 
         self.info_lbl = QLabel()
         layout.addWidget(self.info_lbl)
+
+        group = QGroupBox()
+        self.group_layout = QGridLayout()
+        self.group_layout.setSpacing(10)
+        self.group_layout.setContentsMargins(0, 0, 0, 0)
+        group.setLayout(self.group_layout)
+        layout.addWidget(group)
+
+        bottom_group = QGroupBox()
+        bottom_group_layout = QHBoxLayout()
+        bottom_group_layout.setSpacing(10)
+        bottom_group_layout.setContentsMargins(0, 10, 0, 10)
+        bottom_group.setLayout(bottom_group_layout)
+
+        celibrate_btn = QPushButton(text="Calibrate")
+        self.icon_lbl = QLabel()
+        self.icon_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.icon_lbl.setPixmap(
+            icon(MDI6.close_octagon_outline, color="magenta").pixmap(QSize(30, 30))
+        )
+        # when calibrated:
+        # self.icon_lbl.setPixmap(
+        #     icon(MDI6.check_bold, color=(0, 255, 0)).pixmap(QSize(20, 20))
+        # )
+        self.cal_lbl = QLabel()
+        self.cal_lbl.setText("Plate non Calibrated!")
+
+        bottom_group_layout.addWidget(celibrate_btn)
+        bottom_group_layout.addWidget(self.icon_lbl)
+        bottom_group_layout.addWidget(self.cal_lbl)
+
+        layout.addWidget(bottom_group)
 
     def _load_plate_info(self) -> list:
         with open(
@@ -91,23 +123,16 @@ class PlateCalibration(QWidget):
             self.plate = None
             return
 
-        self._clear()
+        self._clear_tables()
 
-        group = QGroupBox()
-        group_layout = QGridLayout()
-        group_layout.setSpacing(10)
-        group_layout.setContentsMargins(0, 0, 0, 0)
-        group.setLayout(group_layout)
         self.table_1 = CalibrationTable(self.plate, 1)
         self.table_2 = CalibrationTable(self.plate, 2)
         self.table_3 = CalibrationTable(self.plate, 3)
         self.table_4 = CalibrationTable(self.plate, 4)
-        group_layout.addWidget(self.table_1, 0, 0)
-        group_layout.addWidget(self.table_2, 0, 1)
-        group_layout.addWidget(self.table_3, 1, 0)
-        group_layout.addWidget(self.table_4, 1, 1)
-
-        self.layout().addWidget(group)
+        self.group_layout.addWidget(self.table_1, 0, 0)
+        self.group_layout.addWidget(self.table_2, 0, 1)
+        self.group_layout.addWidget(self.table_3, 1, 0)
+        self.group_layout.addWidget(self.table_4, 1, 1)
 
         if self.plate.get("rows") > 1 or self.plate.get("cols") > 1:
             self.combo.clear()
@@ -116,18 +141,12 @@ class PlateCalibration(QWidget):
             self.combo.clear()
             self.combo.addItems(["1 Well"])
 
-    def _clear(self):
-        if self.layout().count() == 1:
-            return
-        for i in reversed(range(self.layout().count())):
-            # if i == 0:
-            if i <= 1:
-                return
-            if item := self.layout().takeAt(i):
+    def _clear_tables(self):
+        for i in reversed(range(self.group_layout.count())):
+            if item := self.group_layout.takeAt(i):
                 if wdg := item.widget():
-                    if isinstance(wdg, QGroupBox):
-                        wdg.setParent(None)
-                        wdg.deleteLater()
+                    wdg.setParent(None)
+                    wdg.deleteLater()
 
     def _enable_table(self, text: str):
         if not self.plate:
@@ -142,7 +161,7 @@ class PlateCalibration(QWidget):
             self.table_4.setEnabled(False)
             text = (
                 f"Add {3 if self.plate.get('circular') else 4} "
-                f"points on the edge of {self.table_1.well_lbl.text()}."
+                f"points on the edge of well {self.table_1.well_lbl.text()}."
             )
         else:
             self.table_2.setEnabled(True)
@@ -150,7 +169,7 @@ class PlateCalibration(QWidget):
             self.table_4.setEnabled(True)
             text = (
                 f"Add {3 if self.plate.get('circular') else 4} "
-                f"points on the edge of {self.table_1.well_lbl.text()}, "
+                f"points on the edge of wells {self.table_1.well_lbl.text()}, "
                 f"{self.table_2.well_lbl.text()}, {self.table_3.well_lbl.text()} "
                 f"and {self.table_4.well_lbl.text()}"
             )
@@ -183,13 +202,13 @@ class CalibrationTable(QWidget):
         cols = self._plate.get("cols")
 
         if self.position == 1:
-            self.well_lbl.setText(f"Well {ALPHABET[0]}1")
+            self.well_lbl.setText(f"{ALPHABET[0]}1")
         elif self.position == 2:
-            self.well_lbl.setText(f"Well {ALPHABET[0]}{cols}")
+            self.well_lbl.setText(f"{ALPHABET[0]}{cols}")
         elif self.position == 3:
-            self.well_lbl.setText(f"Well {ALPHABET[rows - 1]}1")
+            self.well_lbl.setText(f"{ALPHABET[rows - 1]}1")
         elif self.position == 4:
-            self.well_lbl.setText(f"Well {ALPHABET[rows - 1]}{cols}")
+            self.well_lbl.setText(f"{ALPHABET[rows - 1]}{cols}")
 
         layout.addWidget(self.well_lbl)
 
