@@ -3,6 +3,7 @@ from typing import Optional
 
 import yaml
 from fonticon_mdi6 import MDI6
+from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QApplication,
@@ -22,6 +23,7 @@ from qtpy.QtWidgets import (
 from superqt.fonticon import icon
 from superqt.utils import signals_blocked
 
+from micromanager_gui._core import get_core_singleton
 from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
     PlateCalibration,
 )
@@ -39,9 +41,15 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class HCSWidget(QWidget):
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        *,
+        mmcore: Optional[CMMCorePlus] = None,
+    ):
         super().__init__(parent)
 
+        self._mmc = mmcore or get_core_singleton()
         self.wp = None
 
         self._create_main_wdg()
@@ -301,6 +309,9 @@ class HCSWidget(QWidget):
             self._on_combo_changed(items[0])
 
     def _generate_pos_list(self):
+
+        if not self._mmc.getPixelSizeUm():
+            raise ValueError("Pixel Size not defined! Set pixel size first.")
 
         well_list = self.scene._get_plate_positions()
 

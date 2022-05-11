@@ -43,7 +43,7 @@ class PlateCalibration(QWidget):
         self._mmc = mmcore or get_core_singleton()
         # self.viever = viewer
 
-        self._mmc.loadSystemConfiguration()  # to remove
+        # self._mmc.loadSystemConfiguration()  # to remove
 
         self.plate = None
         self.wells_dict = {}
