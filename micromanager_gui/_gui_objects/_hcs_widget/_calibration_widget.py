@@ -243,7 +243,7 @@ class CalibrationTable(QWidget):
         layout.addWidget(self.well_lbl, 0, 0, 1, 2)
 
         self.tb = QTableWidget()
-        self.tb.setMinimumHeight(145)
+        self.tb.setMinimumHeight(150)
         hdr = self.tb.horizontalHeader()
         hdr.setSectionResizeMode(hdr.Stretch)
         self.tb.verticalHeader().setVisible(False)
