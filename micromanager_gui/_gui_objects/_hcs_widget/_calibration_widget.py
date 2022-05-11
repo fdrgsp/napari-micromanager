@@ -6,7 +6,7 @@ import yaml
 from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
-    QApplication,
+    QAbstractItemView,
     QComboBox,
     QGridLayout,
     QGroupBox,
@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
     QSizePolicy,
     QSpacerItem,
     QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -40,31 +41,27 @@ class PlateCalibration(QWidget):
         self._mmc = mmcore or get_core_singleton()
         # self.viever = viewer
 
+        self._mmc.loadSystemConfiguration()  # to remove
+
         self.plate = None
 
         self._create_gui()
-
-    def _load_plate_info(self) -> list:
-        with open(
-            PLATE_DATABASE,
-        ) as file:
-            return yaml.safe_load(file)
 
     def _create_gui(self):
 
         layout = QVBoxLayout()
         layout.setSpacing(5)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
         combo_wdg = QWidget()
         combo_wdg_layout = QHBoxLayout()
         combo_wdg_layout.setSpacing(0)
+        combo_wdg_layout.setContentsMargins(0, 0, 0, 5)
         combo_wdg.setLayout(combo_wdg_layout)
         self.lbl = QLabel(text="Number of Wells for Calibration:")
         self.lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
         self.combo = QComboBox()
-        # self.combo.addItems(["1 Well", "4 Wells"])
         self.combo.currentTextChanged.connect(self._enable_table)
 
         combo_wdg_layout.addWidget(self.lbl)
@@ -74,7 +71,19 @@ class PlateCalibration(QWidget):
 
         layout.addWidget(combo_wdg)
 
+        self.info_lbl = QLabel()
+        layout.addWidget(self.info_lbl)
+
+    def _load_plate_info(self) -> list:
+        with open(
+            PLATE_DATABASE,
+        ) as file:
+            return yaml.safe_load(file)
+
     def _update_gui(self, plate):
+
+        if self.plate and self.plate.get("id") == plate:
+            return
 
         try:
             self.plate = self._load_plate_info()[plate]
@@ -89,10 +98,10 @@ class PlateCalibration(QWidget):
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(0, 0, 0, 0)
         group.setLayout(group_layout)
-        self.table_1 = self._general_table_wdg(1)
-        self.table_2 = self._general_table_wdg(2)
-        self.table_3 = self._general_table_wdg(3)
-        self.table_4 = self._general_table_wdg(4)
+        self.table_1 = CalibrationTable(self.plate, 1)
+        self.table_2 = CalibrationTable(self.plate, 2)
+        self.table_3 = CalibrationTable(self.plate, 3)
+        self.table_4 = CalibrationTable(self.plate, 4)
         group_layout.addWidget(self.table_1, 0, 0)
         group_layout.addWidget(self.table_2, 0, 1)
         group_layout.addWidget(self.table_3, 1, 0)
@@ -111,7 +120,8 @@ class PlateCalibration(QWidget):
         if self.layout().count() == 1:
             return
         for i in reversed(range(self.layout().count())):
-            if i == 0:
+            # if i == 0:
+            if i <= 1:
                 return
             if item := self.layout().takeAt(i):
                 if wdg := item.widget():
@@ -119,77 +129,127 @@ class PlateCalibration(QWidget):
                         wdg.setParent(None)
                         wdg.deleteLater()
 
-    def _general_table_wdg(self, position: int):
-
-        if position > 4:
-            raise ValueError("Value must be between 1 and 4")
-
-        wdg = QWidget()
-        layout = QVBoxLayout()
-        layout.setSpacing(10)
-        wdg.setLayout(layout)
-
-        lbl = QLabel()
-        lbl.setAlignment(Qt.AlignCenter)
-        rows = self.plate.get("rows")
-        cols = self.plate.get("cols")
-
-        if position == 1:
-            lbl.setText(f"Well {ALPHABET[0]}1")
-        elif position == 2:
-            lbl.setText(f"Well {ALPHABET[0]}{cols}")
-        elif position == 3:
-            lbl.setText(f"Well {ALPHABET[rows - 1]}1")
-        elif position == 4:
-            lbl.setText(f"Well {ALPHABET[rows - 1]}{cols}")
-
-        layout.addWidget(lbl)
-
-        tb = QTableWidget()
-        hdr = tb.horizontalHeader()
-        hdr.setSectionResizeMode(hdr.Stretch)
-        tb.verticalHeader().setVisible(False)
-        tb.setTabKeyNavigation(True)
-        tb.setColumnCount(2)
-        tb.setRowCount(0)
-        tb.setHorizontalHeaderLabels(["X", "Y"])
-        layout.addWidget(tb)
-
-        btn_wdg = QWidget()
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(10)
-        btn_wdg.setLayout(btn_layout)
-        add_btn = QPushButton(text="Add")
-        clear_btn = QPushButton(text="Clear")
-        btn_layout.addWidget(add_btn)
-        btn_layout.addWidget(clear_btn)
-
-        layout.addWidget(btn_wdg)
-
-        return wdg
-
     def _enable_table(self, text: str):
         if not self.plate:
             self.table_1.setEnabled(False)
             self.table_2.setEnabled(False)
             self.table_3.setEnabled(False)
             self.table_4.setEnabled(False)
+            text = ""
         elif text == "1 Well":
             self.table_2.setEnabled(False)
             self.table_3.setEnabled(False)
             self.table_4.setEnabled(False)
+            text = (
+                f"Add {3 if self.plate.get('circular') else 4} "
+                f"points on the edge of {self.table_1.well_lbl.text()}."
+            )
         else:
             self.table_2.setEnabled(True)
             self.table_3.setEnabled(True)
             self.table_4.setEnabled(True)
+            text = (
+                f"Add {3 if self.plate.get('circular') else 4} "
+                f"points on the edge of {self.table_1.well_lbl.text()}, "
+                f"{self.table_2.well_lbl.text()}, {self.table_3.well_lbl.text()} "
+                f"and {self.table_4.well_lbl.text()}"
+            )
+        self.info_lbl.setText(text)
 
 
-if __name__ == "__main__":
+class CalibrationTable(QWidget):
+    def __init__(
+        self, plate: dict, position: int, *, mmcore: Optional[CMMCorePlus] = None
+    ):
+        super().__init__()
 
-    app = QApplication([])
-    window = PlateCalibration()
-    window.show()
-    app.exec_()
+        if position > 4:
+            raise ValueError("Value must be between 1 and 4")
+
+        self._plate = plate
+        self.position = position
+        self._mmc = mmcore or get_core_singleton()
+
+        self._create_wdg()
+
+    def _create_wdg(self):
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+        self.setLayout(layout)
+
+        self.well_lbl = QLabel()
+        self.well_lbl.setAlignment(Qt.AlignCenter)
+        rows = self._plate.get("rows")
+        cols = self._plate.get("cols")
+
+        if self.position == 1:
+            self.well_lbl.setText(f"Well {ALPHABET[0]}1")
+        elif self.position == 2:
+            self.well_lbl.setText(f"Well {ALPHABET[0]}{cols}")
+        elif self.position == 3:
+            self.well_lbl.setText(f"Well {ALPHABET[rows - 1]}1")
+        elif self.position == 4:
+            self.well_lbl.setText(f"Well {ALPHABET[rows - 1]}{cols}")
+
+        layout.addWidget(self.well_lbl)
+
+        self.tb = QTableWidget()
+        hdr = self.tb.horizontalHeader()
+        hdr.setSectionResizeMode(hdr.Stretch)
+        self.tb.verticalHeader().setVisible(False)
+        self.tb.setTabKeyNavigation(True)
+        self.tb.setColumnCount(2)
+        self.tb.setRowCount(0)
+        self.tb.setHorizontalHeaderLabels(["X", "Y"])
+        self.tb.setSelectionBehavior(QAbstractItemView.SelectRows)
+        layout.addWidget(self.tb)
+
+        btn_wdg = QWidget()
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
+        btn_wdg.setLayout(btn_layout)
+        add_btn = QPushButton(text="Add")
+        add_btn.clicked.connect(self._add_pos)
+        remove_btn = QPushButton(text="Remove")
+        remove_btn.clicked.connect(self._remove_position_row)
+        clear_btn = QPushButton(text="Clear")
+        clear_btn.clicked.connect(self._clear_table)
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(remove_btn)
+        btn_layout.addWidget(clear_btn)
+
+        layout.addWidget(btn_wdg)
+
+    def _add_pos(self):
+
+        if not self._mmc.getXYStageDevice():
+            return
+
+        if len(self._mmc.getLoadedDevices()) > 1:
+            idx = self._add_position_row()
+
+            for c, ax in enumerate("XY"):
+                cur = getattr(self._mmc, f"get{ax}Position")()
+                item = QTableWidgetItem(str(cur))
+                item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+                self.tb.setItem(idx, c, item)
+
+    def _add_position_row(self) -> int:
+        idx = self.tb.rowCount()
+        self.tb.insertRow(idx)
+        return idx
+
+    def _remove_position_row(self):
+        rows = {r.row() for r in self.tb.selectedIndexes()}
+        for idx in sorted(rows, reverse=True):
+            self.tb.removeRow(idx)
+
+    def _clear_table(self):
+        self.tb.clearContents()
+        self.tb.setRowCount(0)
+
+    def get_positions(self):
+        pass
 
 
 a = (-2.0, 2.0)

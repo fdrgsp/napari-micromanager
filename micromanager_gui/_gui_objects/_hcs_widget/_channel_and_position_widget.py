@@ -35,7 +35,11 @@ class ChannelPositionWidget(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        self.setLayout(QVBoxLayout())
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+        layout.setContentsMargins(10, 10, 10, 10)
+        self.setLayout(layout)
+
         z = self._create_stack_groupBox()
         self.layout().addWidget(z)
         pos = self._create_positions_list_wdg()

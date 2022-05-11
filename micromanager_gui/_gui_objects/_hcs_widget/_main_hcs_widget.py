@@ -63,7 +63,7 @@ class HCSWidget(QWidget):
 
         layout.addWidget(scroll)
 
-        btns = self._create_bottom_wdg()
+        btns = self._create_btns_wdg()
         layout.addWidget(btns)
 
     def _add_tab_wdg(self):
@@ -80,13 +80,14 @@ class HCSWidget(QWidget):
         tab.addTab(self.calibration_tab, "Plate Calibration")
         tab.addTab(ch_and_pos_list, "Channel and Positions List")
 
-        tab.currentChanged.connect(self._p)
+        tab.currentChanged.connect(self._update_calibration_tab)
 
         return tab
 
-    def _p(self, tab: int):
-        if tab == 1:
-            self.calibration_tab._update_gui(self.wp_combo.currentText())
+    def _update_calibration_tab(self, tab: int):
+        if tab != 1:
+            return
+        self.calibration_tab._update_gui(self.wp_combo.currentText())
 
     def _create_plate_and_fov_tab(self):
         wdg = QWidget()
@@ -140,7 +141,7 @@ class HCSWidget(QWidget):
 
         return wdg
 
-    def _create_bottom_wdg(self):
+    def _create_btns_wdg(self):
 
         wdg = QWidget()
         wdg.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
@@ -170,9 +171,6 @@ class HCSWidget(QWidget):
         self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))
         self.cancel_Button.setIconSize(QSize(icon_size, icon_size))
 
-        # spacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # wdg_layout.addItem(spacer)
         wdg_layout.addWidget(self.run_Button)
         wdg_layout.addWidget(self.pause_Button)
         wdg_layout.addWidget(self.cancel_Button)
