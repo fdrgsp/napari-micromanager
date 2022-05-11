@@ -124,13 +124,14 @@ class PlateCalibration(QWidget):
         )
         self.info_lbl.setText(text)
 
-        self.table_1.tb.setRowCount(3)
-        self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
-        self.table_1.tb.setItem(0, 1, QTableWidgetItem("200"))
-        self.table_1.tb.setItem(1, 0, QTableWidgetItem("-200"))
-        self.table_1.tb.setItem(1, 1, QTableWidgetItem("100"))
-        self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100.675"))
-        self.table_1.tb.setItem(2, 1, QTableWidgetItem("-0"))
+        # to test
+        # self.table_1.tb.setRowCount(3)
+        # self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
+        # self.table_1.tb.setItem(0, 1, QTableWidgetItem("200"))
+        # self.table_1.tb.setItem(1, 0, QTableWidgetItem("-200"))
+        # self.table_1.tb.setItem(1, 1, QTableWidgetItem("100"))
+        # self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100.675"))
+        # self.table_1.tb.setItem(2, 1, QTableWidgetItem("-0"))
 
     def _set_calibrated(self, state: bool):
         if state:
