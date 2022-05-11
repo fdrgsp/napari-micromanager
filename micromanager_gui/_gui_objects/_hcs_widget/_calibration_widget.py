@@ -245,6 +245,7 @@ class CalibrationTable(QWidget):
         self.tb.setRowCount(0)
         self.tb.setHorizontalHeaderLabels(["X", "Y"])
         self.tb.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tb.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         layout.addWidget(self.tb, 1, 0, 3, 1)
 
         btn_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
