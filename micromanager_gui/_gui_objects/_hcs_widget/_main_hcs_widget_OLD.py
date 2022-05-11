@@ -80,18 +80,27 @@ class HCSWidget(QWidget):
         tab.setTabPosition(QTabWidget.West)
 
         select_plate_tab = self._create_plate_and_fov_tab()
+        self.calibration_tab = PlateCalibration()
         ch_and_pos_list = ChannelPositionWidget()
         ch_and_pos_list.position_list_button.clicked.connect(self._generate_pos_list)
 
-        tab.addTab(select_plate_tab, "Plate, FOVs and Calibration")
+        tab.addTab(select_plate_tab, "Plate and FOVs")
+        tab.addTab(self.calibration_tab, "Plate Calibration")
         tab.addTab(ch_and_pos_list, "Channel and Positions List")
 
+        tab.currentChanged.connect(self._update_calibration_tab)
+
         return tab
+
+    def _update_calibration_tab(self, tab: int):
+        if tab != 1:
+            return
+        self.calibration_tab._update_gui(self.wp_combo.currentText())
 
     def _create_plate_and_fov_tab(self):
         wdg = QWidget()
         wdg_layout = QVBoxLayout()
-        wdg_layout.setSpacing(20)
+        wdg_layout.setSpacing(10)
         wdg_layout.setContentsMargins(10, 10, 10, 10)
         wdg.setLayout(wdg_layout)
 
@@ -118,7 +127,7 @@ class HCSWidget(QWidget):
         self.FOV_selector = SelectFOV()
 
         # add widgets
-        view_group = QGroupBox("Plate Selection")
+        view_group = QGroupBox()
         view_gp_layout = QVBoxLayout()
         view_gp_layout.setSpacing(0)
         view_gp_layout.setContentsMargins(10, 0, 10, 10)
@@ -127,22 +136,13 @@ class HCSWidget(QWidget):
         view_gp_layout.addWidget(self.view)
         wdg_layout.addWidget(view_group)
 
-        FOV_group = QGroupBox(title="FOVs Selection")
+        FOV_group = QGroupBox()
         FOV_gp_layout = QVBoxLayout()
         FOV_gp_layout.setSpacing(0)
         FOV_gp_layout.setContentsMargins(10, 10, 10, 10)
         FOV_group.setLayout(FOV_gp_layout)
         FOV_gp_layout.addWidget(self.FOV_selector)
         wdg_layout.addWidget(FOV_group)
-
-        cal_group = QGroupBox(title="Plate Calibration")
-        cal_group_layout = QVBoxLayout()
-        cal_group_layout.setSpacing(0)
-        cal_group_layout.setContentsMargins(10, 10, 10, 10)
-        cal_group.setLayout(cal_group_layout)
-        self.calibration = PlateCalibration()
-        cal_group_layout.addWidget(self.calibration)
-        wdg_layout.addWidget(cal_group)
 
         verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         wdg_layout.addItem(verticalSpacer)
@@ -220,10 +220,6 @@ class HCSWidget(QWidget):
     def _on_combo_changed(self, value: str):
         self.scene.clear()
         self._draw_well_plate(value)
-        self._update_calibration_wdg(value)
-
-    def _update_calibration_wdg(self, plate: str):
-        self.calibration._update_gui(plate)
 
     def _draw_well_plate(self, well_plate: str):
         self.wp = WellPlate.set_format(well_plate)
@@ -314,9 +310,6 @@ class HCSWidget(QWidget):
 
     def _generate_pos_list(self):
 
-        if not self.calibration.is_calibrated:
-            raise ValueError("Plate not calibrated! Calibrate it first.")
-
         if not self._mmc.getPixelSizeUm():
             raise ValueError("Pixel Size not defined! Set pixel size first.")
 
@@ -327,17 +320,10 @@ class HCSWidget(QWidget):
             return
 
         print(self.wp.getAllInfo())
-        print("")
 
-        a1 = self.scene._get_A1_position()
-        print("A1 view coords ->", a1)
-        print("A1 stage coords ->", self.calibration.calibration_well)
-        print("")
-
-        print("selected wells:")
+        well_list.sort()
         for pos in well_list:
             print(pos)
-        print("")
         # TODO: convert in stage coordinates after calibration
         # e.g. ('A1', 0, 0, 48.3, 48.3)
         # 48.3 and 48.3 are xy coords of the center. After calibration
@@ -348,11 +334,12 @@ class HCSWidget(QWidget):
             for item in self.FOV_selector.scene.items()
             if isinstance(item, FOVPoints)
         ]
-        print("FOVs:")
         for fov in fovs:
             print(fov)
         # TODO: convert in plate coordinates
         # TODO: convert in stage coordinates after calibration
+
+        print(self.calibration_tab.wells_dict)
 
 
 if __name__ == "__main__":

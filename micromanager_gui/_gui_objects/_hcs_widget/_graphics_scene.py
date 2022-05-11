@@ -58,7 +58,13 @@ class GraphicsScene(QGraphicsScene):
         # self._print_selected_wells()  # to be removed
 
     def _get_plate_positions(self):
-        return [item.getPos() for item in self.items() if item.isSelected()]
+        return [item.getPos() for item in reversed(self.items()) if item.isSelected()]
+
+    def _get_A1_position(self):
+        for item in reversed(self.items()):
+            w = item.getPos()
+            if w[0] == "A1":
+                return w
 
     # def _print_selected_wells(self):  # to be removed
     #     print("___________")

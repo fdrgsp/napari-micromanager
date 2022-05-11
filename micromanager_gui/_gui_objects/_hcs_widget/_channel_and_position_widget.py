@@ -36,18 +36,22 @@ class ChannelPositionWidget(QWidget):
         self._mmc = mmcore or get_core_singleton()
 
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(20)
         layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
-        z = self._create_stack_groupBox()
-        self.layout().addWidget(z)
+        z_selector = self._create_z_stage_selector()
+        self.layout().addWidget(z_selector)
         pos = self._create_positions_list_wdg()
         self.layout().addWidget(pos)
         ch = self._create_channel_group()
         self.layout().addWidget(ch)
+        z_stack = self._create_stack_groupBox()
+        self.layout().addWidget(z_stack)
 
         self._mmc.events.systemConfigurationLoaded.connect(self._on_sys_cfg)
+
+        self._on_sys_cfg()
 
     def _create_channel_group(self):
 
@@ -188,19 +192,6 @@ class ChannelPositionWidget(QWidget):
         step_wdg_layout.setContentsMargins(0, 10, 0, 0)
         step_wdg.setLayout(step_wdg_layout)
 
-        z_wdg = QWidget()
-        z_layout = QHBoxLayout()
-        z_layout.setSpacing(0)
-        z_layout.setContentsMargins(0, 0, 0, 0)
-        z_wdg.setLayout(z_layout)
-        z_lbl = QLabel(text="Z Stage:")
-        z_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        self.z_combo = QComboBox()
-        self.update_stage_combo()
-        z_layout.addWidget(z_lbl)
-        z_layout.addWidget(self.z_combo)
-        step_wdg_layout.addWidget(z_wdg)
-
         s = QWidget()
         s_layout = QHBoxLayout()
         s_layout.setSpacing(0)
@@ -238,6 +229,22 @@ class ChannelPositionWidget(QWidget):
 
         return group
 
+    def _create_z_stage_selector(self):
+
+        z_wdg = QGroupBox(title="Z Stage Selector")
+        z_layout = QHBoxLayout()
+        z_layout.setSpacing(0)
+        z_layout.setContentsMargins(10, 10, 10, 10)
+        z_wdg.setLayout(z_layout)
+        z_lbl = QLabel(text="Z Stage:")
+        z_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.z_combo = QComboBox()
+        self.update_stage_combo()
+        z_layout.addWidget(z_lbl)
+        z_layout.addWidget(self.z_combo)
+
+        return z_wdg
+
     def _create_positions_list_wdg(self):
         group = QGroupBox(title="Positions")
         group.setMinimumHeight(230)
@@ -268,9 +275,9 @@ class ChannelPositionWidget(QWidget):
         hdr.setSectionResizeMode(hdr.Stretch)
         self.stage_tableWidget.verticalHeader().setVisible(False)
         self.stage_tableWidget.setTabKeyNavigation(True)
-        self.stage_tableWidget.setColumnCount(3)
+        self.stage_tableWidget.setColumnCount(4)
         self.stage_tableWidget.setRowCount(0)
-        self.stage_tableWidget.setHorizontalHeaderLabels(["X", "Y", "Z"])
+        self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
         group_layout.addWidget(self.stage_tableWidget)
 
         return group
@@ -282,7 +289,9 @@ class ChannelPositionWidget(QWidget):
 
     def update_stage_combo(self):
         self.z_combo.clear()
-        self.z_combo.addItems(list(self._mmc.getLoadedDevicesOfType(DeviceType.Stage)))
+        items = list(self._mmc.getLoadedDevicesOfType(DeviceType.Stage))
+        items.append("None")
+        self.z_combo.addItems(items)
 
     def clear_positions(self):
         self.stage_tableWidget.clearContents()
