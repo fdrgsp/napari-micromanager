@@ -328,6 +328,8 @@ class HCSWidget(QWidget):
         # TODO: convert in plate coordinates
         # TODO: convert in stage coordinates after calibration
 
+        print(self.calibration_tab.wells_dict)
+
 
 if __name__ == "__main__":
     import sys
