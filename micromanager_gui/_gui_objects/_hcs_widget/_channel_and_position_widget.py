@@ -381,6 +381,8 @@ class ChannelPositionWidget(QWidget):
         self.n_images_label.setText(f"Number of Images: {round((_range / step) + 1)}")
 
     def _assign_to_wells(self):
+        if self.z_combo.currentText() == "None":
+            return
         rows = {r.row() for r in self.stage_tableWidget.selectedIndexes()}
         for row in rows:
             item = QTableWidgetItem(str(self.z_doublespinbox.value()))

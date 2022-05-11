@@ -198,6 +198,8 @@ class PlateCalibration(QWidget):
 
     def _calibrate_plate(self):
 
+        self._set_calibrated(False)
+
         if self._mmc.isSequenceRunning():
             self._mmc.stopSequenceAcquisition()
 
