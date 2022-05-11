@@ -88,8 +88,8 @@ class HCSWidget(QWidget):
             self._generate_pos_list
         )
 
-        tab.addTab(select_plate_tab, "Plate, FOVs and Calibration")
-        tab.addTab(self.ch_and_pos_list, "Channel and Positions List")
+        tab.addTab(select_plate_tab, "  Plate, FOVs and Calibration  ")
+        tab.addTab(self.ch_and_pos_list, "  Channel and Positions List  ")
 
         return tab
 
@@ -126,7 +126,7 @@ class HCSWidget(QWidget):
         view_group = QGroupBox("Plate Selection")
         view_gp_layout = QVBoxLayout()
         view_gp_layout.setSpacing(0)
-        view_gp_layout.setContentsMargins(10, 0, 10, 10)
+        view_gp_layout.setContentsMargins(10, 10, 10, 10)
         view_group.setLayout(view_gp_layout)
         view_gp_layout.addWidget(upper_wdg)
         view_gp_layout.addWidget(self.view)

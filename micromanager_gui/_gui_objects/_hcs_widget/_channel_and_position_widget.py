@@ -4,6 +4,7 @@ from typing import Optional
 from pymmcore_plus import CMMCorePlus, DeviceType
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QAbstractSpinBox,
     QApplication,
     QComboBox,
@@ -94,6 +95,7 @@ class ChannelPositionWidget(QWidget):
 
         # table
         self.stage_tableWidget = QTableWidget()
+        self.stage_tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.stage_tableWidget.setMinimumHeight(90)
         hdr = self.stage_tableWidget.horizontalHeader()
         hdr.setSectionResizeMode(hdr.Stretch)
@@ -103,6 +105,8 @@ class ChannelPositionWidget(QWidget):
         self.stage_tableWidget.setRowCount(0)
         self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
         group_layout.addWidget(self.stage_tableWidget)
+
+        self.stage_tableWidget.cellDoubleClicked.connect(self.move_to_position)
 
         return group
 
@@ -296,6 +300,17 @@ class ChannelPositionWidget(QWidget):
     def clear_positions(self):
         self.stage_tableWidget.clearContents()
         self.stage_tableWidget.setRowCount(0)
+
+    def move_to_position(self):
+        if not self._mmc.getXYStageDevice():
+            return
+        curr_row = self.stage_tableWidget.currentRow()
+        x_val = self.stage_tableWidget.item(curr_row, 1).text()
+        y_val = self.stage_tableWidget.item(curr_row, 2).text()
+        z_val = self.stage_tableWidget.item(curr_row, 3).text()
+        self._mmc.setXYPosition(float(x_val), float(y_val))
+        if z_val:
+            self._mmc.setPosition(self._mmc.getFocusDevice(), float(z_val))
 
     def add_channel(self) -> bool:
         if len(self._mmc.getLoadedDevices()) <= 1:
