@@ -384,10 +384,9 @@ class ChannelPositionWidget(QWidget):
 
     def _assign_to_wells(self):
         rows = {r.row() for r in self.stage_tableWidget.selectedIndexes()}
-        print(rows)
-        item = QTableWidgetItem(str(self.z_doublespinbox.value()))
-        item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
         for row in rows:
+            item = QTableWidgetItem(str(self.z_doublespinbox.value()))
+            item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
             self.stage_tableWidget.setItem(row, 3, item)
 
 
