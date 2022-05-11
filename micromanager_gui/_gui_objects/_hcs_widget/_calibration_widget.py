@@ -126,11 +126,11 @@ class PlateCalibration(QWidget):
 
         self.table_1.tb.setRowCount(3)
         self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
-        self.table_1.tb.setItem(0, 1, QTableWidgetItem("210"))
+        self.table_1.tb.setItem(0, 1, QTableWidgetItem("200"))
         self.table_1.tb.setItem(1, 0, QTableWidgetItem("-200"))
-        self.table_1.tb.setItem(1, 1, QTableWidgetItem("110"))
-        self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100"))
-        self.table_1.tb.setItem(2, 1, QTableWidgetItem("10"))
+        self.table_1.tb.setItem(1, 1, QTableWidgetItem("100"))
+        self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100.675"))
+        self.table_1.tb.setItem(2, 1, QTableWidgetItem("-0"))
 
     def _set_calibrated(self, state: bool):
         if state:
@@ -148,25 +148,31 @@ class PlateCalibration(QWidget):
             self.cal_lbl.setText("Plate non Calibrated!")
 
     def get_center_of_round_well(
-        self, a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]
-    ) -> Tuple[float, float]:
+        self, a: Tuple[int, int], b: Tuple[int, int], c: Tuple[int, int]
+    ) -> Tuple[int, int]:
         """Find the center of a round well given 3 edge points"""
         # eq circle (x - x1)^2 + (y - y1)^2 = r^2
         # for point a: (x - ax)^2 + (y - ay)^2 = r^2
         # for point b: = (x - bx)^2 + (y - by)^2 = r^2
         # for point c: = (x - cx)^2 + (y - cy)^2 = r^2
 
+        x1, y1 = a
+        x2, y2 = b
+        x3, y3 = c
+
         x, y = symbols("x y")
 
-        eq1 = Eq((x - a[0]) ** 2 + (y - a[1]) ** 2, (x - b[0]) ** 2 + (y - b[1]) ** 2)
-        eq2 = Eq((x - a[0]) ** 2 + (y - a[1]) ** 2, (x - c[0]) ** 2 + (y - c[1]) ** 2)
+        eq1 = Eq((x - x1) ** 2 + (y - y1) ** 2, (x - x2) ** 2 + (y - y2) ** 2)
+        eq2 = Eq((x - x1) ** 2 + (y - y1) ** 2, (x - x3) ** 2 + (y - y3) ** 2)
 
-        if dict_center := solve((eq1, eq2), (x, y)):
+        dict_center = solve((eq1, eq2), (x, y))
+        try:
             xc = dict_center[x]
             yc = dict_center[y]
-        else:
+            print(xc, yc)
+        except TypeError as e:
             self._set_calibrated(False)
-            raise ValueError("Invalid Coordinates!")
+            raise TypeError("Invalid Coordinates!") from e
 
         return xc, yc
 
@@ -192,6 +198,9 @@ class PlateCalibration(QWidget):
 
     def _calibrate_plate(self):
 
+        if self._mmc.isSequenceRunning():
+            self._mmc.stopSequenceAcquisition()
+
         if not self.plate:
             return
 
@@ -200,8 +209,8 @@ class PlateCalibration(QWidget):
 
         pos = ()
         for r in range(3 if self.plate.get("circular") else 4):
-            x = float(self.table_1.tb.item(r, 0).text())
-            y = float(self.table_1.tb.item(r, 1).text())
+            x = round(float(self.table_1.tb.item(r, 0).text()))
+            y = round(float(self.table_1.tb.item(r, 1).text()))
             pos += ((x, y),)
 
         if self.plate.get("circular"):
