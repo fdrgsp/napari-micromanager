@@ -333,19 +333,7 @@ class HCSWidget(QWidget):
         self.ch_and_pos_list.clear_positions()
 
         plate_info = self.wp.getAllInfo()
-        # print(plate_info)
-        # print("")
 
-        # a1 = self.scene._get_A1_position()
-        # print("A1 view coords ->", a1)
-        # print("A1 stage coords ->", self.calibration.calibration_well)
-        # print("")
-
-        # print("selected wells:")
-        # for pos in well_list:
-        #     print(pos)
-
-        # print("calibrated well positions:")
         # center stage coords of calibrated well a1
         a1_x = self.calibration.calibration_well[1]
         a1_y = self.calibration.calibration_well[2]
@@ -360,18 +348,12 @@ class HCSWidget(QWidget):
             x = a1_x + ((x_step * 1000) * col)
             y = a1_y + ((y_step * 1000) * row)
             cal_well_list.append((well, x, y))
-        # for pos in cal_well_list:
-        #     print(pos)
-        # print("")
 
         fovs = [
             item.getPositionsInfo()
             for item in self.FOV_selector.scene.items()
             if isinstance(item, FOVPoints)
         ]
-        # print("FOVs:")
-        # for fov in fovs:
-        #     print(fov)
 
         row = 0
         for pos in cal_well_list:
@@ -384,7 +366,6 @@ class HCSWidget(QWidget):
             well_y_um = well_y * 1000
 
             for idx, fov in enumerate(fovs):
-                # r = row + idx
 
                 # pixel coord fx and fy + pixel width and height drawing
                 fx, fy, w, h = fov
@@ -405,27 +386,28 @@ class HCSWidget(QWidget):
                 new_fx_cal = cx_cal + (new_fx * px_val_x)
                 new_fy_cal = cy_cal + (new_fy * px_val_y)
 
-                # print(well_name, new_fx_cal, new_fy_cal)
-
-                self._add_position_row()
-                name = QTableWidgetItem(f"{well_name}_pos{idx:03d}")
-                name.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
-                self.ch_and_pos_list.stage_tableWidget.setItem(row, 0, name)
-                stage_x = QTableWidgetItem(str(new_fx_cal))
-                stage_x.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
-                self.ch_and_pos_list.stage_tableWidget.setItem(row, 1, stage_x)
-                stage_y = QTableWidgetItem(str(new_fy_cal))
-                stage_y.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
-                self.ch_and_pos_list.stage_tableWidget.setItem(row, 2, stage_y)
-
-                if self.ch_and_pos_list.z_combo.currentText() != "None":
-                    selected_z_stage = self.ch_and_pos_list.z_combo.currentText()
-                    z_pos = self._mmc.getPosition(selected_z_stage)
-                    item = QTableWidgetItem(str(z_pos))
-                    item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
-                    self.ch_and_pos_list.stage_tableWidget.setItem(row, 3, item)
+                self._add_to_table(row, well_name, idx, new_fx_cal, new_fy_cal)
 
                 row += 1
+
+    def _add_to_table(self, row, well_name, idx, new_fx_cal, new_fy_cal):
+        self._add_position_row()
+        name = QTableWidgetItem(f"{well_name}_pos{idx:03d}")
+        name.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+        self.ch_and_pos_list.stage_tableWidget.setItem(row, 0, name)
+        stage_x = QTableWidgetItem(str(new_fx_cal))
+        stage_x.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+        self.ch_and_pos_list.stage_tableWidget.setItem(row, 1, stage_x)
+        stage_y = QTableWidgetItem(str(new_fy_cal))
+        stage_y.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+        self.ch_and_pos_list.stage_tableWidget.setItem(row, 2, stage_y)
+
+        if self.ch_and_pos_list.z_combo.currentText() != "None":
+            selected_z_stage = self.ch_and_pos_list.z_combo.currentText()
+            z_pos = self._mmc.getPosition(selected_z_stage)
+            item = QTableWidgetItem(str(z_pos))
+            item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+            self.ch_and_pos_list.stage_tableWidget.setItem(row, 3, item)
 
     def _add_position_row(self) -> int:
         idx = self.ch_and_pos_list.stage_tableWidget.rowCount()
