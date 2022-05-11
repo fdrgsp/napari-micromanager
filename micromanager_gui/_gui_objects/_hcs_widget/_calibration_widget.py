@@ -30,7 +30,6 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 class PlateCalibration(QWidget):
     def __init__(
         self,
-        # viewer: napari.viewer.Viewer,
         parent: Optional[QWidget] = None,
         *,
         mmcore: Optional[CMMCorePlus] = None,
@@ -38,9 +37,6 @@ class PlateCalibration(QWidget):
         super().__init__(parent)
 
         self._mmc = mmcore or get_core_singleton()
-        # self.viever = viewer
-
-        # self._mmc.loadSystemConfiguration()  # to remove
 
         self.plate = None
         self.calibration_well = tuple()

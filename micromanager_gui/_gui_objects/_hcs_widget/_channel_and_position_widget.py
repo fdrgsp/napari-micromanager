@@ -85,28 +85,32 @@ class ChannelPositionWidget(QWidget):
         wdg_layout.setContentsMargins(0, 0, 0, 0)
         wdg.setLayout(wdg_layout)
 
-        self.position_list_button = QPushButton(text="Create List")
+        self.position_list_button = QPushButton(text="Create Position List")
+        self.remove_position_button = QPushButton(text="Remove Position")
+        self.remove_position_button.clicked.connect(self.remove_position)
         self.clear_positions_button = QPushButton(text="Clear List")
         self.clear_positions_button.clicked.connect(self.clear_positions)
+        wdg_layout.addWidget(self.position_list_button)
+        wdg_layout.addWidget(self.remove_position_button)
+        wdg_layout.addWidget(self.clear_positions_button)
+        group_layout.addWidget(wdg)
 
         assign_z_wdg = QWidget()
         assign_z_wdg_layout = QHBoxLayout()
         assign_z_wdg_layout.setSpacing(5)
         assign_z_wdg_layout.setContentsMargins(10, 0, 0, 0)
         assign_z_wdg.setLayout(assign_z_wdg_layout)
-        self.assign_z = QPushButton(text="Assign to selected wells Z =")
+        lbl = QLabel(text="Assign the following Z value to the selected wells:")
+        lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.assign_z = QPushButton(text="Assign")
         self.assign_z.clicked.connect(self._assign_to_wells)
         self.z_doublespinbox = QDoubleSpinBox()
         self.z_doublespinbox.setAlignment(Qt.AlignCenter)
         self.z_doublespinbox.setMaximum(1000000)
-        assign_z_wdg_layout.addWidget(self.assign_z)
+        assign_z_wdg_layout.addWidget(lbl)
         assign_z_wdg_layout.addWidget(self.z_doublespinbox)
-
-        wdg_layout.addWidget(self.position_list_button)
-        wdg_layout.addWidget(self.clear_positions_button)
-        wdg_layout.addWidget(assign_z_wdg)
-
-        group_layout.addWidget(wdg)
+        assign_z_wdg_layout.addWidget(self.assign_z)
+        group_layout.addWidget(assign_z_wdg)
 
         # table
         self.stage_tableWidget = QTableWidget()
@@ -312,6 +316,11 @@ class ChannelPositionWidget(QWidget):
         items = list(self._mmc.getLoadedDevicesOfType(DeviceType.Stage))
         items.append("None")
         self.z_combo.addItems(items)
+
+    def remove_position(self):
+        rows = {r.row() for r in self.stage_tableWidget.selectedIndexes()}
+        for idx in sorted(rows, reverse=True):
+            self.stage_tableWidget.removeRow(idx)
 
     def clear_positions(self):
         self.stage_tableWidget.clearContents()
