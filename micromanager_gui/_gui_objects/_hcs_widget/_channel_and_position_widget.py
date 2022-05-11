@@ -17,6 +17,7 @@ from qtpy.QtWidgets import (
     QSizePolicy,
     QSpinBox,
     QTableWidget,
+    QTableWidgetItem,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -84,12 +85,29 @@ class ChannelPositionWidget(QWidget):
         wdg_layout.setContentsMargins(0, 0, 0, 0)
         wdg.setLayout(wdg_layout)
 
-        self.position_list_button = QPushButton(text="Create Positons List")
+        self.position_list_button = QPushButton(text="Create List")
         self.clear_positions_button = QPushButton(text="Clear List")
         self.clear_positions_button.clicked.connect(self.clear_positions)
 
+        assign_z_wdg = QWidget()
+        assign_z_wdg_layout = QHBoxLayout()
+        assign_z_wdg_layout.setSpacing(5)
+        assign_z_wdg_layout.setContentsMargins(15, 0, 0, 0)
+        assign_z_wdg.setLayout(assign_z_wdg_layout)
+        assign_lbl = QLabel(text="assign z ")
+        assign_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.assign_z = QPushButton(text="to the selected wells")
+        self.assign_z.clicked.connect(self._assign_to_wells)
+        self.z_doublespinbox = QDoubleSpinBox()
+        self.z_doublespinbox.setAlignment(Qt.AlignCenter)
+        self.z_doublespinbox.setMaximum(1000000)
+        assign_z_wdg_layout.addWidget(assign_lbl)
+        assign_z_wdg_layout.addWidget(self.z_doublespinbox)
+        assign_z_wdg_layout.addWidget(self.assign_z)
+
         wdg_layout.addWidget(self.position_list_button)
         wdg_layout.addWidget(self.clear_positions_button)
+        wdg_layout.addWidget(assign_z_wdg)
 
         group_layout.addWidget(wdg)
 
@@ -307,9 +325,9 @@ class ChannelPositionWidget(QWidget):
         curr_row = self.stage_tableWidget.currentRow()
         x_val = self.stage_tableWidget.item(curr_row, 1).text()
         y_val = self.stage_tableWidget.item(curr_row, 2).text()
-        z_val = self.stage_tableWidget.item(curr_row, 3).text()
-        self._mmc.setXYPosition(float(x_val), float(y_val))
-        if z_val:
+        if z_item := self.stage_tableWidget.item(curr_row, 3):
+            z_val = z_item.text()
+            self._mmc.setXYPosition(float(x_val), float(y_val))
             self._mmc.setPosition(self._mmc.getFocusDevice(), float(z_val))
 
     def add_channel(self) -> bool:
@@ -363,6 +381,14 @@ class ChannelPositionWidget(QWidget):
             _range = self.z_range_abovebelow_doubleSpinBox.value()
 
         self.n_images_label.setText(f"Number of Images: {round((_range / step) + 1)}")
+
+    def _assign_to_wells(self):
+        rows = {r.row() for r in self.stage_tableWidget.selectedIndexes()}
+        print(rows)
+        item = QTableWidgetItem(str(self.z_doublespinbox.value()))
+        item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+        for row in rows:
+            self.stage_tableWidget.setItem(row, 3, item)
 
 
 if __name__ == "__main__":
