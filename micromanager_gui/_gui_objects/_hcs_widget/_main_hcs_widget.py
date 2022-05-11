@@ -323,8 +323,7 @@ class HCSWidget(QWidget):
         well_list = self.scene._get_plate_positions()
 
         if not well_list:
-            print("select at least one well!")
-            return
+            raise ValueError("No Well selected! Select at least one well first.")
 
         print(self.wp.getAllInfo())
         print("")
