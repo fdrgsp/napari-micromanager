@@ -70,7 +70,5 @@ class Well(QGraphicsItem):
     def getPos(self):
         row = self._row
         col = self._col
-        xc = self._x + (self._size_x / 2)
-        yc = self._y + (self._size_y / 2)
         well = f"{ALPHABET[self._row]}{self._col + 1}"
-        return well, row, col, xc, yc
+        return well, row, col

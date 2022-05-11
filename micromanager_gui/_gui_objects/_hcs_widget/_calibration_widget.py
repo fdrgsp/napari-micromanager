@@ -110,12 +110,6 @@ class PlateCalibration(QWidget):
             return
 
         self._set_calibrated(False)
-        # self.is_calibrated = False
-        # self.calibration_well = tuple()
-        # self.icon_lbl.setPixmap(
-        #     icon(MDI6.close_octagon_outline, color="magenta").pixmap(QSize(30, 30))
-        # )
-        # self.cal_lbl.setText("Plate non Calibrated!")
         self.table_1._clear_table()
 
         try:
@@ -129,6 +123,14 @@ class PlateCalibration(QWidget):
             f"points on the edge of well A1\nand click on 'Calibrate Plate'."
         )
         self.info_lbl.setText(text)
+
+        self.table_1.tb.setRowCount(3)
+        self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
+        self.table_1.tb.setItem(0, 1, QTableWidgetItem("210"))
+        self.table_1.tb.setItem(1, 0, QTableWidgetItem("-200"))
+        self.table_1.tb.setItem(1, 1, QTableWidgetItem("110"))
+        self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100"))
+        self.table_1.tb.setItem(2, 1, QTableWidgetItem("10"))
 
     def _set_calibrated(self, state: bool):
         if state:
@@ -154,8 +156,6 @@ class PlateCalibration(QWidget):
         # for point b: = (x - bx)^2 + (y - by)^2 = r^2
         # for point c: = (x - cx)^2 + (y - cy)^2 = r^2
 
-        print(a[0], a[1])
-
         x, y = symbols("x y")
 
         eq1 = Eq((x - a[0]) ** 2 + (y - a[1]) ** 2, (x - b[0]) ** 2 + (y - b[1]) ** 2)
@@ -178,8 +178,6 @@ class PlateCalibration(QWidget):
         d: Tuple[float, float],
     ) -> Tuple[float, float]:
         """Find the center of a square well given 4 edge points"""
-
-        print(a[0], a[1])
 
         x_list = [x[0] for x in [a, b, c, d]]
         y_list = [y[1] for y in [a, b, c, d]]
@@ -215,11 +213,6 @@ class PlateCalibration(QWidget):
         self.calibration_well = ("A1", xc, yc)
 
         self._set_calibrated(True)
-        # self.is_calibrated = True
-        # self.icon_lbl.setPixmap(
-        #     icon(MDI6.check_bold, color=(0, 255, 0)).pixmap(QSize(20, 20))
-        # )
-        # self.cal_lbl.setText("Plate Calibrated!")
 
 
 class CalibrationTable(QWidget):

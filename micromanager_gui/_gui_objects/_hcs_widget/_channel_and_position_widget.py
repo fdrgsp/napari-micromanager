@@ -53,6 +53,59 @@ class ChannelPositionWidget(QWidget):
 
         self._on_sys_cfg()
 
+    def _create_z_stage_selector(self):
+
+        z_wdg = QGroupBox(title="Z Stage Selector")
+        z_layout = QHBoxLayout()
+        z_layout.setSpacing(0)
+        z_layout.setContentsMargins(10, 10, 10, 10)
+        z_wdg.setLayout(z_layout)
+        z_lbl = QLabel(text="Z Stage:")
+        z_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
+        self.z_combo = QComboBox()
+        self.update_stage_combo()
+        z_layout.addWidget(z_lbl)
+        z_layout.addWidget(self.z_combo)
+
+        return z_wdg
+
+    def _create_positions_list_wdg(self):
+        group = QGroupBox(title="Positions")
+        group.setMinimumHeight(230)
+        group_layout = QVBoxLayout()
+        group_layout.setSpacing(10)
+        group_layout.setContentsMargins(10, 10, 10, 10)
+        group.setLayout(group_layout)
+
+        wdg = QWidget()
+        wdg_layout = QHBoxLayout()
+        wdg_layout.setSpacing(10)
+        wdg_layout.setContentsMargins(0, 0, 0, 0)
+        wdg.setLayout(wdg_layout)
+
+        self.position_list_button = QPushButton(text="Create Positons List")
+        self.clear_positions_button = QPushButton(text="Clear List")
+        self.clear_positions_button.clicked.connect(self.clear_positions)
+
+        wdg_layout.addWidget(self.position_list_button)
+        wdg_layout.addWidget(self.clear_positions_button)
+
+        group_layout.addWidget(wdg)
+
+        # table
+        self.stage_tableWidget = QTableWidget()
+        self.stage_tableWidget.setMinimumHeight(90)
+        hdr = self.stage_tableWidget.horizontalHeader()
+        hdr.setSectionResizeMode(hdr.Stretch)
+        self.stage_tableWidget.verticalHeader().setVisible(False)
+        self.stage_tableWidget.setTabKeyNavigation(True)
+        self.stage_tableWidget.setColumnCount(4)
+        self.stage_tableWidget.setRowCount(0)
+        self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
+        group_layout.addWidget(self.stage_tableWidget)
+
+        return group
+
     def _create_channel_group(self):
 
         group = QGroupBox(title="Channels")
@@ -226,59 +279,6 @@ class ChannelPositionWidget(QWidget):
         self.step_size_doubleSpinBox.valueChanged.connect(self._update_n_images)
         self.z_tabWidget.currentChanged.connect(self._update_n_images)
         group.toggled.connect(self._update_n_images)
-
-        return group
-
-    def _create_z_stage_selector(self):
-
-        z_wdg = QGroupBox(title="Z Stage Selector")
-        z_layout = QHBoxLayout()
-        z_layout.setSpacing(0)
-        z_layout.setContentsMargins(10, 10, 10, 10)
-        z_wdg.setLayout(z_layout)
-        z_lbl = QLabel(text="Z Stage:")
-        z_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        self.z_combo = QComboBox()
-        self.update_stage_combo()
-        z_layout.addWidget(z_lbl)
-        z_layout.addWidget(self.z_combo)
-
-        return z_wdg
-
-    def _create_positions_list_wdg(self):
-        group = QGroupBox(title="Positions")
-        group.setMinimumHeight(230)
-        group_layout = QVBoxLayout()
-        group_layout.setSpacing(10)
-        group_layout.setContentsMargins(10, 10, 10, 10)
-        group.setLayout(group_layout)
-
-        wdg = QWidget()
-        wdg_layout = QHBoxLayout()
-        wdg_layout.setSpacing(10)
-        wdg_layout.setContentsMargins(0, 0, 0, 0)
-        wdg.setLayout(wdg_layout)
-
-        self.position_list_button = QPushButton(text="Create Positons List")
-        self.clear_positions_button = QPushButton(text="Clear List")
-        self.clear_positions_button.clicked.connect(self.clear_positions)
-
-        wdg_layout.addWidget(self.position_list_button)
-        wdg_layout.addWidget(self.clear_positions_button)
-
-        group_layout.addWidget(wdg)
-
-        # table
-        self.stage_tableWidget = QTableWidget()
-        self.stage_tableWidget.setMinimumHeight(90)
-        hdr = self.stage_tableWidget.horizontalHeader()
-        hdr.setSectionResizeMode(hdr.Stretch)
-        self.stage_tableWidget.verticalHeader().setVisible(False)
-        self.stage_tableWidget.setTabKeyNavigation(True)
-        self.stage_tableWidget.setColumnCount(4)
-        self.stage_tableWidget.setRowCount(0)
-        self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
-        group_layout.addWidget(self.stage_tableWidget)
 
         return group
 

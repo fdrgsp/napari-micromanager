@@ -16,6 +16,7 @@ from qtpy.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpacerItem,
+    QTableWidgetItem,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -56,6 +57,8 @@ class HCSWidget(QWidget):
 
         self._update_wp_combo()
 
+        self._mmc.loadSystemConfiguration()
+
     def _create_main_wdg(self):  # sourcery skip: class-extract-method
 
         layout = QVBoxLayout()
@@ -80,11 +83,13 @@ class HCSWidget(QWidget):
         tab.setTabPosition(QTabWidget.West)
 
         select_plate_tab = self._create_plate_and_fov_tab()
-        ch_and_pos_list = ChannelPositionWidget()
-        ch_and_pos_list.position_list_button.clicked.connect(self._generate_pos_list)
+        self.ch_and_pos_list = ChannelPositionWidget()
+        self.ch_and_pos_list.position_list_button.clicked.connect(
+            self._generate_pos_list
+        )
 
         tab.addTab(select_plate_tab, "Plate, FOVs and Calibration")
-        tab.addTab(ch_and_pos_list, "Channel and Positions List")
+        tab.addTab(self.ch_and_pos_list, "Channel and Positions List")
 
         return tab
 
@@ -325,33 +330,107 @@ class HCSWidget(QWidget):
         if not well_list:
             raise ValueError("No Well selected! Select at least one well first.")
 
-        print(self.wp.getAllInfo())
-        print("")
+        self.ch_and_pos_list.clear_positions()
 
-        a1 = self.scene._get_A1_position()
-        print("A1 view coords ->", a1)
-        print("A1 stage coords ->", self.calibration.calibration_well)
-        print("")
+        plate_info = self.wp.getAllInfo()
+        # print(plate_info)
+        # print("")
 
-        print("selected wells:")
+        # a1 = self.scene._get_A1_position()
+        # print("A1 view coords ->", a1)
+        # print("A1 stage coords ->", self.calibration.calibration_well)
+        # print("")
+
+        # print("selected wells:")
+        # for pos in well_list:
+        #     print(pos)
+
+        # print("calibrated well positions:")
+        # center stage coords of calibrated well a1
+        a1_x = self.calibration.calibration_well[1]
+        a1_y = self.calibration.calibration_well[2]
+
+        # distance between welld from plate database (mm)
+        x_step, y_step = plate_info.get("well_distance")
+
+        cal_well_list = []
         for pos in well_list:
-            print(pos)
-        print("")
-        # TODO: convert in stage coordinates after calibration
-        # e.g. ('A1', 0, 0, 48.3, 48.3)
-        # 48.3 and 48.3 are xy coords of the center. After calibration
-        # we can have them expressed in stage coords.
+            well, row, col = pos
+            # find center stage coords for all the selected wells
+            x = a1_x + ((x_step * 1000) * col)
+            y = a1_y + ((y_step * 1000) * row)
+            cal_well_list.append((well, x, y))
+        # for pos in cal_well_list:
+        #     print(pos)
+        # print("")
 
         fovs = [
             item.getPositionsInfo()
             for item in self.FOV_selector.scene.items()
             if isinstance(item, FOVPoints)
         ]
-        print("FOVs:")
-        for fov in fovs:
-            print(fov)
-        # TODO: convert in plate coordinates
-        # TODO: convert in stage coordinates after calibration
+        # print("FOVs:")
+        # for fov in fovs:
+        #     print(fov)
+
+        row = 0
+        for pos in cal_well_list:
+            well_name, cx_cal, cy_cal = pos
+
+            # well dimensions from database (mm)
+            well_x, well_y = plate_info.get("well_size")
+            # well dimensions from database (um)
+            well_x_um = well_x * 1000
+            well_y_um = well_y * 1000
+
+            for idx, fov in enumerate(fovs):
+                # r = row + idx
+
+                # pixel coord fx and fy + pixel width and height drawing
+                fx, fy, w, h = fov
+
+                # find 1 px value in um depending on well dimension
+                px_val_x = well_x_um / w
+                px_val_y = well_y_um / h
+
+                # find center coord in px
+                cx = w / 2
+                cy = h / 2
+
+                # shift point coords in px when center is (0, 0)
+                new_fx = fx - cx
+                new_fy = fy - cy
+
+                # find stage coords of fov point
+                new_fx_cal = cx_cal + (new_fx * px_val_x)
+                new_fy_cal = cy_cal + (new_fy * px_val_y)
+
+                # print(well_name, new_fx_cal, new_fy_cal)
+
+                self._add_position_row()
+                name = QTableWidgetItem(f"{well_name}_pos{idx:03d}")
+                name.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+                self.ch_and_pos_list.stage_tableWidget.setItem(row, 0, name)
+                stage_x = QTableWidgetItem(str(new_fx_cal))
+                stage_x.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+                self.ch_and_pos_list.stage_tableWidget.setItem(row, 1, stage_x)
+                stage_y = QTableWidgetItem(str(new_fy_cal))
+                stage_y.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+                self.ch_and_pos_list.stage_tableWidget.setItem(row, 2, stage_y)
+
+                if self.ch_and_pos_list.z_combo.currentText() != "None":
+                    selected_z_stage = self.ch_and_pos_list.z_combo.currentText()
+                    z_pos = self._mmc.getPosition(selected_z_stage)
+                    item = QTableWidgetItem(str(z_pos))
+                    item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
+                    self.ch_and_pos_list.stage_tableWidget.setItem(row, 3, item)
+
+                row += 1
+
+    def _add_position_row(self) -> int:
+        idx = self.ch_and_pos_list.stage_tableWidget.rowCount()
+        self.ch_and_pos_list.stage_tableWidget.insertRow(idx)
+        return idx
 
 
 if __name__ == "__main__":
