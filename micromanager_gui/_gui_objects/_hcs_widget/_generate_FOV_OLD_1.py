@@ -11,12 +11,14 @@ from qtpy.QtWidgets import (
     QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
+    QListWidget,
     QPushButton,
     QSizePolicy,
     QSpinBox,
-    QTabWidget,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -36,42 +38,50 @@ class SelectFOV(QWidget):
         self._create_widget()
 
     def _create_widget(self):
+        self.lst = QListWidget()
+        self.lst.insertItem(0, "Random")
+        self.lst.insertItem(1, "Grid")
+        self.lst.insertItem(2, "Center")
+        self.lst.setMaximumWidth(self.lst.sizeHintForColumn(0) + 10)
+        self.lst.setMaximumHeight(150)
+        self.lst.currentRowChanged.connect(self.display)
 
-        layout = QHBoxLayout()
-        layout.setSpacing(5)
-        layout.setContentsMargins(10, 0, 10, 0)
-        self.setLayout(layout)
+        self.stack = QStackedWidget()
 
-        self.tab_wdg = QTabWidget()
-        self.tab_wdg.setMinimumHeight(150)
+        self.center_wdg = QWidget()
+        self.random_wdg = QWidget()
+        self.grid_wdg = QWidget()
 
-        self.center_wdg = self._center_wdg_gui()
-        self.random_wdg = self._random_wdg_gui()
-        self.grid_wdg = self._grid_wdg_gui()
+        self._set_random_wdg_gui()
+        self._set_grid_wdg_gui()
+        self._set_center_wdg_gui()
 
-        self.tab_wdg.addTab(self.center_wdg, "Center")
-        self.tab_wdg.addTab(self.random_wdg, "Random")
-        self.tab_wdg.addTab(self.grid_wdg, "Grid")
-
-        layout.addWidget(self.tab_wdg)
+        self.stack.addWidget(self.random_wdg)
+        self.stack.addWidget(self.grid_wdg)
+        self.stack.addWidget(self.center_wdg)
 
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
         self.view.setFixedSize(200, 150)
 
-        layout.addWidget(self.view)
+        hbox = QHBoxLayout()
+        hbox.setSpacing(5)
+        hbox.setContentsMargins(10, 0, 10, 0)
+        hbox.addWidget(self.lst)
+        hbox.addWidget(self.stack)
+        hbox.addWidget(self.view)
+        self.setLayout(hbox)
 
-        self.tab_wdg.currentChanged.connect(self._on_tab_changed)
-
-    def _random_wdg_gui(self):
-        random_wdg = QWidget()
+    def _set_random_wdg_gui(self):
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-        random_wdg.setLayout(layout)
+        self.random_wdg.setLayout(layout)
 
-        group_wdg = QWidget()
+        group_wdg = QGroupBox()
+        # group_wdg.setMinimumHeight(150)
+        group_wdg.setMaximumHeight(150)
         group_wdg_layout = QVBoxLayout()
         group_wdg_layout.setSpacing(0)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
@@ -122,16 +132,15 @@ class SelectFOV(QWidget):
         self.random_button.clicked.connect(self._on_random_button_pressed)
         group_wdg_layout.addWidget(self.random_button)
 
-        return random_wdg
-
-    def _grid_wdg_gui(self):
-        grid_wdg = QWidget()
+    def _set_grid_wdg_gui(self):
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-        grid_wdg.setLayout(layout)
+        self.grid_wdg.setLayout(layout)
 
-        group_wdg = QWidget()
+        group_wdg = QGroupBox()
+        # group_wdg.setMinimumHeight(150)
+        group_wdg.setMaximumHeight(150)
         group_wdg_layout = QVBoxLayout()
         group_wdg_layout.setSpacing(0)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
@@ -186,17 +195,15 @@ class SelectFOV(QWidget):
         )
         group_wdg_layout.addWidget(_spacing_y)
 
-        return grid_wdg
-
-    def _center_wdg_gui(self):
-
-        center_wdg = QWidget()
+    def _set_center_wdg_gui(self):
         layout = QVBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-        center_wdg.setLayout(layout)
+        self.center_wdg.setLayout(layout)
 
-        group_wdg = QWidget()
+        group_wdg = QGroupBox()
+        # group_wdg.setMinimumHeight(150)
+        group_wdg.setMaximumHeight(150)
         group_wdg_layout = QVBoxLayout()
         group_wdg_layout.setSpacing(0)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
@@ -245,8 +252,6 @@ class SelectFOV(QWidget):
         )
         group_wdg_layout.addWidget(nFOV)
 
-        return center_wdg
-
     def _make_QHBoxLayout_wdg_with_label(self, label: QLabel, wdg: QWidget):
         widget = QWidget()
         layout = QHBoxLayout()
@@ -257,24 +262,25 @@ class SelectFOV(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def _on_tab_changed(self, tab_index: int):
+    def display(self, i):
+        self.stack.setCurrentIndex(i)
 
-        if tab_index == 0:  # Center
-            self.scene.clear()
-            nFOV = self.number_of_FOV_c.value()
-            area_x = self.plate_area_x_c.value()
-            area_y = self.plate_area_y_c.value()
-            self._set_FOV_and_mode(nFOV, "Center", area_x, area_y)
-
-        elif tab_index == 1:  # Random
+        if i == 0:  # Random
             self.scene.clear()
             nFOV = self.number_of_FOV.value()
             area_x = self.plate_area_x.value()
             area_y = self.plate_area_y.value()
             self._set_FOV_and_mode(nFOV, "Random", area_x, area_y)
 
-        elif tab_index == 2:  # Grid
+        elif i == 1:  # Grid
             self.scene.clear()
+
+        elif i == 2:  # Center
+            self.scene.clear()
+            nFOV = self.number_of_FOV_c.value()
+            area_x = self.plate_area_x_c.value()
+            area_y = self.plate_area_y_c.value()
+            self._set_FOV_and_mode(nFOV, "Center", area_x, area_y)
 
     def _on_area_x_changed(self, value: int):
 
@@ -337,7 +343,11 @@ class SelectFOV(QWidget):
     def _on_random_button_pressed(self):
         self.scene.clear()
 
-        mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
+        try:
+            mode = self.lst.currentItem().text()
+        except AttributeError:
+            mode = "Random"
+
         nFOV = self.number_of_FOV.value()
         area_x = self.plate_area_x.value()
         area_y = self.plate_area_y.value()

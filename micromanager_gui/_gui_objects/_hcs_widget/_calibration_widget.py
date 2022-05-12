@@ -65,7 +65,7 @@ class PlateCalibration(QWidget):
         bottom_group = QGroupBox()
         bottom_group_layout = QVBoxLayout()
         bottom_group_layout.setSpacing(10)
-        bottom_group_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_group_layout.setContentsMargins(10, 10, 10, 10)
         bottom_group.setLayout(bottom_group_layout)
 
         self.info_lbl = QLabel()

@@ -133,6 +133,7 @@ class HCSWidget(QWidget):
         wdg_layout.addWidget(view_group)
 
         FOV_group = QGroupBox(title="FOVs Selection")
+        FOV_group.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         FOV_gp_layout = QVBoxLayout()
         FOV_gp_layout.setSpacing(0)
         FOV_gp_layout.setContentsMargins(10, 10, 10, 10)
