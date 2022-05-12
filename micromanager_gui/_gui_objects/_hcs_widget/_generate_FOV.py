@@ -37,8 +37,6 @@ class SelectFOV(QWidget):
 
         self._create_widget()
 
-        # self._set_enabled(False)
-
     def _create_widget(self):
         self.lst = QListWidget()
         self.lst.insertItem(0, "Random")
