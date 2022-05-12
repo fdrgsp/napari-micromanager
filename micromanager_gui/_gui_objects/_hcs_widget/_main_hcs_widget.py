@@ -85,9 +85,11 @@ class HCSWidget(QWidget):
         self.ch_and_pos_list.position_list_button.clicked.connect(
             self._generate_pos_list
         )
+        self.saving_tab = QWidget()
 
         tab.addTab(select_plate_tab, "  Plate, FOVs and Calibration  ")
         tab.addTab(self.ch_and_pos_list, "  Channel and Positions List  ")
+        tab.addTab(self.saving_tab, "  Saving  ")
 
         return tab
 
