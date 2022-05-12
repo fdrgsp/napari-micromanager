@@ -38,8 +38,8 @@ class SelectFOV(QWidget):
     def _create_widget(self):
 
         layout = QHBoxLayout()
-        layout.setSpacing(5)
-        layout.setContentsMargins(10, 0, 10, 0)
+        layout.setSpacing(10)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
         self.tab_wdg = QTabWidget()
@@ -58,7 +58,7 @@ class SelectFOV(QWidget):
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
-        self.view.setFixedSize(200, 150)
+        self.view.setFixedSize(200, 160)
 
         layout.addWidget(self.view)
 
@@ -73,7 +73,7 @@ class SelectFOV(QWidget):
 
         group_wdg = QWidget()
         group_wdg_layout = QVBoxLayout()
-        group_wdg_layout.setSpacing(0)
+        group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
         layout.addWidget(group_wdg)
@@ -133,7 +133,7 @@ class SelectFOV(QWidget):
 
         group_wdg = QWidget()
         group_wdg_layout = QVBoxLayout()
-        group_wdg_layout.setSpacing(0)
+        group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
         layout.addWidget(group_wdg)
@@ -198,7 +198,7 @@ class SelectFOV(QWidget):
 
         group_wdg = QWidget()
         group_wdg_layout = QVBoxLayout()
-        group_wdg_layout.setSpacing(0)
+        group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
         layout.addWidget(group_wdg)
@@ -345,7 +345,7 @@ class SelectFOV(QWidget):
 
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
 
-        max_size_y = 140
+        max_size_y = 150
 
         main_pen = QPen(Qt.magenta)
         main_pen.setWidth(4)
@@ -379,7 +379,7 @@ class SelectFOV(QWidget):
                     )
 
         else:
-            max_size_x = 140 if self._size_x == self._size_y else 190
+            max_size_x = 150 if self._size_x == self._size_y else 190
 
             self.scene.addRect(0, 0, max_size_x, max_size_y, main_pen)
 

@@ -1,3 +1,12 @@
+coverslip 12x42:
+  circular: false
+  cols: 1
+  id: coverslip 12x42
+  rows: 1
+  well_size_x: 12.0
+  well_size_y: 42.0
+  well_spacing_x: 0.0
+  well_spacing_y: 0.0
 coverslip 22mm:
   circular: false
   cols: 1
@@ -5,6 +14,15 @@ coverslip 22mm:
   rows: 1
   well_size_x: 22.0
   well_size_y: 22.0
+  well_spacing_x: 0.0
+  well_spacing_y: 0.0
+coverslip 22x42:
+  circular: false
+  cols: 1
+  id: coverslip 22x42
+  rows: 1
+  well_size_x: 22.0
+  well_size_y: 42.0
   well_spacing_x: 0.0
   well_spacing_y: 0.0
 standard 12:
