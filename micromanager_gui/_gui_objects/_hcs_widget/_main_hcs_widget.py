@@ -165,6 +165,20 @@ class HCSWidget(QWidget):
         wdg_layout.setContentsMargins(10, 15, 10, 10)
         wdg.setLayout(wdg_layout)
 
+        acq_wdg = QWidget()
+        acq_wdg_layout = QHBoxLayout()
+        acq_wdg_layout.setSpacing(0)
+        acq_wdg_layout.setContentsMargins(0, 0, 0, 0)
+        acq_wdg.setLayout(acq_wdg_layout)
+        acquisition_order_label = QLabel(text="Acquisition Order:")
+        lbl_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        acquisition_order_label.setSizePolicy(lbl_sizepolicy)
+        self.acquisition_order_comboBox = QComboBox()
+        self.acquisition_order_comboBox.setMinimumWidth(100)
+        self.acquisition_order_comboBox.addItems(["tpzc", "tpcz", "ptzc", "ptcz"])
+        acq_wdg_layout.addWidget(acquisition_order_label)
+        acq_wdg_layout.addWidget(self.acquisition_order_comboBox)
+
         btn_sizepolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         min_width = 130
         icon_size = 40
@@ -185,6 +199,10 @@ class HCSWidget(QWidget):
         self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))
         self.cancel_Button.setIconSize(QSize(icon_size, icon_size))
 
+        spacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        wdg_layout.addWidget(acq_wdg)
+        wdg_layout.addItem(spacer)
         wdg_layout.addWidget(self.run_Button)
         wdg_layout.addWidget(self.pause_Button)
         wdg_layout.addWidget(self.cancel_Button)
