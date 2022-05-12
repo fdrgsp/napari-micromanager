@@ -117,14 +117,11 @@ class PlateCalibration(QWidget):
             return
 
         if self.plate.get("circular"):
-            text = (
-                "Add 3 points on the edge of well A1\n"
-                "and click on 'Calibrate Plate'."
-            )
+            text = "Add 3 points on the edge\n" "and click on 'Calibrate Plate'."
         else:
             text = (
                 "Add 2 points (opposite vertices)\n"
-                "or 4 points (1 point per side) of well A1\n"
+                "or add 4 points (1 point per side)\n"
                 "and click on 'Calibrate Plate'."
             )
         self.info_lbl.setText(text)
@@ -210,6 +207,9 @@ class PlateCalibration(QWidget):
         x_max, x_min = (max(x_list), min(x_list))
         y_max, y_min = (max(y_list), min(y_list))
 
+        if x_max == x_min or y_max == y_min:
+            raise ValueError("Invalid Coordinates!")
+
         x_val = abs(x_min) if x_min < 0 else 0
         y_val = abs(y_min) if y_min < 0 else 0
 
@@ -280,7 +280,7 @@ class CalibrationTable(QWidget):
     def _create_wdg(self):
         layout = QGridLayout()
         layout.setSpacing(10)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(10, 0, 0, 0)
         self.setLayout(layout)
 
         self.well_lbl = QLabel()
