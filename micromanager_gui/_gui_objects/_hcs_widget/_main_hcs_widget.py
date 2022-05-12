@@ -57,8 +57,6 @@ class HCSWidget(QWidget):
 
         self._update_wp_combo()
 
-        self._mmc.loadSystemConfiguration()
-
     def _create_main_wdg(self):  # sourcery skip: class-extract-method
 
         layout = QVBoxLayout()

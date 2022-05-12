@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, overload
 
 import yaml
 from fonticon_mdi6 import MDI6
@@ -43,6 +43,8 @@ class PlateCalibration(QWidget):
         self.is_calibrated = False
 
         self._create_gui()
+
+        self._mmc.loadSystemConfiguration()
 
     def _create_gui(self):
 
@@ -121,13 +123,15 @@ class PlateCalibration(QWidget):
         self.info_lbl.setText(text)
 
         # to test
-        # self.table_1.tb.setRowCount(3)
-        # self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
+        # self.table_1.tb.setRowCount(4)
+        # self.table_1.tb.setItem(0, 0, QTableWidgetItem("-200"))
         # self.table_1.tb.setItem(0, 1, QTableWidgetItem("200"))
-        # self.table_1.tb.setItem(1, 0, QTableWidgetItem("-200"))
+        # self.table_1.tb.setItem(1, 0, QTableWidgetItem("100"))
         # self.table_1.tb.setItem(1, 1, QTableWidgetItem("100"))
-        # self.table_1.tb.setItem(2, 0, QTableWidgetItem("-100.675"))
-        # self.table_1.tb.setItem(2, 1, QTableWidgetItem("-0"))
+        # self.table_1.tb.setItem(2, 0, QTableWidgetItem("100"))
+        # self.table_1.tb.setItem(2, 1, QTableWidgetItem("200"))
+        # self.table_1.tb.setItem(3, 0, QTableWidgetItem("-200"))
+        # self.table_1.tb.setItem(3, 1, QTableWidgetItem("100"))
 
     def _set_calibrated(self, state: bool):
         if state:
@@ -144,8 +148,8 @@ class PlateCalibration(QWidget):
             )
             self.cal_lbl.setText("Plate non Calibrated!")
 
-    def get_center_of_round_well(
-        self, a: Tuple[int, int], b: Tuple[int, int], c: Tuple[int, int]
+    def get_circle_center_(
+        self, a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]
     ) -> Tuple[int, int]:
         """Find the center of a round well given 3 edge points"""
         # eq circle (x - x1)^2 + (y - y1)^2 = r^2
@@ -159,37 +163,59 @@ class PlateCalibration(QWidget):
 
         x, y = symbols("x y")
 
-        eq1 = Eq((x - x1) ** 2 + (y - y1) ** 2, (x - x2) ** 2 + (y - y2) ** 2)
-        eq2 = Eq((x - x1) ** 2 + (y - y1) ** 2, (x - x3) ** 2 + (y - y3) ** 2)
+        eq1 = Eq(
+            (x - round(x1)) ** 2 + (y - round(y1)) ** 2,
+            (x - round(x2)) ** 2 + (y - round(y2)) ** 2,
+        )
+        eq2 = Eq(
+            (x - round(x1)) ** 2 + (y - round(y1)) ** 2,
+            (x - round(x3)) ** 2 + (y - round(y3)) ** 2,
+        )
 
         dict_center = solve((eq1, eq2), (x, y))
         try:
             xc = dict_center[x]
             yc = dict_center[y]
-            print(xc, yc)
         except TypeError as e:
             self._set_calibrated(False)
             raise TypeError("Invalid Coordinates!") from e
 
         return xc, yc
 
-    def get_center_of_squared_well(
-        self,
-        a: Tuple[float, float],
-        b: Tuple[float, float],
-        c: Tuple[float, float],
-        d: Tuple[float, float],
-    ) -> Tuple[float, float]:
-        """Find the center of a square well given 4 edge points"""
+    @overload
+    def get_rect_center(self, a: Tuple, b: Tuple, c: Tuple, d: Tuple) -> Tuple:
+        ...
 
-        x_list = [x[0] for x in [a, b, c, d]]
-        y_list = [y[1] for y in [a, b, c, d]]
+    @overload
+    def get_rect_center(self, a: Tuple, b: Tuple) -> Tuple:
+        ...
 
+    def get_rect_center(self, *args) -> Tuple:
+        """
+        Find the center of a rectanle/square well given
+        two opposite verices coordinates or 4 points on the edges.
+        """
+        x_list = [x[0] for x in [*args]]
+        y_list = [y[1] for y in [*args]]
         x_max, x_min = (max(x_list), min(x_list))
         y_max, y_min = (max(y_list), min(y_list))
 
-        xc = (x_max - x_min) / 2
-        yc = (y_max - y_min) / 2
+        x_val = abs(x_min) if x_min < 0 else 0
+        y_val = abs(y_min) if y_min < 0 else 0
+
+        x1, y1 = (x_min + x_val, y_max + y_val)
+        x2, y2 = (x_max + x_val, y_min + y_val)
+
+        x_max_, x_min_ = (max(x1, x2), min(x1, x2))
+        y_max_, y_min_ = (max(y1, y2), min(y1, y2))
+
+        xc = ((x_max_ - x_min_) / 2) - x_val
+        yc = ((y_max_ - y_min_) / 2) - y_val
+
+        if x_min > 0:
+            xc += x_min
+        if y_min > 0:
+            yc += y_min
 
         return xc, yc
 
@@ -208,14 +234,15 @@ class PlateCalibration(QWidget):
 
         pos = ()
         for r in range(3 if self.plate.get("circular") else 4):
-            x = round(float(self.table_1.tb.item(r, 0).text()))
-            y = round(float(self.table_1.tb.item(r, 1).text()))
+            x = float(self.table_1.tb.item(r, 0).text())
+            y = float(self.table_1.tb.item(r, 1).text())
             pos += ((x, y),)
 
         if self.plate.get("circular"):
-            xc, yc = self.get_center_of_round_well(*pos)
+
+            xc, yc = self.get_circle_center_(*pos)
         else:
-            xc, yc = self.get_center_of_squared_well(*pos)
+            xc, yc = self.get_rect_center(*pos)
 
         self.calibration_well = tuple()
         self.calibration_well = ("A1", xc, yc)
