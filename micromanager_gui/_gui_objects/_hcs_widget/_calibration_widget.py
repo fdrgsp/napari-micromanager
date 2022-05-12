@@ -256,7 +256,6 @@ class PlateCalibration(QWidget):
             pos += ((x, y),)
 
         if self.plate.get("circular"):
-
             xc, yc = self.get_circle_center_(*pos)
         else:
             xc, yc = self.get_rect_center(*pos)

@@ -337,9 +337,11 @@ class HCSWidget(QWidget):
         # center stage coords of calibrated well a1
         a1_x = self.calibration.calibration_well[1]
         a1_y = self.calibration.calibration_well[2]
+        print(a1_x, a1_y)
 
         # distance between welld from plate database (mm)
         x_step, y_step = plate_info.get("well_distance")
+        print(x_step, y_step)
 
         cal_well_list = []
         for pos in well_list:
