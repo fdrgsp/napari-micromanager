@@ -92,6 +92,22 @@ class ChannelPositionWidget(QWidget):
         wdg_layout.addWidget(self.clear_positions_button)
         group_layout.addWidget(wdg)
 
+        # table
+        self.stage_tableWidget = QTableWidget()
+        self.stage_tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.stage_tableWidget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.stage_tableWidget.setMinimumHeight(90)
+        hdr = self.stage_tableWidget.horizontalHeader()
+        hdr.setSectionResizeMode(hdr.Stretch)
+        self.stage_tableWidget.verticalHeader().setVisible(True)
+        self.stage_tableWidget.setTabKeyNavigation(True)
+        self.stage_tableWidget.setColumnCount(4)
+        self.stage_tableWidget.setRowCount(0)
+        self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
+        group_layout.addWidget(self.stage_tableWidget)
+
+        self.stage_tableWidget.cellDoubleClicked.connect(self.move_to_position)
+
         assign_z_wdg = QWidget()
         assign_z_wdg_layout = QHBoxLayout()
         assign_z_wdg_layout.setSpacing(5)
@@ -108,22 +124,6 @@ class ChannelPositionWidget(QWidget):
         assign_z_wdg_layout.addWidget(self.z_doublespinbox)
         assign_z_wdg_layout.addWidget(self.assign_z)
         group_layout.addWidget(assign_z_wdg)
-
-        # table
-        self.stage_tableWidget = QTableWidget()
-        self.stage_tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.stage_tableWidget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.stage_tableWidget.setMinimumHeight(90)
-        hdr = self.stage_tableWidget.horizontalHeader()
-        hdr.setSectionResizeMode(hdr.Stretch)
-        self.stage_tableWidget.verticalHeader().setVisible(False)
-        self.stage_tableWidget.setTabKeyNavigation(True)
-        self.stage_tableWidget.setColumnCount(4)
-        self.stage_tableWidget.setRowCount(0)
-        self.stage_tableWidget.setHorizontalHeaderLabels(["Well", "X", "Y", "Z"])
-        group_layout.addWidget(self.stage_tableWidget)
-
-        self.stage_tableWidget.cellDoubleClicked.connect(self.move_to_position)
 
         return group
 
