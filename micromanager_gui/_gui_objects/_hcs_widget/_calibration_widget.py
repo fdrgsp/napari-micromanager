@@ -116,10 +116,17 @@ class PlateCalibration(QWidget):
             self.plate = None
             return
 
-        text = (
-            f"Add {3 if self.plate.get('circular') else 4} "
-            f"points on the edge of well A1\nand click on 'Calibrate Plate'."
-        )
+        if self.plate.get("circular"):
+            text = (
+                "Add 3 points on the edge of well A1\n"
+                "and click on 'Calibrate Plate'."
+            )
+        else:
+            text = (
+                "Add 2 points (opposite vertices)\n"
+                "or 4 points (1 point per side)\n"
+                "of well A1 and click on 'Calibrate Plate'."
+            )
         self.info_lbl.setText(text)
 
         # to test
