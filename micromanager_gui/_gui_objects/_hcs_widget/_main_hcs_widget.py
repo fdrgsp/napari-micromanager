@@ -312,7 +312,9 @@ class HCSWidget(QWidget):
             self.wp_combo.clear()
             self.wp_combo.addItems(plates)
         if new_plate:
-            self.wp_combo.setCurrentText(list(new_plate.keys())[0])
+            value = list(new_plate.keys())[0]
+            self.wp_combo.setCurrentText(value)
+            self._on_combo_changed(value)
         else:
             items = [self.wp_combo.itemText(i) for i in range(self.wp_combo.count())]
             self.wp_combo.setCurrentText(items[0])
