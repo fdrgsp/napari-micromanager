@@ -270,6 +270,8 @@ class PlateCalibration(QWidget):
 
         self._set_calibrated(True)
 
+        print("A1", xc, yc)
+
 
 class CalibrationTable(QWidget):
     def __init__(self, *, mmcore: Optional[CMMCorePlus] = None):

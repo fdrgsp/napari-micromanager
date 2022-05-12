@@ -58,7 +58,8 @@ class SelectFOV(QWidget):
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
-        self.view.setFixedSize(200, 160)
+        self._view_size = 200
+        self.view.setFixedSize(self._view_size, self._view_size)
 
         layout.addWidget(self.view)
 
@@ -84,7 +85,7 @@ class SelectFOV(QWidget):
         plate_area_label_x.setText("Area x (mm):")
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
-        self.plate_area_x.setMinimum(1)
+        self.plate_area_x.setMinimum(0.01)
         self.plate_area_x.valueChanged.connect(self._on_area_x_changed)
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_x, self.plate_area_x
@@ -97,7 +98,7 @@ class SelectFOV(QWidget):
         plate_area_label_y.setText("Area y (mm):")
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
-        self.plate_area_y.setMinimum(1)
+        self.plate_area_y.setMinimum(0.01)
         self.plate_area_y.valueChanged.connect(self._on_area_y_changed)
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_y, self.plate_area_y
@@ -166,7 +167,7 @@ class SelectFOV(QWidget):
         spacing_x_lbl.setText("Spacing x (µm):")
         self.spacing_x = QSpinBox()
         self.spacing_x.setAlignment(AlignCenter)
-        self.spacing_x.setMinimum(1)
+        self.spacing_x.setMinimum(0)
         # self.spacing_x.valueChanged.connect(self._on_spacing_x_changed)
         _spacing_x = self._make_QHBoxLayout_wdg_with_label(
             spacing_x_lbl, self.spacing_x
@@ -179,7 +180,7 @@ class SelectFOV(QWidget):
         spacing_y_lbl.setText("Spacing y (µm):")
         self.spacing_y = QSpinBox()
         self.spacing_y.setAlignment(AlignCenter)
-        self.spacing_y.setMinimum(1)
+        self.spacing_y.setMinimum(0)
         # self.spacing_y.valueChanged.connect(self._on_spacing_y_changed)
         _spacing_y = self._make_QHBoxLayout_wdg_with_label(
             spacing_y_lbl, self.spacing_y
@@ -345,7 +346,20 @@ class SelectFOV(QWidget):
 
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
 
-        max_size_y = 150
+        # max_size_y = 150
+
+        if self._size_y == self._size_x or self._size_y < self._size_x:
+            max_size_y = 150
+        else:
+            max_size_y = 190
+
+        if self._size_x == self._size_y or self._size_x < self._size_y:
+            max_size_x = 150
+        else:
+            max_size_x = 190
+
+        sy = (self._view_size - max_size_y) / 2  # 25 or 5
+        sx = (self._view_size - max_size_x) / 2  # 25 or 5
 
         main_pen = QPen(Qt.magenta)
         main_pen.setWidth(4)
@@ -353,21 +367,29 @@ class SelectFOV(QWidget):
         area_pen.setWidth(4)
 
         if self._is_circular:
-            self.scene.addEllipse(0, 0, max_size_y, max_size_y, main_pen)
+            # self.scene.addEllipse(sx, sy, max_size_y, max_size_y, main_pen)
+            self.scene.addEllipse(sx, sy, max_size_x, max_size_y, main_pen)
 
             if mode == "Center":
                 self.scene.clear()
-                self.scene.addEllipse(0, 0, max_size_y, max_size_y, area_pen)
-                center_x, center_y = (max_size_y / 2, max_size_y / 2)
+                # self.scene.addEllipse(sx, sy, max_size_y, max_size_y, area_pen)
+                self.scene.addEllipse(sx, sy, max_size_x, max_size_y, area_pen)
+                center_x, center_y = (self._view_size / 2, self._view_size / 2)
                 self.scene.addItem(
                     FOVPoints(
-                        center_x, center_y, 5, 5, "Center", max_size_y, max_size_y
+                        center_x,
+                        center_y,
+                        5,
+                        5,
+                        "Center",
+                        self._view_size,
+                        self._view_size,
                     )
                 )
 
             elif mode == "Random":
-                diameter = (max_size_y * area_x) / self._size_x
-                center = (max_size_y - diameter) / 2
+                diameter = (max_size_x * area_x) / self._size_x
+                center = (self._view_size - diameter) / 2
 
                 fov_area = QRectF(center, center, diameter, diameter)
                 self.scene.addEllipse(fov_area, area_pen)
@@ -375,39 +397,50 @@ class SelectFOV(QWidget):
                 points = self._random_points_in_circle(nFOV, diameter, center)
                 for p in points:
                     self.scene.addItem(
-                        FOVPoints(p[0], p[1], 5, 5, "Random", max_size_y, max_size_y)
+                        FOVPoints(
+                            p[0], p[1], 5, 5, "Random", self._view_size, self._view_size
+                        )
                     )
 
         else:
-            max_size_x = 150 if self._size_x == self._size_y else 190
-
-            self.scene.addRect(0, 0, max_size_x, max_size_y, main_pen)
+            self.scene.addRect(sx, sy, max_size_x, max_size_y, main_pen)
 
             if mode == "Center":
                 self.scene.clear()
-                self.scene.addRect(0, 0, max_size_x, max_size_y, area_pen)
-                center_x, center_y = (max_size_x / 2, max_size_y / 2)
+                self.scene.addRect(sx, sy, max_size_x, max_size_y, area_pen)
+                center_x, center_y = (
+                    (max_size_x + (sx * 2)) / 2,
+                    (max_size_y + (sy * 2)) / 2,
+                )
                 self.scene.addItem(
                     FOVPoints(
-                        center_x, center_y, 5, 5, "Center", max_size_x, max_size_y
+                        center_x,
+                        center_y,
+                        5,
+                        5,
+                        "Center",
+                        self._view_size,
+                        self._view_size,
                     )
                 )
 
             elif mode == "Random":
                 size_x = (max_size_x * area_x) / self._size_x
                 size_y = (max_size_y * area_y) / self._size_y
-                center_x = (max_size_x - size_x) / 2
-                center_y = (max_size_y - size_y) / 2
+                center_x = (self._view_size - size_x) / 2
+                center_y = (self._view_size - size_y) / 2
 
                 fov_area = QRectF(center_x, center_y, size_x, size_y)
                 self.scene.addRect(fov_area, area_pen)
 
                 points = self._random_points_in_square(
-                    nFOV, size_x, size_y, max_size_x, max_size_y
+                    nFOV, size_x, size_y, self._view_size, self._view_size
                 )
                 for p in points:
                     self.scene.addItem(
-                        FOVPoints(p[0], p[1], 5, 5, "Random", max_size_x, max_size_y)
+                        FOVPoints(
+                            p[0], p[1], 5, 5, "Random", self._view_size, self._view_size
+                        )
                     )
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
