@@ -117,7 +117,9 @@ class PlateCalibration(QWidget):
             return
 
         if self.plate.get("circular"):
-            text = "Add 3 points on the edge\n" "and click on 'Calibrate Plate'."
+            text = (
+                "Add 3 points on the circonference\n" "and click on 'Calibrate Plate'."
+            )
         else:
             text = (
                 "Add 2 points (opposite vertices)\n"

@@ -78,7 +78,7 @@ class HCSWidget(QWidget):
     def _add_tab_wdg(self):
 
         tab = QTabWidget()
-        # tab.setTabPosition(QTabWidget.West)
+        tab.setTabPosition(QTabWidget.West)
 
         select_plate_tab = self._create_plate_and_fov_tab()
         self.ch_and_pos_list = ChannelPositionWidget()
