@@ -344,18 +344,13 @@ class HCSWidget(QWidget):
         # distance between wells from plate database (mm)
         x_step, y_step = plate_info.get("well_distance")
 
-        print("a1_x", a1_x, "a1_y", a1_y)
-        print("x_step", x_step, "y_step", y_step)
-
         cal_well_list = []
         for pos in well_list:
             well, row, col = pos
-            print("     pos", pos)
             # find center stage coords for all the selected wells
             x = a1_x + ((x_step * 1000) * col)
             y = a1_y + ((y_step * 1000) * row)
             cal_well_list.append((well, x, y))
-            print("     x", x, "y", y)
 
         fovs = [
             item.getPositionsInfo()
@@ -366,20 +361,17 @@ class HCSWidget(QWidget):
         row = 0
         for pos in cal_well_list:
             well_name, cx_cal, cy_cal = pos
-            print("             pos", pos)
 
             # well dimensions from database (mm)
             well_x, well_y = plate_info.get("well_size")
             # well dimensions from database (um)
             well_x_um = well_x * 1000
             well_y_um = well_y * 1000
-            print("             well_x_um", well_x_um, "well_y_um", well_y_um)
 
             for idx, fov in enumerate(fovs):
 
                 # pixel coord fx and fy + pixel width and height drawing
                 fx, fy, w, h = fov
-                print("                 fov", fov)
 
                 # find 1 px value in um depending on well dimension
                 px_val_x = well_x_um / w
