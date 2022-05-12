@@ -202,6 +202,9 @@ class PlateCalibration(QWidget):
         Find the center of a rectanle/square well given
         two opposite verices coordinates or 4 points on the edges.
         """
+
+        # add block if wrong coords!!!
+
         x_list = [x[0] for x in [*args]]
         y_list = [y[1] for y in [*args]]
         x_max, x_min = (max(x_list), min(x_list))
