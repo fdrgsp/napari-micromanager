@@ -5,17 +5,20 @@ import numpy as np
 from qtpy.QtCore import QRectF, Qt
 from qtpy.QtGui import QPen
 from qtpy.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
-    QComboBox,
     QDoubleSpinBox,
     QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
+    QListWidget,
     QPushButton,
     QSizePolicy,
     QSpinBox,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -34,60 +37,81 @@ class SelectFOV(QWidget):
 
         self._create_widget()
 
-        self._set_enabled(False)
+        # self._set_enabled(False)
 
     def _create_widget(self):
+        self.lst = QListWidget()
+        self.lst.insertItem(0, "Random")
+        self.lst.insertItem(1, "Grid")
+        self.lst.insertItem(2, "Center")
+        self.lst.setMaximumWidth(self.lst.sizeHintForColumn(0) + 10)
+        self.lst.setMaximumHeight(150)
+        self.lst.currentRowChanged.connect(self.display)
 
-        main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(5)
-        self.setLayout(main_layout)
+        self.stack = QStackedWidget()
 
-        left_wdg = QWidget()
+        self.center_wdg = QWidget()
+        self.random_wdg = QWidget()
+        self.grid_wdg = QWidget()
+
+        self._set_random_wdg_gui()
+        self._set_grid_wdg_gui()
+        self._set_center_wdg_gui()
+
+        self.stack.addWidget(self.random_wdg)
+        self.stack.addWidget(self.grid_wdg)
+        self.stack.addWidget(self.center_wdg)
+
+        self.scene = QGraphicsScene()
+        self.view = QGraphicsView(self.scene, self)
+        self.view.setStyleSheet("background:grey;")
+        self.view.setFixedSize(200, 150)
+
+        hbox = QHBoxLayout()
+        hbox.setSpacing(5)
+        hbox.setContentsMargins(10, 0, 10, 0)
+        hbox.addWidget(self.lst)
+        hbox.addWidget(self.stack)
+        hbox.addWidget(self.view)
+        self.setLayout(hbox)
+
+    def _set_random_wdg_gui(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        left_wdg.setLayout(layout)
+        self.random_wdg.setLayout(layout)
 
-        fov_label = QLabel()
-        fov_label.setMinimumWidth(120)
-        fov_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        fov_label.setText("Selection mode:")
-        self.FOV_selection_mode_combo = QComboBox()
-        self.FOV_selection_mode_combo.addItems(["Random", "Center"])
-        self.FOV_selection_mode_combo.currentTextChanged.connect(
-            self._on_FOV_selection_changed
-        )
-        mode = self._make_QHBoxLayout_wdg_with_label(
-            fov_label, self.FOV_selection_mode_combo
-        )
-        layout.addWidget(mode)
+        group_wdg = QGroupBox()
+        group_wdg.setMinimumHeight(150)
+        group_wdg_layout = QVBoxLayout()
+        group_wdg_layout.setSpacing(5)
+        group_wdg_layout.setContentsMargins(5, 5, 5, 5)
+        group_wdg.setLayout(group_wdg_layout)
+        layout.addWidget(group_wdg)
 
-        self.plate_area_label_x = QLabel()
-        self.plate_area_label_x.setMinimumWidth(120)
-        self.plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.plate_area_label_x.setText("Area FOV x (mm):")
+        plate_area_label_x = QLabel()
+        plate_area_label_x.setMinimumWidth(120)
+        plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        plate_area_label_x.setText("Area FOV x (mm):")
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
         self.plate_area_x.setMinimum(1)
         self.plate_area_x.valueChanged.connect(self._on_area_x_changed)
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
-            self.plate_area_label_x, self.plate_area_x
+            plate_area_label_x, self.plate_area_x
         )
-        layout.addWidget(_plate_area_x)
+        group_wdg_layout.addWidget(_plate_area_x)
 
-        self.plate_area_label_y = QLabel()
-        self.plate_area_label_y.setMinimumWidth(120)
-        self.plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.plate_area_label_y.setText("Area FOV y (mm):")
+        plate_area_label_y = QLabel()
+        plate_area_label_y.setMinimumWidth(120)
+        plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        plate_area_label_y.setText("Area FOV y (mm):")
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
         self.plate_area_y.setMinimum(1)
         self.plate_area_y.valueChanged.connect(self._on_area_y_changed)
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
-            self.plate_area_label_y, self.plate_area_y
+            plate_area_label_y, self.plate_area_y
         )
-        layout.addWidget(_plate_area_y)
+        group_wdg_layout.addWidget(_plate_area_y)
 
         number_of_FOV_label = QLabel()
         number_of_FOV_label.setMinimumWidth(120)
@@ -101,27 +125,125 @@ class SelectFOV(QWidget):
         nFOV = self._make_QHBoxLayout_wdg_with_label(
             number_of_FOV_label, self.number_of_FOV
         )
-        layout.addWidget(nFOV)
+        group_wdg_layout.addWidget(nFOV)
 
-        self.random_button = QPushButton(text="New Random FOV(s)")
+        self.random_button = QPushButton(text="Generate Random FOV(s)")
         self.random_button.clicked.connect(self._on_random_button_pressed)
-        layout.addWidget(self.random_button)
+        group_wdg_layout.addWidget(self.random_button)
 
-        main_layout.addWidget(left_wdg)
+    def _set_grid_wdg_gui(self):
+        layout = QVBoxLayout()
+        self.grid_wdg.setLayout(layout)
 
-        self.scene = QGraphicsScene()
-        self.view = QGraphicsView(self.scene, self)
-        self.view.setStyleSheet("background:grey;")
-        self.view.setFixedSize(200, 150)
+        group_wdg = QGroupBox()
+        group_wdg.setMinimumHeight(150)
+        group_wdg_layout = QVBoxLayout()
+        group_wdg_layout.setSpacing(5)
+        group_wdg_layout.setContentsMargins(5, 5, 5, 5)
+        group_wdg.setLayout(group_wdg_layout)
+        layout.addWidget(group_wdg)
 
-        main_layout.addWidget(self.view)
+        rows_lbl = QLabel()
+        rows_lbl.setMinimumWidth(120)
+        rows_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        rows_lbl.setText("Rows:")
+        self.rows = QSpinBox()
+        self.rows.setAlignment(AlignCenter)
+        self.rows.setMinimum(1)
+        # self.rows.valueChanged.connect(self._on_row_changed)
+        _rows = self._make_QHBoxLayout_wdg_with_label(rows_lbl, self.rows)
+        group_wdg_layout.addWidget(_rows)
 
-    def _set_enabled(self, enabled: bool):
-        self.FOV_selection_mode_combo.setEnabled(enabled)
-        self.random_button.setEnabled(enabled)
-        self.number_of_FOV.setEnabled(enabled)
-        self.plate_area_x.setEnabled(enabled)
-        self.plate_area_y.setEnabled(enabled)
+        cols_lbl = QLabel()
+        cols_lbl.setMinimumWidth(120)
+        cols_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        cols_lbl.setText("Columns:")
+        self.cols = QSpinBox()
+        self.cols.setAlignment(AlignCenter)
+        self.cols.setMinimum(1)
+        # self.cols.valueChanged.connect(self._on_col_changed)
+        _cols = self._make_QHBoxLayout_wdg_with_label(cols_lbl, self.cols)
+        group_wdg_layout.addWidget(_cols)
+
+        spacing_x_lbl = QLabel()
+        spacing_x_lbl.setMinimumWidth(120)
+        spacing_x_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        spacing_x_lbl.setText("Spacing x (µm):")
+        self.spacing_x = QSpinBox()
+        self.spacing_x.setAlignment(AlignCenter)
+        self.spacing_x.setMinimum(1)
+        # self.spacing_x.valueChanged.connect(self._on_spacing_x_changed)
+        _spacing_x = self._make_QHBoxLayout_wdg_with_label(
+            spacing_x_lbl, self.spacing_x
+        )
+        group_wdg_layout.addWidget(_spacing_x)
+
+        spacing_y_lbl = QLabel()
+        spacing_y_lbl.setMinimumWidth(120)
+        spacing_y_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        spacing_y_lbl.setText("Spacing y (µm):")
+        self.spacing_y = QSpinBox()
+        self.spacing_y.setAlignment(AlignCenter)
+        self.spacing_y.setMinimum(1)
+        # self.spacing_y.valueChanged.connect(self._on_spacing_y_changed)
+        _spacing_y = self._make_QHBoxLayout_wdg_with_label(
+            spacing_y_lbl, self.spacing_y
+        )
+        group_wdg_layout.addWidget(_spacing_y)
+
+    def _set_center_wdg_gui(self):
+        layout = QVBoxLayout()
+        self.center_wdg.setLayout(layout)
+
+        group_wdg = QGroupBox()
+        group_wdg.setMinimumHeight(150)
+        group_wdg_layout = QVBoxLayout()
+        group_wdg_layout.setSpacing(5)
+        group_wdg_layout.setContentsMargins(5, 5, 5, 5)
+        group_wdg.setLayout(group_wdg_layout)
+        layout.addWidget(group_wdg)
+
+        plate_area_label_x = QLabel()
+        plate_area_label_x.setMinimumWidth(120)
+        plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        plate_area_label_x.setText("Area FOV x (mm):")
+        self.plate_area_x_c = QDoubleSpinBox()
+        self.plate_area_x_c.setEnabled(False)
+        self.plate_area_x_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.plate_area_x_c.setAlignment(AlignCenter)
+        self.plate_area_x_c.setMinimum(1)
+        _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
+            plate_area_label_x, self.plate_area_x_c
+        )
+        group_wdg_layout.addWidget(_plate_area_x)
+
+        plate_area_label_y = QLabel()
+        plate_area_label_y.setMinimumWidth(120)
+        plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        plate_area_label_y.setText("Area FOV y (mm):")
+        self.plate_area_y_c = QDoubleSpinBox()
+        self.plate_area_y_c.setEnabled(False)
+        self.plate_area_y_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.plate_area_y_c.setAlignment(AlignCenter)
+        self.plate_area_y_c.setMinimum(1)
+        _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
+            plate_area_label_y, self.plate_area_y_c
+        )
+        group_wdg_layout.addWidget(_plate_area_y)
+
+        number_of_FOV_label = QLabel()
+        number_of_FOV_label.setMinimumWidth(120)
+        number_of_FOV_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        number_of_FOV_label.setText("Number of FOV:")
+        self.number_of_FOV_c = QSpinBox()
+        self.number_of_FOV_c.setEnabled(False)
+        self.number_of_FOV_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.number_of_FOV_c.setAlignment(AlignCenter)
+        self.number_of_FOV_c.setValue(1)
+        nFOV = self._make_QHBoxLayout_wdg_with_label(
+            number_of_FOV_label, self.number_of_FOV_c
+        )
+        group_wdg_layout.addWidget(nFOV)
 
     def _make_QHBoxLayout_wdg_with_label(self, label: QLabel, wdg: QWidget):
         widget = QWidget()
@@ -133,29 +255,31 @@ class SelectFOV(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def _on_FOV_selection_changed(self, value: str):
+    def display(self, i):
+        self.stack.setCurrentIndex(i)
 
-        self.random_button.setEnabled(value == "Random")
-        self.number_of_FOV.setEnabled(value == "Random")
-        self.plate_area_x.setEnabled(value == "Random")
-        self.plate_area_x.setValue(self._size_x)
-        if not self._is_circular:
-            self.plate_area_y.setEnabled(value == "Random")
-            self.plate_area_y.setValue(self._size_y)
+        if i == 0:  # Random
+            self.scene.clear()
+            nFOV = self.number_of_FOV.value()
+            area_x = self.plate_area_x.value()
+            area_y = self.plate_area_y.value()
+            self._set_FOV_and_mode(nFOV, "Random", area_x, area_y)
 
-        self.scene.clear()
+        elif i == 1:  # Grid
+            self.scene.clear()
 
-        nFOV = self.number_of_FOV.value()
-        area_x = self.plate_area_x.value()
-        area_y = self.plate_area_y.value()
-
-        self._set_FOV_and_mode(nFOV, value, area_x, area_y)
+        elif i == 2:  # Center
+            self.scene.clear()
+            nFOV = self.number_of_FOV_c.value()
+            area_x = self.plate_area_x_c.value()
+            area_y = self.plate_area_y_c.value()
+            self._set_FOV_and_mode(nFOV, "Center", area_x, area_y)
 
     def _on_area_x_changed(self, value: int):
 
         self.scene.clear()
 
-        mode = self.FOV_selection_mode_combo.currentText()
+        mode = "Random"
         nFOV = self.number_of_FOV.value()
         area_y = self.plate_area_y.value()
 
@@ -165,7 +289,7 @@ class SelectFOV(QWidget):
 
         self.scene.clear()
 
-        mode = self.FOV_selection_mode_combo.currentText()
+        mode = "Random"
         nFOV = self.number_of_FOV.value()
         area_x = self.plate_area_x.value()
 
@@ -175,7 +299,7 @@ class SelectFOV(QWidget):
 
         self.scene.clear()
 
-        mode = self.FOV_selection_mode_combo.currentText()
+        mode = "Random"
         area_x = self.plate_area_x.value()
         area_y = self.plate_area_y.value()
 
@@ -183,31 +307,40 @@ class SelectFOV(QWidget):
 
     def _load_plate_info(self, size_x, size_y, is_circular):
 
-        self.FOV_selection_mode_combo.setEnabled(True)
-
         self._size_x = size_x
         self._size_y = size_y
         self._is_circular = is_circular
 
-        enable = self.FOV_selection_mode_combo.currentText() == "Random"
-        self.random_button.setEnabled(enable)
-        self.number_of_FOV.setEnabled(enable)
-        self.plate_area_x.setEnabled(enable)
+        self.plate_area_x.setEnabled(True)
 
-        self.plate_area_x.setMaximum(self._size_x)
-        with signals_blocked(self.plate_area_x):
-            self.plate_area_x.setValue(self._size_x)
-        self.plate_area_y.setMaximum(self._size_y)
-        with signals_blocked(self.plate_area_y):
-            self.plate_area_y.setValue(self._size_y)
+        self._set_spinboxes_values(self.plate_area_x, self.plate_area_y)
+        self._set_spinboxes_values(self.plate_area_x_c, self.plate_area_y_c)
 
         self.plate_area_y.setEnabled(not self._is_circular)
+        self.plate_area_y.setButtonSymbols(
+            QAbstractSpinBox.NoButtons
+            if self._is_circular
+            else QAbstractSpinBox.UpDownArrows
+        )
 
         self._on_random_button_pressed()
 
+    def _set_spinboxes_values(self, spin_x, spin_y):
+        spin_x.setMaximum(self._size_x)
+        with signals_blocked(spin_x):
+            spin_x.setValue(self._size_x)
+        spin_y.setMaximum(self._size_y)
+        with signals_blocked(spin_y):
+            spin_y.setValue(self._size_y)
+
     def _on_random_button_pressed(self):
         self.scene.clear()
-        mode = self.FOV_selection_mode_combo.currentText()
+
+        try:
+            mode = self.lst.currentItem().text()
+        except AttributeError:
+            mode = "Random"
+
         nFOV = self.number_of_FOV.value()
         area_x = self.plate_area_x.value()
         area_y = self.plate_area_y.value()
@@ -287,8 +420,7 @@ class SelectFOV(QWidget):
             # random angle
             alpha = 2 * math.pi * random.random()
             # random radius
-            # r = (radius - 5) * math.sqrt(random.random())  # -5 because of point size
-            r = radius * math.sqrt(random.random())  # -5 because of point size
+            r = radius * math.sqrt(random.random())
             # calculating coordinates
             x = r * math.cos(alpha) + center + radius
             y = r * math.sin(alpha) + center + radius
@@ -296,10 +428,6 @@ class SelectFOV(QWidget):
         return points
 
     def _random_points_in_square(self, nFOV, size_x, size_y, max_size_x, max_size_y):
-        # x_left = ((max_size_x - size_x) / 2) + 5  # left bound
-        # x_right = x_left + size_x - 10  # right bound
-        # y_up = ((max_size_y - size_y) / 2) + 5  # upper bound
-        # y_down = y_up + size_y - 10  # lower bound
         x_left = (max_size_x - size_x) / 2  # left bound
         x_right = x_left + size_x  # right bound
         y_up = (max_size_y - size_y) / 2  # upper bound
@@ -367,6 +495,5 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = SelectFOV()
-    win._load_plate_info(10, 10, True)
     win.show()
     sys.exit(app.exec_())
