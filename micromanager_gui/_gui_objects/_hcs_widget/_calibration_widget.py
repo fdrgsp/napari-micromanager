@@ -236,11 +236,21 @@ class PlateCalibration(QWidget):
         if not self.plate:
             return
 
-        if self.table_1.tb.rowCount() < (3 if self.plate.get("circular") else 4):
+        if self.plate.get("circular"):
+            if self.table_1.tb.rowCount() < 3:
+                raise ValueError("Not enough points for well A1.")
+        elif self.table_1.tb.rowCount() < 2 or self.table_1.tb.rowCount() == 3:
             raise ValueError("Not enough points for well A1.")
 
         pos = ()
-        for r in range(3 if self.plate.get("circular") else 4):
+        if self.plate.get("circular"):
+            _range = 3
+        elif self.table_1.tb.rowCount() == 2:
+            _range = 2
+        elif self.table_1.tb.rowCount() >= 4:
+            _range = 4
+
+        for r in range(_range):
             x = float(self.table_1.tb.item(r, 0).text())
             y = float(self.table_1.tb.item(r, 1).text())
             pos += ((x, y),)
