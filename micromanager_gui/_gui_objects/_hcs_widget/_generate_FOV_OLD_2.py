@@ -1,9 +1,7 @@
 import math
 import random
-from typing import Optional
 
 import numpy as np
-from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import QRectF, Qt
 from qtpy.QtGui import QPen
 from qtpy.QtWidgets import (
@@ -24,21 +22,15 @@ from qtpy.QtWidgets import (
 )
 from superqt.utils import signals_blocked
 
-from micromanager_gui._core import get_core_singleton
-
 AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class SelectFOV(QWidget):
-    def __init__(self, *, mmcore: Optional[CMMCorePlus] = None):
+    def __init__(self):
         super().__init__()
 
-        self._mmc = mmcore or get_core_singleton()
-
-        self._mmc.loadSystemConfiguration()  # to remove
-
-        self._plate_size_x = None
-        self._plate_size_y = None
+        self._size_x = None
+        self._size_y = None
         self._is_circular = None
 
         self._create_widget()
@@ -67,8 +59,7 @@ class SelectFOV(QWidget):
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background:grey;")
         self._view_size = 200
-        self.scene.setSceneRect(QRectF(0, 0, self._view_size, self._view_size))
-        self.view.setFixedSize(self._view_size + 2, self._view_size + 2)
+        self.view.setFixedSize(self._view_size, self._view_size)
 
         layout.addWidget(self.view)
 
@@ -270,34 +261,25 @@ class SelectFOV(QWidget):
     def _on_tab_changed(self, tab_index: int):
 
         if tab_index == 0:  # Center
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
-
+            self.scene.clear()
             nFOV = self.number_of_FOV_c.value()
             area_x = self.plate_area_x_c.value()
             area_y = self.plate_area_y_c.value()
             self._set_FOV_and_mode(nFOV, "Center", area_x, area_y)
 
         elif tab_index == 1:  # Random
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
-
+            self.scene.clear()
             nFOV = self.number_of_FOV.value()
             area_x = self.plate_area_x.value()
             area_y = self.plate_area_y.value()
             self._set_FOV_and_mode(nFOV, "Random", area_x, area_y)
 
         elif tab_index == 2:  # Grid
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
+            self.scene.clear()
 
     def _on_area_x_changed(self, value: int):
-        for item in self.scene.items():
-            if isinstance(item, (WellArea, FOVPoints)):
-                self.scene.removeItem(item)
+
+        self.scene.clear()
 
         mode = "Random"
         nFOV = self.number_of_FOV.value()
@@ -306,9 +288,8 @@ class SelectFOV(QWidget):
         self._set_FOV_and_mode(nFOV, mode, value, area_y)
 
     def _on_area_y_changed(self, value: int):
-        for item in self.scene.items():
-            if isinstance(item, (WellArea, FOVPoints)):
-                self.scene.removeItem(item)
+
+        self.scene.clear()
 
         mode = "Random"
         nFOV = self.number_of_FOV.value()
@@ -318,9 +299,7 @@ class SelectFOV(QWidget):
 
     def _on_number_of_FOV_changed(self, value: int):
 
-        for item in self.scene.items():
-            if isinstance(item, FOVPoints):
-                self.scene.removeItem(item)
+        self.scene.clear()
 
         mode = "Random"
         area_x = self.plate_area_x.value()
@@ -330,10 +309,8 @@ class SelectFOV(QWidget):
 
     def _load_plate_info(self, size_x, size_y, is_circular):
 
-        self.scene.clear()
-
-        self._plate_size_x = size_x
-        self._plate_size_y = size_y
+        self._size_x = size_x
+        self._size_y = size_y
         self._is_circular = is_circular
 
         self.plate_area_x.setEnabled(True)
@@ -348,59 +325,18 @@ class SelectFOV(QWidget):
             else QAbstractSpinBox.UpDownArrows
         )
 
-        if (
-            self._plate_size_x == self._plate_size_y
-            or self._plate_size_x < self._plate_size_y
-        ):
-            self._scene_size_x = 150
-        else:
-            self._scene_size_x = 180
-
-        if (
-            self._plate_size_y == self._plate_size_x
-            or self._plate_size_y < self._plate_size_x
-        ):
-            self._scene_size_y = 150
-        else:
-            self._scene_size_y = 180
-
-        self._scene_start_x = (self._view_size - self._scene_size_x) / 2  # 25 or 5
-        self._scene_start_y = (self._view_size - self._scene_size_y) / 2  # 25 or 5
-
-        pen = QPen(Qt.green)
-        pen.setWidth(4)
-        if self._is_circular:
-            self.scene.addEllipse(
-                self._scene_start_x,
-                self._scene_start_y,
-                self._scene_size_x,
-                self._scene_size_y,
-                pen,
-            )
-        else:
-            self.scene.addRect(
-                self._scene_start_x,
-                self._scene_start_y,
-                self._scene_size_x,
-                self._scene_size_y,
-                pen,
-            )
-
         self._on_random_button_pressed()
 
     def _set_spinboxes_values(self, spin_x, spin_y):
-        spin_x.setMaximum(self._plate_size_x)
+        spin_x.setMaximum(self._size_x)
         with signals_blocked(spin_x):
-            spin_x.setValue(self._plate_size_x)
-        spin_y.setMaximum(self._plate_size_y)
+            spin_x.setValue(self._size_x)
+        spin_y.setMaximum(self._size_y)
         with signals_blocked(spin_y):
-            spin_y.setValue(self._plate_size_y)
+            spin_y.setValue(self._size_y)
 
     def _on_random_button_pressed(self):
-
-        for item in self.scene.items():
-            if isinstance(item, FOVPoints):
-                self.scene.removeItem(item)
+        self.scene.clear()
 
         mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
         nFOV = self.number_of_FOV.value()
@@ -408,130 +344,123 @@ class SelectFOV(QWidget):
         area_y = self.plate_area_y.value()
         self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
 
-        print(self.view.sizeHint())
-        print(self.view.frameSize())
-        print(self.view.width(), self.view.height())
-        print(self.scene.width(), self.scene.height())
-        print("")
-
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
 
-        _cam_x = self._mmc.getROI(self._mmc.getCameraDevice())[-2]
-        _cam_y = self._mmc.getROI(self._mmc.getCameraDevice())[-1]
-        _image_size_mm_x = (_cam_x * self._mmc.getPixelSizeUm()) / 1000
-        _image_size_mm_y = (_cam_y * self._mmc.getPixelSizeUm()) / 1000
+        # max_size_y = 150
 
-        area_pen = QPen(Qt.magenta)
+        if self._size_y == self._size_x or self._size_y < self._size_x:
+            max_size_y = 150
+        else:
+            max_size_y = 190
+
+        if self._size_x == self._size_y or self._size_x < self._size_y:
+            max_size_x = 150
+        else:
+            max_size_x = 190
+
+        sy = (self._view_size - max_size_y) / 2  # 25 or 5
+        sx = (self._view_size - max_size_x) / 2  # 25 or 5
+
+        main_pen = QPen(Qt.magenta)
+        main_pen.setWidth(4)
+        area_pen = QPen(Qt.green)
         area_pen.setWidth(4)
 
         if self._is_circular:
+            self.scene.addEllipse(sx, sy, max_size_x, max_size_y, main_pen)
+
             if mode == "Center":
+                self.scene.clear()
+
+                self.scene.addEllipse(sx, sy, max_size_x, max_size_y, area_pen)
                 center_x, center_y = (self._view_size / 2, self._view_size / 2)
                 self.scene.addItem(
                     FOVPoints(
                         center_x,
                         center_y,
+                        5,
+                        5,
                         "Center",
-                        self._scene_size_x,
-                        self._scene_size_y,
-                        self._plate_size_x,
-                        self._plate_size_y,
-                        _image_size_mm_x,
-                        _image_size_mm_y,
+                        self._view_size,
+                        self._view_size,
                     )
                 )
 
             elif mode == "Random":
-                diameter = (self._scene_size_x * area_x) / self._plate_size_x
+                diameter = (max_size_x * area_x) / self._size_x
                 center = (self._view_size - diameter) / 2
 
-                self.scene.addItem(
-                    WellArea(True, center, center, diameter, diameter, area_pen)
-                )
+                fov_area = QRectF(center, center, diameter, diameter)
+                self.scene.addEllipse(fov_area, area_pen)
+
                 points = self._random_points_in_circle(nFOV, diameter, center)
                 for p in points:
                     self.scene.addItem(
                         FOVPoints(
-                            p[0],
-                            p[1],
-                            "Random",
-                            self._scene_size_x,
-                            self._scene_size_y,
-                            self._plate_size_x,
-                            self._plate_size_y,
-                            _image_size_mm_x,
-                            _image_size_mm_y,
+                            p[0], p[1], 5, 5, "Random", self._view_size, self._view_size
                         )
                     )
 
         else:
+            self.scene.addRect(sx, sy, max_size_x, max_size_y, main_pen)
+
             if mode == "Center":
-                center_x, center_y = (self._view_size / 2, self._view_size / 2)
+                self.scene.clear()
+                self.scene.addRect(sx, sy, max_size_x, max_size_y, area_pen)
+                center_x, center_y = (
+                    (max_size_x + (sx * 2)) / 2,
+                    (max_size_y + (sy * 2)) / 2,
+                )
                 self.scene.addItem(
                     FOVPoints(
                         center_x,
                         center_y,
+                        5,
+                        5,
                         "Center",
-                        self._scene_size_x,
-                        self._scene_size_y,
-                        self._plate_size_x,
-                        self._plate_size_y,
-                        _image_size_mm_x,
-                        _image_size_mm_y,
+                        self._view_size,
+                        self._view_size,
                     )
                 )
 
             elif mode == "Random":
-                size_x = (self._scene_size_x * (area_x)) / self._plate_size_x
-                size_y = (self._scene_size_y * area_y) / self._plate_size_y
+                size_x = (max_size_x * area_x) / self._size_x
+                size_y = (max_size_y * area_y) / self._size_y
                 center_x = (self._view_size - size_x) / 2
                 center_y = (self._view_size - size_y) / 2
-                self.scene.addItem(
-                    WellArea(False, center_x, center_y, size_x, size_y, area_pen)
-                )
-                points_area_x = (self._scene_size_x * area_x) / self._plate_size_x
-                points_area_y = (self._scene_size_y * area_y) / self._plate_size_y
+
+                fov_area = QRectF(center_x, center_y, size_x, size_y)
+                self.scene.addRect(fov_area, area_pen)
+
                 points = self._random_points_in_square(
-                    nFOV, points_area_x, points_area_y, self._view_size, self._view_size
+                    nFOV, size_x, size_y, self._view_size, self._view_size
                 )
                 for p in points:
                     self.scene.addItem(
                         FOVPoints(
-                            p[0],
-                            p[1],
-                            "Random",
-                            self._scene_size_x,
-                            self._scene_size_y,
-                            self._plate_size_x,
-                            self._plate_size_y,
-                            _image_size_mm_x,
-                            _image_size_mm_y,
+                            p[0], p[1], 5, 5, "Random", self._view_size, self._view_size
                         )
                     )
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
         points = []
         radius = diameter / 2
-        _to_add = center + radius
-
         for _ in range(nFOV):
             # random angle
             alpha = 2 * math.pi * random.random()
             # random radius
-            r = np.random.randint(0, radius)
+            r = radius * math.sqrt(random.random())
             # calculating coordinates
-            x = r * math.cos(alpha) + _to_add
-            y = r * math.sin(alpha) + _to_add
+            x = r * math.cos(alpha) + center + radius
+            y = r * math.sin(alpha) + center + radius
             points.append((x, y))
         return points
 
     def _random_points_in_square(self, nFOV, size_x, size_y, max_size_x, max_size_y):
-
         x_left = (max_size_x - size_x) / 2  # left bound
         x_right = x_left + size_x  # right bound
         y_up = (max_size_y - size_y) / 2  # upper bound
         y_down = y_up + size_y  # lower bound
-
         points = []
         for _ in range(nFOV):
             x = np.random.randint(x_left, x_right)
@@ -540,88 +469,49 @@ class SelectFOV(QWidget):
         return points
 
 
-class WellArea(QGraphicsItem):
-    def __init__(self, circular: bool, start_x, start_y, width, height, pen: QPen):
-
-        super().__init__()
-
-        self._view_size = 202  # size of view.setFixedSize()
-
-        self._circular = circular
-        self._start_x = start_x
-        self._start_y = start_y
-        self._w = width
-        self._h = height
-        self._pen = pen
-
-        self.rect = QRectF(self._start_x, self._start_y, self._w, self._h)
-
-    def boundingRect(self):
-        return QRectF(0, 0, self._view_size, self._view_size)
-
-    def paint(self, painter=None, style=None, widget=None):
-        painter.setPen(self._pen)
-        if self._circular:
-            painter.drawEllipse(self.rect)
-        else:
-            painter.drawRect(self.rect)
-
-
 class FOVPoints(QGraphicsItem):
     def __init__(
         self,
         x: int,
         y: int,
+        size_x: float,
+        size_y: float,
         mode: str,
-        scene_size_x,  # 150
-        scene_size_y,  # 150
-        plate_size_x,  # self._scene_size_x 22mm
-        plate_size_y,  # self._scene_size_y 22mm
-        image_size_mm_x,
-        image_size_mm_y,
-        *,
-        mmcore: Optional[CMMCorePlus] = None
+        max_size_x: float,
+        max_size_y: float,
     ):
         super().__init__()
 
-        self._view_size = 202  # size of view.setFixedSize()
-
-        self._mmc = mmcore or get_core_singleton()
-        self._mmc.loadSystemConfiguration()
-
         self._x = x
         self._y = y
+
+        self._size_x = size_x
+        self._size_y = size_y
+
         self._mode = mode
 
-        self._current_draw_size_x = scene_size_x  # 150
-        self._current_draw_size_y = scene_size_y  # 150
+        self.width = max_size_x
+        self.height = max_size_y
 
-        # point width and height in scene px
-        self._x_size = (scene_size_x * image_size_mm_x) / plate_size_x
-        self._y_size = (scene_size_y * image_size_mm_y) / plate_size_y
-
-        self.width = scene_size_x
-        self.height = scene_size_y
-
-        self.point = QRectF(self._x, self._y, self._x_size, self._y_size)
+        self.point = QRectF(self._x, self._y, self._size_x, self._size_y)
 
     def boundingRect(self):
-        return QRectF(0, 0, self._view_size, self._view_size)
+        return self.point
 
     def paint(self, painter=None, style=None, widget=None):
         x, y = self.getCenter()
         pen = QPen()
-        pen.setWidth(2)
+        pen.setWidth(5)
         painter.setPen(pen)
-        # painter.drawPoint(x, y)
-
-        start_x = self._x - (self._x_size / 2)
-        start_y = self._y - (self._y_size / 2)
-        painter.drawRect(QRectF(start_x, start_y, self._x_size, self._y_size))
+        painter.drawPoint(x, y)
 
     def getCenter(self):
-        xc = round(self._x)
-        yc = round(self._y)
+        if self._mode == "Random":
+            xc = round(self._x + (self._size_x / 2))
+            yc = round(self._y + (self._size_y / 2))
+        elif self._mode == "Center":
+            xc = round(self._x)
+            yc = round(self._y)
         return xc, yc
 
     def getPositionsInfo(self):

@@ -1,3 +1,21 @@
+coverslip 1mm:
+  circular: false
+  cols: 1
+  id: coverslip 1mm
+  rows: 1
+  well_size_x: 2.0
+  well_size_y: 2.0
+  well_spacing_x: 0.0
+  well_spacing_y: 0.0
+coverslip 1mm round:
+  circular: true
+  cols: 1
+  id: coverslip 1mm round
+  rows: 1
+  well_size_x: 2.0
+  well_size_y: 2.0
+  well_spacing_x: 0.0
+  well_spacing_y: 0.0
 coverslip 22mm:
   circular: false
   cols: 1
