@@ -425,53 +425,47 @@ class SelectFOV(QWidget):
         area_pen.setWidth(4)
 
         if self._is_circular:
-            if mode == "Center":
-                center_x, center_y = (self._view_size / 2, self._view_size / 2)
-                self.scene.addItem(
-                    FOVPoints(
-                        center_x,
-                        center_y,
-                        "Center",
-                        self._scene_size_x,
-                        self._scene_size_y,
-                        self._plate_size_x,
-                        self._plate_size_y,
-                        _image_size_mm_x,
-                        _image_size_mm_y,
-                    )
-                )
-
-            elif mode == "Random":
-                diameter = (self._scene_size_x * area_x) / self._plate_size_x
-                center = (self._view_size - diameter) / 2
-
-                self.scene.addItem(
-                    WellArea(True, center, center, diameter, diameter, area_pen)
-                )
-                points = self._random_points_in_circle(nFOV, diameter, center)
-                for p in points:
-                    self.scene.addItem(
-                        FOVPoints(
-                            p[0],
-                            p[1],
-                            "Random",
-                            self._scene_size_x,
-                            self._scene_size_y,
-                            self._plate_size_x,
-                            self._plate_size_y,
-                            _image_size_mm_x,
-                            _image_size_mm_y,
-                        )
-                    )
-
+            self._update_scene_if_circular(
+                nFOV, mode, area_x, _image_size_mm_x, _image_size_mm_y, area_pen
+            )
         else:
-            if mode == "Center":
-                center_x, center_y = (self._view_size / 2, self._view_size / 2)
+            self._update_scene_if_rectangular(
+                nFOV, mode, area_x, area_y, _image_size_mm_x, _image_size_mm_y, area_pen
+            )
+
+    def _update_scene_if_circular(
+        self, nFOV, mode, area_x, _image_size_mm_x, _image_size_mm_y, area_pen
+    ):
+        if mode == "Center":
+            center_x, center_y = (self._view_size / 2, self._view_size / 2)
+            self.scene.addItem(
+                FOVPoints(
+                    center_x,
+                    center_y,
+                    "Center",
+                    self._scene_size_x,
+                    self._scene_size_y,
+                    self._plate_size_x,
+                    self._plate_size_y,
+                    _image_size_mm_x,
+                    _image_size_mm_y,
+                )
+            )
+
+        elif mode == "Random":
+            diameter = (self._scene_size_x * area_x) / self._plate_size_x
+            center = (self._view_size - diameter) / 2
+
+            self.scene.addItem(
+                WellArea(True, center, center, diameter, diameter, area_pen)
+            )
+            points = self._random_points_in_circle(nFOV, diameter, center)
+            for p in points:
                 self.scene.addItem(
                     FOVPoints(
-                        center_x,
-                        center_y,
-                        "Center",
+                        p[0],
+                        p[1],
+                        "Random",
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
@@ -481,33 +475,52 @@ class SelectFOV(QWidget):
                     )
                 )
 
-            elif mode == "Random":
-                size_x = (self._scene_size_x * (area_x)) / self._plate_size_x
-                size_y = (self._scene_size_y * area_y) / self._plate_size_y
-                center_x = (self._view_size - size_x) / 2
-                center_y = (self._view_size - size_y) / 2
+    def _update_scene_if_rectangular(
+        self, nFOV, mode, area_x, area_y, _image_size_mm_x, _image_size_mm_y, area_pen
+    ):
+        if mode == "Center":
+            center_x, center_y = (self._view_size / 2, self._view_size / 2)
+            self.scene.addItem(
+                FOVPoints(
+                    center_x,
+                    center_y,
+                    "Center",
+                    self._scene_size_x,
+                    self._scene_size_y,
+                    self._plate_size_x,
+                    self._plate_size_y,
+                    _image_size_mm_x,
+                    _image_size_mm_y,
+                )
+            )
+
+        elif mode == "Random":
+            size_x = (self._scene_size_x * (area_x)) / self._plate_size_x
+            size_y = (self._scene_size_y * area_y) / self._plate_size_y
+            center_x = (self._view_size - size_x) / 2
+            center_y = (self._view_size - size_y) / 2
+            self.scene.addItem(
+                WellArea(False, center_x, center_y, size_x, size_y, area_pen)
+            )
+            points_area_x = (self._scene_size_x * area_x) / self._plate_size_x
+            points_area_y = (self._scene_size_y * area_y) / self._plate_size_y
+            points = self._random_points_in_square(
+                nFOV, points_area_x, points_area_y, self._view_size, self._view_size
+            )
+            for p in points:
                 self.scene.addItem(
-                    WellArea(False, center_x, center_y, size_x, size_y, area_pen)
-                )
-                points_area_x = (self._scene_size_x * area_x) / self._plate_size_x
-                points_area_y = (self._scene_size_y * area_y) / self._plate_size_y
-                points = self._random_points_in_square(
-                    nFOV, points_area_x, points_area_y, self._view_size, self._view_size
-                )
-                for p in points:
-                    self.scene.addItem(
-                        FOVPoints(
-                            p[0],
-                            p[1],
-                            "Random",
-                            self._scene_size_x,
-                            self._scene_size_y,
-                            self._plate_size_x,
-                            self._plate_size_y,
-                            _image_size_mm_x,
-                            _image_size_mm_y,
-                        )
+                    FOVPoints(
+                        p[0],
+                        p[1],
+                        "Random",
+                        self._scene_size_x,
+                        self._scene_size_y,
+                        self._plate_size_x,
+                        self._plate_size_y,
+                        _image_size_mm_x,
+                        _image_size_mm_y,
                     )
+                )
 
     def _random_points_in_circle(self, nFOV, diameter: float, center):
         points = []
