@@ -48,6 +48,8 @@ class ChannelPositionWidget(QWidget):
         self.layout().addWidget(pos)
         ch = self._create_channel_group()
         self.layout().addWidget(ch)
+        timelapse = self._create_time_groupBox()
+        self.layout().addWidget(timelapse)
         z_stack = self._create_stack_groupBox()
         self.layout().addWidget(z_stack)
 
@@ -170,6 +172,59 @@ class ChannelPositionWidget(QWidget):
         group_layout.addWidget(self.add_ch_Button, 0, 1, 1, 1)
         group_layout.addWidget(self.remove_ch_Button, 1, 1, 1, 2)
         group_layout.addWidget(self.clear_ch_Button, 2, 1, 1, 2)
+
+        return group
+
+    def _create_time_groupBox(self):
+        group = QGroupBox(title="Time")
+        group.setCheckable(True)
+        group.setChecked(False)
+        group.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        group_layout = QHBoxLayout()
+        group_layout.setSpacing(10)
+        group_layout.setContentsMargins(10, 10, 10, 10)
+        group.setLayout(group_layout)
+
+        lbl_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        # Timepoints
+        wdg = QWidget()
+        wdg_lay = QHBoxLayout()
+        wdg_lay.setSpacing(5)
+        wdg_lay.setContentsMargins(0, 0, 0, 0)
+        wdg.setLayout(wdg_lay)
+        lbl = QLabel(text="Timepoints:")
+        lbl.setSizePolicy(lbl_sizepolicy)
+        self.timepoints_spinBox = QSpinBox()
+        self.timepoints_spinBox.setMinimum(1)
+        self.timepoints_spinBox.setMaximum(10000)
+        self.timepoints_spinBox.setAlignment(Qt.AlignCenter)
+        wdg_lay.addWidget(lbl)
+        wdg_lay.addWidget(self.timepoints_spinBox)
+        group_layout.addWidget(wdg)
+
+        # Interval
+        wdg1 = QWidget()
+        wdg1_lay = QHBoxLayout()
+        wdg1_lay.setSpacing(5)
+        wdg1_lay.setContentsMargins(0, 0, 0, 0)
+        wdg1.setLayout(wdg1_lay)
+        lbl1 = QLabel(text="Interval:")
+        lbl1.setSizePolicy(lbl_sizepolicy)
+        self.interval_spinBox = QSpinBox()
+        self.interval_spinBox.setMinimum(0)
+        self.interval_spinBox.setMaximum(10000)
+        self.interval_spinBox.setAlignment(Qt.AlignCenter)
+        wdg1_lay.addWidget(lbl1)
+        wdg1_lay.addWidget(self.interval_spinBox)
+        group_layout.addWidget(wdg1)
+
+        self.time_comboBox = QComboBox()
+        self.time_comboBox.setSizePolicy(
+            QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        )
+        self.time_comboBox.addItems(["ms", "sec", "min"])
+        group_layout.addWidget(self.time_comboBox)
 
         return group
 

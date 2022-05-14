@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import yaml
 from fonticon_mdi6 import MDI6
@@ -147,6 +147,7 @@ class HCSWidget(QWidget):
         cal_group_layout.setContentsMargins(10, 10, 10, 10)
         cal_group.setLayout(cal_group_layout)
         self.calibration = PlateCalibration()
+        self.calibration.PlateFromCalibration.connect(self._on_plate_from_calobration)
         cal_group_layout.addWidget(self.calibration)
         wdg_layout.addWidget(cal_group)
 
@@ -246,10 +247,39 @@ class HCSWidget(QWidget):
     def _on_combo_changed(self, value: str):
         self.scene.clear()
         self._draw_well_plate(value)
-        self._update_calibration_wdg(value)
+        self.calibration._update_gui(value)
 
-    def _update_calibration_wdg(self, plate: str):
-        self.calibration._update_gui(plate)
+    def _on_plate_from_calobration(self, coords: Tuple):
+        x_list = [x[0] for x in [*coords]]
+        y_list = [y[1] for y in [*coords]]
+        x_max, x_min = (max(x_list), min(x_list))
+        y_max, y_min = (max(y_list), min(y_list))
+
+        width_mm = (abs(x_max) + abs(x_min)) / 1000
+        height_mm = (abs(y_max) + abs(y_min)) / 1000
+
+        with open(PLATE_DATABASE) as file:
+            f = yaml.safe_load(file)
+            f.pop("_from calibration")
+
+        with open(PLATE_DATABASE, "w") as file:
+            new = {
+                "_from calibration": {
+                    "circular": False,
+                    "id": "_from calibration",
+                    "cols": 1,
+                    "rows": 1,
+                    "well_size_x": width_mm,
+                    "well_size_y": height_mm,
+                    "well_spacing_x": 0,
+                    "well_spacing_y": 0,
+                }
+            }
+            f.update(new)
+            yaml.dump(f, file)
+
+        self.scene.clear()
+        self._draw_well_plate("_from calibration")
 
     def _draw_well_plate(self, well_plate: str):
         self.wp = WellPlate.set_format(well_plate)
@@ -358,8 +388,8 @@ class HCSWidget(QWidget):
         plate_info = self.wp.getAllInfo()
 
         # center stage coords of calibrated well a1
-        a1_x = self.calibration.calibration_well[1]
-        a1_y = self.calibration.calibration_well[2]
+        a1_x = self.calibration.A1_well[1]
+        a1_y = self.calibration.A1_well[2]
 
         # distance between wells from plate database (mm)
         x_step, y_step = plate_info.get("well_distance")

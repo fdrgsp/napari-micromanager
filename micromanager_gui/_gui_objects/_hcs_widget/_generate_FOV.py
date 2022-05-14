@@ -104,6 +104,7 @@ class SelectFOV(QWidget):
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
         self.plate_area_x.setMinimum(0.01)
+        self.plate_area_x.setSingleStep(0.1)
         self.plate_area_x.valueChanged.connect(self._on_area_x_changed)
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_x, self.plate_area_x
@@ -117,6 +118,7 @@ class SelectFOV(QWidget):
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
         self.plate_area_y.setMinimum(0.01)
+        self.plate_area_y.setSingleStep(0.1)
         self.plate_area_y.valueChanged.connect(self._on_area_y_changed)
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_y, self.plate_area_y
@@ -277,7 +279,6 @@ class SelectFOV(QWidget):
         return widget
 
     def _on_px_size_changed(self, info):
-
         with contextlib.suppress(AttributeError):
             for item in self.scene.items():
                 if isinstance(item, (WellArea, FOVPoints)):
@@ -290,7 +291,6 @@ class SelectFOV(QWidget):
             self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
 
     def _on_tab_changed(self, tab_index: int):
-
         if tab_index == 0:  # Center
             for item in self.scene.items():
                 if isinstance(item, (WellArea, FOVPoints)):
@@ -338,7 +338,6 @@ class SelectFOV(QWidget):
         self._set_FOV_and_mode(nFOV, mode, area_x, value)
 
     def _on_number_of_FOV_changed(self, value: int):
-
         for item in self.scene.items():
             if isinstance(item, FOVPoints):
                 self.scene.removeItem(item)
@@ -350,7 +349,6 @@ class SelectFOV(QWidget):
         self._set_FOV_and_mode(value, mode, area_x, area_y)
 
     def _load_plate_info(self, size_x, size_y, is_circular):
-
         self.scene.clear()
 
         self._plate_size_x = size_x
@@ -373,7 +371,7 @@ class SelectFOV(QWidget):
             self._plate_size_x == self._plate_size_y
             or self._plate_size_x < self._plate_size_y
         ):
-            self._scene_size_x = 150
+            self._scene_size_x = 160
         else:
             self._scene_size_x = 180
 
@@ -381,7 +379,7 @@ class SelectFOV(QWidget):
             self._plate_size_y == self._plate_size_x
             or self._plate_size_y < self._plate_size_x
         ):
-            self._scene_size_y = 150
+            self._scene_size_y = 160
         else:
             self._scene_size_y = 180
 
@@ -407,14 +405,18 @@ class SelectFOV(QWidget):
                 pen,
             )
 
-        self._on_random_button_pressed()
+        mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
+        nFOV = self.number_of_FOV.value()
+        area_x = self.plate_area_x.value()
+        area_y = self.plate_area_y.value()
+        self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
 
     def _set_spinboxes_values(self, spin_x, spin_y):
-        spin_x.setMaximum(self._plate_size_x)
         with signals_blocked(spin_x):
+            spin_x.setMaximum(self._plate_size_x)
             spin_x.setValue(self._plate_size_x)
-        spin_y.setMaximum(self._plate_size_y)
         with signals_blocked(spin_y):
+            spin_y.setMaximum(self._plate_size_y)
             spin_y.setValue(self._plate_size_y)
 
     def _on_random_button_pressed(self):
@@ -430,7 +432,6 @@ class SelectFOV(QWidget):
         self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
 
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
-
         if not self._mmc.getCameraDevice():
             return
 
@@ -467,7 +468,6 @@ class SelectFOV(QWidget):
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
-                    self._plate_size_y,
                     _image_size_mm_x,
                     _image_size_mm_y,
                 )
@@ -490,7 +490,6 @@ class SelectFOV(QWidget):
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
-                        self._plate_size_y,
                         _image_size_mm_x,
                         _image_size_mm_y,
                     )
@@ -509,7 +508,6 @@ class SelectFOV(QWidget):
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
-                    self._plate_size_y,
                     _image_size_mm_x,
                     _image_size_mm_y,
                 )
@@ -537,7 +535,6 @@ class SelectFOV(QWidget):
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
-                        self._plate_size_y,
                         _image_size_mm_x,
                         _image_size_mm_y,
                     )

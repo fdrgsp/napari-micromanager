@@ -4,7 +4,7 @@ from typing import Optional, Tuple, overload
 import yaml
 from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
-from qtpy.QtCore import QSize, Qt
+from qtpy.QtCore import QSize, Qt, Signal
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -28,6 +28,9 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 
 
 class PlateCalibration(QWidget):
+
+    PlateFromCalibration = Signal(tuple)
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
@@ -39,7 +42,7 @@ class PlateCalibration(QWidget):
         self._mmc = mmcore or get_core_singleton()
 
         self.plate = None
-        self.calibration_well = tuple()
+        self.A1_well = tuple()
         self.is_calibrated = False
 
         self._create_gui()
@@ -142,7 +145,7 @@ class PlateCalibration(QWidget):
             self.cal_lbl.setText("Plate Calibrated!")
         else:
             self.is_calibrated = False
-            self.calibration_well = tuple()
+            self.A1_well = tuple()
             self.icon_lbl.setPixmap(
                 icon(MDI6.close_octagon_outline, color="magenta").pixmap(QSize(30, 30))
             )
@@ -259,10 +262,13 @@ class PlateCalibration(QWidget):
         else:
             xc, yc = self.get_rect_center(*pos)
 
-        self.calibration_well = tuple()
-        self.calibration_well = ("A1", xc, yc)
+        self.A1_well = tuple()
+        self.A1_well = ("A1", xc, yc)
 
         self._set_calibrated(True)
+
+        if self.plate.get("id") == "_from calibration":
+            self.PlateFromCalibration.emit(pos)
 
 
 class CalibrationTable(QWidget):

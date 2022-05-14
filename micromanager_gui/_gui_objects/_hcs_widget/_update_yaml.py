@@ -202,7 +202,8 @@ class UpdateYaml(QDialog):
         with open(PLATE_DATABASE) as file:
             f = yaml.safe_load(file)
             for plate_name in plate_names:
-                f.pop(plate_name)
+                if plate_name != "_from calibration":
+                    f.pop(plate_name)
 
         with open(PLATE_DATABASE, "w") as file:
             yaml.dump(f, file)

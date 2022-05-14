@@ -21,16 +21,6 @@ with open(y_file) as file:
     wp = yaml.safe_load(file)
 
     for x in wp:
-        print(x)
-
-    # print_yaml(wp, "standard 6")
-    # print('')
-    # print_yaml(wp, "standard 12")
-    # print('')
-    # print_yaml(wp, "standard 24")
-    # print('')
-    # print_yaml(wp, "standard 48")
-    # print('')
-    # print_yaml(wp, "standard 96")
-    # print('')
-    # print_yaml(wp, "standard 384")
+        print("_________")
+        print_yaml(wp, x)
+    print("_________")
