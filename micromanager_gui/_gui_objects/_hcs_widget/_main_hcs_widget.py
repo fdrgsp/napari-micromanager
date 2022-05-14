@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import yaml
 from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
+from pymmcore_plus.mda import PMDAEngine
 from qtpy.QtCore import QSize, Qt
 from qtpy.QtWidgets import (
     QApplication,
@@ -23,6 +24,7 @@ from qtpy.QtWidgets import (
 )
 from superqt.fonticon import icon
 from superqt.utils import signals_blocked
+from useq import MDASequence
 
 from micromanager_gui._core import get_core_singleton
 from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
@@ -36,6 +38,7 @@ from micromanager_gui._gui_objects._hcs_widget._graphics_items import FOVPoints,
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
+from micromanager_gui._mda import SEQUENCE_META, SequenceMeta
 
 PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 AlignCenter = Qt.AlignmentFlag.AlignCenter
@@ -51,6 +54,11 @@ class HCSWidget(QWidget):
         super().__init__(parent)
 
         self._mmc = mmcore or get_core_singleton()
+        self._mmc.mda.events.sequenceStarted.connect(self._on_mda_started)
+        self._mmc.mda.events.sequenceFinished.connect(self._on_mda_finished)
+        self._mmc.mda.events.sequencePauseToggled.connect(self._on_mda_paused)
+        self._mmc.events.mdaEngineRegistered.connect(self._update_mda_engine)
+
         self.wp = None
 
         self._create_main_wdg()
@@ -184,23 +192,28 @@ class HCSWidget(QWidget):
         min_width = 100
         icon_size = 40
         self.run_Button = QPushButton(text="Run")
+        self.run_Button.clicked.connect(self._on_run_clicked)
         self.run_Button.setMinimumWidth(min_width)
         self.run_Button.setStyleSheet("QPushButton { text-align: center; }")
         self.run_Button.setSizePolicy(btn_sizepolicy)
         self.run_Button.setIcon(icon(MDI6.play_circle_outline, color=(0, 255, 0)))
         self.run_Button.setIconSize(QSize(icon_size, icon_size))
         self.pause_Button = QPushButton("Pause")
+        self.pause_Button.released.connect(lambda: self._mmc.mda.toggle_pause())
         self.pause_Button.setMinimumWidth(min_width)
         self.pause_Button.setStyleSheet("QPushButton { text-align: center; }")
         self.pause_Button.setSizePolicy(btn_sizepolicy)
         self.pause_Button.setIcon(icon(MDI6.pause_circle_outline, color="green"))
         self.pause_Button.setIconSize(QSize(icon_size, icon_size))
+        self.pause_Button.hide()
         self.cancel_Button = QPushButton("Cancel")
+        self.cancel_Button.released.connect(lambda: self._mmc.mda.cancel())
         self.cancel_Button.setMinimumWidth(min_width)
         self.cancel_Button.setStyleSheet("QPushButton { text-align: center; }")
         self.cancel_Button.setSizePolicy(btn_sizepolicy)
         self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))
         self.cancel_Button.setIconSize(QSize(icon_size, icon_size))
+        self.cancel_Button.hide()
 
         spacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -471,6 +484,110 @@ class HCSWidget(QWidget):
         idx = self.ch_and_pos_list.stage_tableWidget.rowCount()
         self.ch_and_pos_list.stage_tableWidget.insertRow(idx)
         return idx
+
+    def get_state(self) -> dict:
+        ch_table = self.ch_and_pos_list.channel_tableWidget
+        state = {
+            "axis_order": self.acquisition_order_comboBox.currentText(),
+            "channels": [
+                {
+                    "config": ch_table.cellWidget(c, 0).currentText(),
+                    "group": self._mmc.getChannelGroup() or "Channel",
+                    "exposure": ch_table.cellWidget(c, 1).value(),
+                }
+                for c in range(ch_table.rowCount())
+            ],
+            "time_plan": None,
+            "z_plan": None,
+            "stage_positions": [],
+        }
+
+        if self.ch_and_pos_list.time_group.isChecked():
+            unit = {"min": "minutes", "sec": "seconds", "ms": "milliseconds"}[
+                self.ch_and_pos_list.time_comboBox.currentText()
+            ]
+            state["time_plan"] = {
+                "interval": {unit: self.ch_and_pos_list.interval_spinBox.value()},
+                "loops": self.ch_and_pos_list.timepoints_spinBox.value(),
+            }
+
+        if self.ch_and_pos_list.stack_group.isChecked():
+
+            if self.ch_and_pos_list.z_tabWidget.currentIndex() == 0:
+                state["z_plan"] = {
+                    "range": self.ch_and_pos_list.zrange_spinBox.value(),
+                    "step": self.ch_and_pos_list.step_size_doubleSpinBox.value(),
+                }
+            elif self.ch_and_pos_list.z_tabWidget.currentIndex() == 1:
+                state["z_plan"] = {
+                    "above": self.ch_and_pos_list.above_doubleSpinBox.value(),
+                    "below": self.ch_and_pos_list.below_doubleSpinBox.value(),
+                    "step": self.ch_and_pos_list.step_size_doubleSpinBox.value(),
+                }
+
+        for r in range(self.ch_and_pos_list.stage_tableWidget.rowCount()):
+            pos = {
+                "x": float(self.ch_and_pos_list.stage_tableWidget.item(r, 1).text()),
+                "y": float(self.ch_and_pos_list.stage_tableWidget.item(r, 2).text()),
+            }
+            if self.ch_and_pos_list.z_combo.currentText() != "None":
+                pos["z"] = float(
+                    self.ch_and_pos_list.stage_tableWidget.item(r, 3).text()
+                )
+            state["stage_positions"].append(pos)
+
+        return MDASequence(**state)
+
+    def _update_mda_engine(self, newEngine: PMDAEngine, oldEngine: PMDAEngine):
+        oldEngine.events.sequenceStarted.disconnect(self._on_mda_started)
+        oldEngine.events.sequenceFinished.disconnect(self._on_mda_finished)
+        oldEngine.events.sequencePauseToggled.disconnect(self._on_mda_paused)
+
+        newEngine.events.sequenceStarted.connect(self._on_mda_started)
+        newEngine.events.sequenceFinished.connect(self._on_mda_finished)
+        newEngine.events.sequencePauseToggled.connect(self._on_mda_paused)
+
+    def _on_mda_started(self, sequence):
+        self.pause_Button.show()
+        self.cancel_Button.show()
+        self.run_Button.hide()
+
+    def _on_mda_paused(self, paused):
+        self.pause_Button.setText("Go" if paused else "Pause")
+
+    def _on_mda_finished(self, sequence):
+        self.pause_Button.hide()
+        self.cancel_Button.hide()
+        self.run_Button.show()
+
+    def _on_run_clicked(self):
+
+        if len(self._mmc.getLoadedDevices()) < 2:
+            raise ValueError("Load a cfg file first.")
+
+        if self.ch_and_pos_list.channel_tableWidget.rowCount() <= 0:
+            raise ValueError("Select at least one channel.")
+
+        if self.ch_and_pos_list.stage_tableWidget.rowCount() <= 0:
+            raise ValueError("Select at least one position.")
+
+        # if self.save_groupBox.isChecked() and not (
+        #     self.fname_lineEdit.text() and Path(self.dir_lineEdit.text()).is_dir()
+        # ):
+        #     raise ValueError("Select a filename and a valid directory.")
+
+        experiment = self.get_state()
+
+        SEQUENCE_META[experiment] = SequenceMeta(
+            mode="hca",
+            split_channels=False,
+            should_save=False,
+            file_name="",
+            save_dir="",
+            save_pos=False,
+        )
+        self._mmc.run_mda(experiment)  # run the MDA experiment asynchronously
+        return
 
 
 if __name__ == "__main__":

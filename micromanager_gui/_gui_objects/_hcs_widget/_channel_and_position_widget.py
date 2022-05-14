@@ -176,14 +176,16 @@ class ChannelPositionWidget(QWidget):
         return group
 
     def _create_time_groupBox(self):
-        group = QGroupBox(title="Time")
-        group.setCheckable(True)
-        group.setChecked(False)
-        group.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        self.time_group = QGroupBox(title="Time")
+        self.time_group.setCheckable(True)
+        self.time_group.setChecked(False)
+        self.time_group.setSizePolicy(
+            QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        )
         group_layout = QHBoxLayout()
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 10, 10, 10)
-        group.setLayout(group_layout)
+        self.time_group.setLayout(group_layout)
 
         lbl_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
@@ -226,17 +228,19 @@ class ChannelPositionWidget(QWidget):
         self.time_comboBox.addItems(["ms", "sec", "min"])
         group_layout.addWidget(self.time_comboBox)
 
-        return group
+        return self.time_group
 
     def _create_stack_groupBox(self):
-        group = QGroupBox(title="Z Stacks")
-        group.setCheckable(True)
-        group.setChecked(False)
-        group.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+        self.stack_group = QGroupBox(title="Z Stacks")
+        self.stack_group.setCheckable(True)
+        self.stack_group.setChecked(False)
+        self.stack_group.setSizePolicy(
+            QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        )
         group_layout = QVBoxLayout()
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 10, 10, 10)
-        group.setLayout(group_layout)
+        self.stack_group.setLayout(group_layout)
 
         # tab
         self.z_tabWidget = QTabWidget()
@@ -354,9 +358,9 @@ class ChannelPositionWidget(QWidget):
         self.zrange_spinBox.valueChanged.connect(self._update_n_images)
         self.step_size_doubleSpinBox.valueChanged.connect(self._update_n_images)
         self.z_tabWidget.currentChanged.connect(self._update_n_images)
-        group.toggled.connect(self._update_n_images)
+        self.stack_group.toggled.connect(self._update_n_images)
 
-        return group
+        return self.stack_group
 
     def _on_sys_cfg(self):
         self.clear_channel()
