@@ -31,10 +31,10 @@ from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
 from micromanager_gui._gui_objects._hcs_widget._channel_and_position_widget import (
     ChannelPositionWidget,
 )
-from micromanager_gui._gui_objects._hcs_widget._generate_FOV import FOVPoints, SelectFOV
+from micromanager_gui._gui_objects._hcs_widget._generate_FOV import SelectFOV
+from micromanager_gui._gui_objects._hcs_widget._graphics_items import FOVPoints, Well
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
 from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
-from micromanager_gui._gui_objects._hcs_widget._well import Well
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 
 PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
@@ -180,7 +180,7 @@ class HCSWidget(QWidget):
         acq_wdg_layout.addWidget(self.acquisition_order_comboBox)
 
         btn_sizepolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        min_width = 130
+        min_width = 100
         icon_size = 40
         self.run_Button = QPushButton(text="Run")
         self.run_Button.setMinimumWidth(min_width)
@@ -189,11 +189,13 @@ class HCSWidget(QWidget):
         self.run_Button.setIcon(icon(MDI6.play_circle_outline, color=(0, 255, 0)))
         self.run_Button.setIconSize(QSize(icon_size, icon_size))
         self.pause_Button = QPushButton("Pause")
+        self.pause_Button.setMinimumWidth(min_width)
         self.pause_Button.setStyleSheet("QPushButton { text-align: center; }")
         self.pause_Button.setSizePolicy(btn_sizepolicy)
         self.pause_Button.setIcon(icon(MDI6.pause_circle_outline, color="green"))
         self.pause_Button.setIconSize(QSize(icon_size, icon_size))
         self.cancel_Button = QPushButton("Cancel")
+        self.cancel_Button.setMinimumWidth(min_width)
         self.cancel_Button.setStyleSheet("QPushButton { text-align: center; }")
         self.cancel_Button.setSizePolicy(btn_sizepolicy)
         self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))

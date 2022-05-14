@@ -11,7 +11,6 @@ from qtpy.QtWidgets import (
     QAbstractSpinBox,
     QApplication,
     QDoubleSpinBox,
-    QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,
@@ -26,6 +25,10 @@ from qtpy.QtWidgets import (
 from superqt.utils import signals_blocked
 
 from micromanager_gui._core import get_core_singleton
+from micromanager_gui._gui_objects._hcs_widget._graphics_items import (
+    FOVPoints,
+    WellArea,
+)
 
 AlignCenter = Qt.AlignmentFlag.AlignCenter
 
@@ -428,8 +431,11 @@ class SelectFOV(QWidget):
 
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
 
-        if not self._mmc.getCameraDevice() or not self._mmc.getPixelSizeUm():
+        if not self._mmc.getCameraDevice():
             return
+
+        if not self._mmc.getPixelSizeUm():
+            raise ValueError("Pixel Size not defined! Set pixel size first.")
 
         _cam_x = self._mmc.getROI(self._mmc.getCameraDevice())[-2]
         _cam_y = self._mmc.getROI(self._mmc.getCameraDevice())[-1]
@@ -510,7 +516,7 @@ class SelectFOV(QWidget):
             )
 
         elif mode == "Random":
-            size_x = (self._scene_size_x * (area_x)) / self._plate_size_x
+            size_x = (self._scene_size_x * area_x) / self._plate_size_x
             size_y = (self._scene_size_y * area_y) / self._plate_size_y
             center_x = (self._view_size - size_x) / 2
             center_y = (self._view_size - size_y) / 2
@@ -566,94 +572,6 @@ class SelectFOV(QWidget):
             y = np.random.randint(y_up, y_down)
             points.append((x, y))
         return points
-
-
-class WellArea(QGraphicsItem):
-    def __init__(self, circular: bool, start_x, start_y, width, height, pen: QPen):
-
-        super().__init__()
-
-        self._view_size = 202  # size of QGraphicsView
-
-        self._circular = circular
-        self._start_x = start_x
-        self._start_y = start_y
-        self._w = width
-        self._h = height
-        self._pen = pen
-
-        self.rect = QRectF(self._start_x, self._start_y, self._w, self._h)
-
-    def boundingRect(self):
-        return QRectF(0, 0, self._view_size, self._view_size)
-
-    def paint(self, painter=None, style=None, widget=None):
-        painter.setPen(self._pen)
-        if self._circular:
-            painter.drawEllipse(self.rect)
-        else:
-            painter.drawRect(self.rect)
-
-
-class FOVPoints(QGraphicsItem):
-    def __init__(
-        self,
-        x: int,
-        y: int,
-        mode: str,
-        scene_size_x,  # 150
-        scene_size_y,  # 150
-        plate_size_x,  # self._scene_size_x 22mm
-        plate_size_y,  # self._scene_size_y 22mm
-        image_size_mm_x,
-        image_size_mm_y,
-        *,
-        mmcore: Optional[CMMCorePlus] = None
-    ):
-        super().__init__()
-
-        self._view_size = 202  # size of QGraphicsView
-
-        self._mmc = mmcore or get_core_singleton()
-
-        self._x = x
-        self._y = y
-        self._mode = mode
-
-        self._current_draw_size_x = scene_size_x  # 150
-        self._current_draw_size_y = scene_size_y  # 150
-
-        # point width and height in scene px
-        self._x_size = (scene_size_x * image_size_mm_x) / plate_size_x
-        self._y_size = (scene_size_y * image_size_mm_y) / plate_size_y
-
-        self.width = scene_size_x
-        self.height = scene_size_y
-
-        self.point = QRectF(self._x, self._y, self._x_size, self._y_size)
-
-    def boundingRect(self):
-        return QRectF(0, 0, self._view_size, self._view_size)
-
-    def paint(self, painter=None, style=None, widget=None):
-        pen = QPen()
-        pen.setWidth(2)
-        painter.setPen(pen)
-        # x, y = self.getCenter()
-        # painter.drawPoint(x, y)
-
-        start_x = self._x - (self._x_size / 2)
-        start_y = self._y - (self._y_size / 2)
-        painter.drawRect(QRectF(start_x, start_y, self._x_size, self._y_size))
-
-    def getCenter(self):
-        xc = round(self._x)
-        yc = round(self._y)
-        return xc, yc
-
-    def getPositionsInfo(self):
-        xc, yc = self.getCenter()
-        return xc, yc, self.width, self.height
 
 
 if __name__ == "__main__":

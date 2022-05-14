@@ -121,7 +121,7 @@ class PlateCalibration(QWidget):
         else:
             text = (
                 "Add 2 points (opposite vertices)\n"
-                "or add 4 points (1 point per side)\n"
+                "or 4 points (1 point per side)\n"
                 "and click on 'Calibrate Plate'."
             )
         self.info_lbl.setText(text)
