@@ -30,13 +30,13 @@ from micromanager_gui._core import get_core_singleton
 from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
     PlateCalibration,
 )
-from micromanager_gui._gui_objects._hcs_widget._channel_and_position_widget import (
-    ChannelPositionWidget,
-)
-from micromanager_gui._gui_objects._hcs_widget._generate_FOV import SelectFOV
+from micromanager_gui._gui_objects._hcs_widget._generate_fov_widget import SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_items import FOVPoints, Well
 from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
-from micromanager_gui._gui_objects._hcs_widget._update_yaml import UpdateYaml
+from micromanager_gui._gui_objects._hcs_widget._hcs_mda_widget import (
+    ChannelPositionWidget,
+)
+from micromanager_gui._gui_objects._hcs_widget._update_yaml_widget import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 from micromanager_gui._mda import SEQUENCE_META, SequenceMeta
 
