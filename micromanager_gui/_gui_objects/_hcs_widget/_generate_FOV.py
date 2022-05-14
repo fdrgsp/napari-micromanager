@@ -1,3 +1,4 @@
+import contextlib
 import math
 import random
 from typing import Optional
@@ -35,13 +36,18 @@ class SelectFOV(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        self._mmc.loadSystemConfiguration()  # to remove
+        # self._mmc.loadSystemConfiguration()  # to remove
 
         self._plate_size_x = None
         self._plate_size_y = None
         self._is_circular = None
 
         self._create_widget()
+
+        self._mmc.events.pixelSizeChanged.connect(self._on_px_size_changed)
+        # TODO:
+        # on objective changed -> pixelSizeChanged is not
+        # triggered when obj is changed
 
     def _create_widget(self):
 
@@ -267,6 +273,19 @@ class SelectFOV(QWidget):
         widget.setLayout(layout)
         return widget
 
+    def _on_px_size_changed(self, info):
+
+        with contextlib.suppress(AttributeError):
+            for item in self.scene.items():
+                if isinstance(item, (WellArea, FOVPoints)):
+                    self.scene.removeItem(item)
+
+            nFOV = self.number_of_FOV.value()
+            area_x = self.plate_area_x.value()
+            area_y = self.plate_area_y.value()
+            mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
+            self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
+
     def _on_tab_changed(self, tab_index: int):
 
         if tab_index == 0:  # Center
@@ -274,10 +293,9 @@ class SelectFOV(QWidget):
                 if isinstance(item, (WellArea, FOVPoints)):
                     self.scene.removeItem(item)
 
-            nFOV = self.number_of_FOV_c.value()
             area_x = self.plate_area_x_c.value()
             area_y = self.plate_area_y_c.value()
-            self._set_FOV_and_mode(nFOV, "Center", area_x, area_y)
+            self._set_FOV_and_mode(1, "Center", area_x, area_y)
 
         elif tab_index == 1:  # Random
             for item in self.scene.items():
@@ -408,13 +426,10 @@ class SelectFOV(QWidget):
         area_y = self.plate_area_y.value()
         self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
 
-        print(self.view.sizeHint())
-        print(self.view.frameSize())
-        print(self.view.width(), self.view.height())
-        print(self.scene.width(), self.scene.height())
-        print("")
-
     def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
+
+        if not self._mmc.getCameraDevice() or not self._mmc.getPixelSizeUm():
+            return
 
         _cam_x = self._mmc.getROI(self._mmc.getCameraDevice())[-2]
         _cam_y = self._mmc.getROI(self._mmc.getCameraDevice())[-1]
@@ -558,7 +573,7 @@ class WellArea(QGraphicsItem):
 
         super().__init__()
 
-        self._view_size = 202  # size of view.setFixedSize()
+        self._view_size = 202  # size of QGraphicsView
 
         self._circular = circular
         self._start_x = start_x
@@ -597,10 +612,9 @@ class FOVPoints(QGraphicsItem):
     ):
         super().__init__()
 
-        self._view_size = 202  # size of view.setFixedSize()
+        self._view_size = 202  # size of QGraphicsView
 
         self._mmc = mmcore or get_core_singleton()
-        self._mmc.loadSystemConfiguration()
 
         self._x = x
         self._y = y
@@ -622,10 +636,10 @@ class FOVPoints(QGraphicsItem):
         return QRectF(0, 0, self._view_size, self._view_size)
 
     def paint(self, painter=None, style=None, widget=None):
-        x, y = self.getCenter()
         pen = QPen()
         pen.setWidth(2)
         painter.setPen(pen)
+        # x, y = self.getCenter()
         # painter.drawPoint(x, y)
 
         start_x = self._x - (self._x_size / 2)

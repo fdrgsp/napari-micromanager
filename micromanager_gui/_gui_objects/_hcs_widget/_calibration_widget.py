@@ -44,8 +44,6 @@ class PlateCalibration(QWidget):
 
         self._create_gui()
 
-        self._mmc.loadSystemConfiguration()
-
     def _create_gui(self):
 
         layout = QHBoxLayout()
@@ -129,15 +127,11 @@ class PlateCalibration(QWidget):
         self.info_lbl.setText(text)
 
         # to test
-        # self.table_1.tb.setRowCount(4)
-        # self.table_1.tb.setItem(0, 0, QTableWidgetItem("-200"))
-        # self.table_1.tb.setItem(0, 1, QTableWidgetItem("200"))
+        # self.table_1.tb.setRowCount(2)
+        # self.table_1.tb.setItem(0, 0, QTableWidgetItem("-100"))
+        # self.table_1.tb.setItem(0, 1, QTableWidgetItem("100"))
         # self.table_1.tb.setItem(1, 0, QTableWidgetItem("100"))
-        # self.table_1.tb.setItem(1, 1, QTableWidgetItem("100"))
-        # self.table_1.tb.setItem(2, 0, QTableWidgetItem("100"))
-        # self.table_1.tb.setItem(2, 1, QTableWidgetItem("200"))
-        # self.table_1.tb.setItem(3, 0, QTableWidgetItem("-200"))
-        # self.table_1.tb.setItem(3, 1, QTableWidgetItem("100"))
+        # self.table_1.tb.setItem(1, 1, QTableWidgetItem("-100"))
 
     def _set_calibrated(self, state: bool):
         if state:
@@ -269,8 +263,6 @@ class PlateCalibration(QWidget):
         self.calibration_well = ("A1", xc, yc)
 
         self._set_calibrated(True)
-
-        print("A1", xc, yc)
 
 
 class CalibrationTable(QWidget):

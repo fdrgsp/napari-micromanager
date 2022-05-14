@@ -366,8 +366,12 @@ class HCSWidget(QWidget):
         for pos in well_list:
             well, row, col = pos
             # find center stage coords for all the selected wells
-            x = a1_x + ((x_step * 1000) * col)
-            y = a1_y + ((y_step * 1000) * row)
+            if well == "A1":
+                x = a1_x
+                y = a1_y
+            else:
+                x = a1_x + ((x_step * 1000) * col)
+                y = a1_y + ((y_step * 1000) * row)
             cal_well_list.append((well, x, y))
 
         fovs = [
@@ -377,6 +381,11 @@ class HCSWidget(QWidget):
         ]
 
         row = 0
+
+        # center coord in px (of QGraphicsView))
+        cx = 100
+        cy = 100
+
         for pos in cal_well_list:
             well_name, cx_cal, cy_cal = pos
 
@@ -394,10 +403,6 @@ class HCSWidget(QWidget):
                 # find 1 px value in um depending on well dimension
                 px_val_x = well_x_um / w
                 px_val_y = well_y_um / h
-
-                # find center coord in px
-                cx = w / 2
-                cy = h / 2
 
                 # shift point coords in px when center is (0, 0)
                 new_fx = fx - cx
