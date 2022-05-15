@@ -39,7 +39,7 @@ class SelectFOV(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        # self._mmc.loadSystemConfiguration()  # to remove
+        self._mmc.loadSystemConfiguration()  # to remove
 
         self._plate_size_x = None
         self._plate_size_y = None
@@ -358,18 +358,18 @@ class SelectFOV(QWidget):
                 pen,
             )
 
+        self._set_spinboxes_values(self.plate_area_x, self.plate_area_y)
+        self._set_spinboxes_values(self.plate_area_x_c, self.plate_area_y_c)
+
         mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
         if mode in ["Center", "Random"]:
-            self.plate_area_x.setEnabled(True)
-            self._set_spinboxes_values(self.plate_area_x, self.plate_area_y)
-            self._set_spinboxes_values(self.plate_area_x_c, self.plate_area_y_c)
-
             self.plate_area_y.setEnabled(not self._is_circular)
             self.plate_area_y.setButtonSymbols(
                 QAbstractSpinBox.NoButtons
                 if self._is_circular
                 else QAbstractSpinBox.UpDownArrows
             )
+            self.plate_area_x.setEnabled(True)
             self._reset_center_random_scene(mode)
         else:  # Grid
             self._reset_grid_scene()
