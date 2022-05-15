@@ -120,8 +120,8 @@ class FOVPoints(QGraphicsItem):
         plate_size_x: float,
         image_size_mm_x: float,
         image_size_mm_y: float,
-        row: Optional[int] = 0,
-        col: Optional[int] = 0,
+        fov_row: Optional[int] = None,
+        fov_col: Optional[int] = None,
     ):
         super().__init__()
 
@@ -129,8 +129,8 @@ class FOVPoints(QGraphicsItem):
 
         self._x = x
         self._y = y
-        self.row = row
-        self.col = col
+        self.fov_row = fov_row
+        self.fov_col = fov_col
 
         # fov width and height in scene px
         self._x_size = (scene_size_x * image_size_mm_x) / plate_size_x
@@ -161,4 +161,4 @@ class FOVPoints(QGraphicsItem):
 
     def getPositionsInfo(self):
         xc, yc = self.getCenter()
-        return xc, yc, self.width, self.height, self.row, self.col
+        return xc, yc, self.width, self.height, self.fov_row, self.fov_col
