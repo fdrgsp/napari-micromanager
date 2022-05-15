@@ -199,11 +199,13 @@ class UpdateYaml(QDialog):
 
         plate_names = [self.plate_table.item(r, 0).text() for r in selected_rows]
 
+        if "_from calibration" in plate_names:
+            plate_names.remove("_from calibration")
+
         with open(PLATE_DATABASE) as file:
             f = yaml.safe_load(file)
             for plate_name in plate_names:
-                if plate_name != "_from calibration":
-                    f.pop(plate_name)
+                f.pop(plate_name)
 
         with open(PLATE_DATABASE, "w") as file:
             yaml.dump(f, file)
