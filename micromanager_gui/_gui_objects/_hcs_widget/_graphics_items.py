@@ -1,4 +1,5 @@
 import string
+from typing import Optional
 
 from qtpy.QtCore import QRectF, Qt
 from qtpy.QtGui import QBrush, QColor, QFont, QPen, QTextOption
@@ -119,6 +120,8 @@ class FOVPoints(QGraphicsItem):
         plate_size_x: float,
         image_size_mm_x: float,
         image_size_mm_y: float,
+        row: Optional[int] = 0,
+        col: Optional[int] = 0,
     ):
         super().__init__()
 
@@ -126,6 +129,8 @@ class FOVPoints(QGraphicsItem):
 
         self._x = x
         self._y = y
+        self.row = row
+        self.col = col
 
         # fov width and height in scene px
         self._x_size = (scene_size_x * image_size_mm_x) / plate_size_x
@@ -156,4 +161,4 @@ class FOVPoints(QGraphicsItem):
 
     def getPositionsInfo(self):
         xc, yc = self.getCenter()
-        return xc, yc, self.width, self.height
+        return xc, yc, self.width, self.height, self.row, self.col

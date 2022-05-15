@@ -407,7 +407,7 @@ class HCSWidget(QWidget):
         # distance between wells from plate database (mm)
         x_step, y_step = plate_info.get("well_distance")
 
-        cal_well_list = []
+        ordered_well_list = []
         for pos in well_list:
             well, row, col = pos
             # find center stage coords for all the selected wells
@@ -417,7 +417,12 @@ class HCSWidget(QWidget):
             else:
                 x = a1_x + ((x_step * 1000) * col)
                 y = a1_y + ((y_step * 1000) * row)
-            cal_well_list.append((well, x, y))
+
+            # reorder wells for "snake" acquisition
+            if not row % 2 or col == 0:
+                ordered_well_list.append((well, x, y))
+            else:
+                ordered_well_list.insert(-col, (well, x, y))
 
         fovs = [
             item.getPositionsInfo()
@@ -431,8 +436,14 @@ class HCSWidget(QWidget):
         cx = 100
         cy = 100
 
-        for pos in cal_well_list:
-            well_name, cx_cal, cy_cal = pos
+        mode = self.FOV_selector.tab_wdg.tabText(
+            self.FOV_selector.tab_wdg.currentIndex()
+        )
+        print("mode:", mode)
+
+        pos_list = []
+        for pos in ordered_well_list:
+            well_name, center_stage_x, center_stage_y = pos
 
             # well dimensions from database (mm)
             well_x, well_y = plate_info.get("well_size")
@@ -440,36 +451,55 @@ class HCSWidget(QWidget):
             well_x_um = well_x * 1000
             well_y_um = well_y * 1000
 
+            fov_list = []
             for idx, fov in enumerate(fovs):
 
-                # pixel coord fx and fy + pixel width and height drawing
-                fx, fy, w, h = fov
+                # center fov scene x, y coord fx and fov scene width and height
+                (
+                    center_fov_scene_x,
+                    center_fov_scene_y,
+                    w_fov_scene,
+                    h_fov_scene,
+                    fov_row,
+                    fov_col,
+                ) = fov
 
                 # find 1 px value in um depending on well dimension
-                px_val_x = well_x_um / w
-                px_val_y = well_y_um / h
+                px_val_x = well_x_um / w_fov_scene
+                px_val_y = well_y_um / h_fov_scene
 
                 # shift point coords in px when center is (0, 0)
-                new_fx = fx - cx
-                new_fy = fy - cy
+                new_fx = center_fov_scene_x - cx
+                new_fy = center_fov_scene_y - cy
 
                 # find stage coords of fov point
-                new_fx_cal = cx_cal + (new_fx * px_val_x)
-                new_fy_cal = cy_cal + (new_fy * px_val_y)
+                stage_coord_x = center_stage_x + (new_fx * px_val_x)
+                stage_coord_y = center_stage_y + (new_fy * px_val_y)
 
-                self._add_to_table(row, well_name, idx, new_fx_cal, new_fy_cal)
-
+                # reorder fovs for "snake" acquisition
+                if mode == "Grid" and not fov_row % 2 or mode != "Grid":
+                    fov_list.append((row, well_name, stage_coord_x, stage_coord_y))
+                else:
+                    fov_list.insert(
+                        -fov_col * idx, (row, well_name, stage_coord_x, stage_coord_y)
+                    )
                 row += 1
 
-    def _add_to_table(self, row, well_name, idx, new_fx_cal, new_fy_cal):
+            pos_list.extend(iter(fov_list))
+
+        for r, f in enumerate(pos_list):
+            row, well_name, stage_coord_x, stage_coord_y = f
+            self._add_to_table(r, well_name, stage_coord_x, stage_coord_y)
+
+    def _add_to_table(self, row, well_name, stage_coord_x, stage_coord_y):
         self._add_position_row()
-        name = QTableWidgetItem(f"{well_name}_pos{idx:03d}")
+        name = QTableWidgetItem(f"{well_name}_pos{row:03d}")
         name.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
         self.ch_and_pos_list.stage_tableWidget.setItem(row, 0, name)
-        stage_x = QTableWidgetItem(str(new_fx_cal))
+        stage_x = QTableWidgetItem(str(stage_coord_x))
         stage_x.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
         self.ch_and_pos_list.stage_tableWidget.setItem(row, 1, stage_x)
-        stage_y = QTableWidgetItem(str(new_fy_cal))
+        stage_y = QTableWidgetItem(str(stage_coord_y))
         stage_y.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
         self.ch_and_pos_list.stage_tableWidget.setItem(row, 2, stage_y)
 

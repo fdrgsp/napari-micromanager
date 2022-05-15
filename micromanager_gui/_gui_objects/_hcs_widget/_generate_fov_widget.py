@@ -39,7 +39,7 @@ class SelectFOV(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        self._mmc.loadSystemConfiguration()  # to remove
+        # self._mmc.loadSystemConfiguration()  # to remove
 
         self._plate_size_x = None
         self._plate_size_y = None
@@ -431,7 +431,7 @@ class SelectFOV(QWidget):
             for c in range(cols):
                 x = start_x if c == 0 else x + move_x
                 y = y
-                points.append((x, y))
+                points.append((x, y, r, c))
 
         for p in points:
             self.scene.addItem(
@@ -443,6 +443,8 @@ class SelectFOV(QWidget):
                     self._plate_size_x,
                     _image_size_mm_x,
                     _image_size_mm_y,
+                    p[2],
+                    p[3],
                 )
             )
 
