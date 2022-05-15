@@ -32,7 +32,9 @@ from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
 )
 from micromanager_gui._gui_objects._hcs_widget._generate_fov_widget import SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_items import FOVPoints, Well
-from micromanager_gui._gui_objects._hcs_widget._graphics_scene import GraphicsScene
+from micromanager_gui._gui_objects._hcs_widget._graphics_scene_widget import (
+    GraphicsScene,
+)
 from micromanager_gui._gui_objects._hcs_widget._hcs_mda_widget import (
     ChannelPositionWidget,
 )
