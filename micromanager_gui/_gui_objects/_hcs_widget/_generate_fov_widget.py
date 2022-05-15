@@ -39,7 +39,7 @@ class SelectFOV(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        # self._mmc.loadSystemConfiguration()  # to remove
+        self._mmc.loadSystemConfiguration()  # to remove
 
         self._plate_size_x = None
         self._plate_size_y = None
@@ -83,6 +83,14 @@ class SelectFOV(QWidget):
 
         self.tab_wdg.currentChanged.connect(self._on_tab_changed)
 
+    def _create_label(self, layout, widget, label_text):
+        layout.addWidget(widget)
+        result = QLabel()
+        result.setMinimumWidth(110)
+        result.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        result.setText(label_text)
+        return result
+
     def _random_wdg_gui(self):
         random_wdg = QWidget()
         layout = QVBoxLayout()
@@ -95,40 +103,32 @@ class SelectFOV(QWidget):
         group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
-        layout.addWidget(group_wdg)
+        plate_area_label_x = self._create_label(layout, group_wdg, "Area x (mm):")
 
-        plate_area_label_x = QLabel()
-        plate_area_label_x.setMinimumWidth(110)
-        plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        plate_area_label_x.setText("Area x (mm):")
         self.plate_area_x = QDoubleSpinBox()
         self.plate_area_x.setAlignment(AlignCenter)
         self.plate_area_x.setMinimum(0.01)
         self.plate_area_x.setSingleStep(0.1)
-        self.plate_area_x.valueChanged.connect(self._on_area_x_changed)
+        self.plate_area_x.valueChanged.connect(self._on_area_changed)
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_x, self.plate_area_x
         )
-        group_wdg_layout.addWidget(_plate_area_x)
+        plate_area_label_y = self._create_label(
+            group_wdg_layout, _plate_area_x, "Area y (mm):"
+        )
 
-        plate_area_label_y = QLabel()
-        plate_area_label_y.setMinimumWidth(110)
-        plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        plate_area_label_y.setText("Area y (mm):")
         self.plate_area_y = QDoubleSpinBox()
         self.plate_area_y.setAlignment(AlignCenter)
         self.plate_area_y.setMinimum(0.01)
         self.plate_area_y.setSingleStep(0.1)
-        self.plate_area_y.valueChanged.connect(self._on_area_y_changed)
+        self.plate_area_y.valueChanged.connect(self._on_area_changed)
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_y, self.plate_area_y
         )
-        group_wdg_layout.addWidget(_plate_area_y)
+        number_of_FOV_label = self._create_label(
+            group_wdg_layout, _plate_area_y, "FOVs:"
+        )
 
-        number_of_FOV_label = QLabel()
-        number_of_FOV_label.setMinimumWidth(110)
-        number_of_FOV_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        number_of_FOV_label.setText("FOVs:")
         self.number_of_FOV = QSpinBox()
         self.number_of_FOV.setAlignment(AlignCenter)
         self.number_of_FOV.setMinimum(1)
@@ -157,51 +157,42 @@ class SelectFOV(QWidget):
         group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
-        layout.addWidget(group_wdg)
-
-        rows_lbl = QLabel()
-        rows_lbl.setMinimumWidth(110)
-        rows_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        rows_lbl.setText("Rows:")
+        rows_lbl = self._create_label(layout, group_wdg, "Rows:")
         self.rows = QSpinBox()
         self.rows.setAlignment(AlignCenter)
         self.rows.setMinimum(1)
-        # self.rows.valueChanged.connect(self._on_row_changed)
+        self.rows.valueChanged.connect(self._on_grid_changed)
         _rows = self._make_QHBoxLayout_wdg_with_label(rows_lbl, self.rows)
-        group_wdg_layout.addWidget(_rows)
+        cols_lbl = self._create_label(group_wdg_layout, _rows, "Columns:")
 
-        cols_lbl = QLabel()
-        cols_lbl.setMinimumWidth(110)
-        cols_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        cols_lbl.setText("Columns:")
         self.cols = QSpinBox()
         self.cols.setAlignment(AlignCenter)
         self.cols.setMinimum(1)
-        # self.cols.valueChanged.connect(self._on_col_changed)
+        self.cols.valueChanged.connect(self._on_grid_changed)
         _cols = self._make_QHBoxLayout_wdg_with_label(cols_lbl, self.cols)
-        group_wdg_layout.addWidget(_cols)
+        spacing_x_lbl = self._create_label(group_wdg_layout, _cols, "Spacing x (um):")
 
-        spacing_x_lbl = QLabel()
-        spacing_x_lbl.setMinimumWidth(110)
-        spacing_x_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        spacing_x_lbl.setText("Spacing x (µm):")
-        self.spacing_x = QSpinBox()
+        self.spacing_x = QDoubleSpinBox()
         self.spacing_x.setAlignment(AlignCenter)
-        self.spacing_x.setMinimum(0)
-        # self.spacing_x.valueChanged.connect(self._on_spacing_x_changed)
+        self.spacing_x.setMinimum(-10000)
+        self.spacing_x.setMaximum(100000)
+        self.spacing_x.setSingleStep(100.0)
+        self.spacing_x.setValue(0)
+        self.spacing_x.valueChanged.connect(self._on_grid_changed)
         _spacing_x = self._make_QHBoxLayout_wdg_with_label(
             spacing_x_lbl, self.spacing_x
         )
-        group_wdg_layout.addWidget(_spacing_x)
+        spacing_y_lbl = self._create_label(
+            group_wdg_layout, _spacing_x, "Spacing y (um):"
+        )
 
-        spacing_y_lbl = QLabel()
-        spacing_y_lbl.setMinimumWidth(110)
-        spacing_y_lbl.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        spacing_y_lbl.setText("Spacing y (µm):")
-        self.spacing_y = QSpinBox()
+        self.spacing_y = QDoubleSpinBox()
         self.spacing_y.setAlignment(AlignCenter)
-        self.spacing_y.setMinimum(0)
-        # self.spacing_y.valueChanged.connect(self._on_spacing_y_changed)
+        self.spacing_y.setMinimum(-10000)
+        self.spacing_y.setMaximum(100000)
+        self.spacing_y.setSingleStep(100.0)
+        self.spacing_y.setValue(0)
+        self.spacing_y.valueChanged.connect(self._on_grid_changed)
         _spacing_y = self._make_QHBoxLayout_wdg_with_label(
             spacing_y_lbl, self.spacing_y
         )
@@ -222,12 +213,8 @@ class SelectFOV(QWidget):
         group_wdg_layout.setSpacing(5)
         group_wdg_layout.setContentsMargins(10, 10, 10, 10)
         group_wdg.setLayout(group_wdg_layout)
-        layout.addWidget(group_wdg)
+        plate_area_label_x = self._create_label(layout, group_wdg, "Area x (mm):")
 
-        plate_area_label_x = QLabel()
-        plate_area_label_x.setMinimumWidth(110)
-        plate_area_label_x.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        plate_area_label_x.setText("Area x (mm):")
         self.plate_area_x_c = QDoubleSpinBox()
         self.plate_area_x_c.setEnabled(False)
         self.plate_area_x_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -236,12 +223,10 @@ class SelectFOV(QWidget):
         _plate_area_x = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_x, self.plate_area_x_c
         )
-        group_wdg_layout.addWidget(_plate_area_x)
+        plate_area_label_y = self._create_label(
+            group_wdg_layout, _plate_area_x, "Area y (mm):"
+        )
 
-        plate_area_label_y = QLabel()
-        plate_area_label_y.setMinimumWidth(110)
-        plate_area_label_y.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        plate_area_label_y.setText("Area y (mm):")
         self.plate_area_y_c = QDoubleSpinBox()
         self.plate_area_y_c.setEnabled(False)
         self.plate_area_y_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -250,12 +235,10 @@ class SelectFOV(QWidget):
         _plate_area_y = self._make_QHBoxLayout_wdg_with_label(
             plate_area_label_y, self.plate_area_y_c
         )
-        group_wdg_layout.addWidget(_plate_area_y)
+        number_of_FOV_label = self._create_label(
+            group_wdg_layout, _plate_area_y, "FOVs:"
+        )
 
-        number_of_FOV_label = QLabel()
-        number_of_FOV_label.setMinimumWidth(110)
-        number_of_FOV_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        number_of_FOV_label.setText("FOVs:")
         self.number_of_FOV_c = QSpinBox()
         self.number_of_FOV_c.setEnabled(False)
         self.number_of_FOV_c.setButtonSymbols(QAbstractSpinBox.NoButtons)
@@ -283,70 +266,52 @@ class SelectFOV(QWidget):
             for item in self.scene.items():
                 if isinstance(item, (WellArea, FOVPoints)):
                     self.scene.removeItem(item)
-
-            nFOV = self.number_of_FOV.value()
-            area_x = self.plate_area_x.value()
-            area_y = self.plate_area_y.value()
             mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
-            self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
+            if mode in ["Center", "Random"]:
+                self._reset_center_random_scene(mode)
+            else:  # Grid
+                self._reset_grid_scene()
 
-    def _on_tab_changed(self, tab_index: int):
-        if tab_index == 0:  # Center
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
-
-            area_x = self.plate_area_x_c.value()
-            area_y = self.plate_area_y_c.value()
-            self._set_FOV_and_mode(1, "Center", area_x, area_y)
-
-        elif tab_index == 1:  # Random
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
-
-            nFOV = self.number_of_FOV.value()
-            area_x = self.plate_area_x.value()
-            area_y = self.plate_area_y.value()
-            self._set_FOV_and_mode(nFOV, "Random", area_x, area_y)
-
-        elif tab_index == 2:  # Grid
-            for item in self.scene.items():
-                if isinstance(item, (WellArea, FOVPoints)):
-                    self.scene.removeItem(item)
-
-    def _on_area_x_changed(self, value: int):
-        for item in self.scene.items():
-            if isinstance(item, (WellArea, FOVPoints)):
-                self.scene.removeItem(item)
-
-        mode = "Random"
-        nFOV = self.number_of_FOV.value()
-        area_y = self.plate_area_y.value()
-
-        self._set_FOV_and_mode(nFOV, mode, value, area_y)
-
-    def _on_area_y_changed(self, value: int):
-        for item in self.scene.items():
-            if isinstance(item, (WellArea, FOVPoints)):
-                self.scene.removeItem(item)
-
-        mode = "Random"
+    def _reset_center_random_scene(self, mode):
         nFOV = self.number_of_FOV.value()
         area_x = self.plate_area_x.value()
+        area_y = self.plate_area_y.value()
+        self._update_FOV_center_random(nFOV, mode, area_x, area_y)
 
-        self._set_FOV_and_mode(nFOV, mode, area_x, value)
+    def _reset_grid_scene(self):
+        rows = self.rows.value()
+        cols = self.cols.value()
+        dx = self.spacing_x.value()
+        dy = self.spacing_y.value()
+        self._update_FOV_grid(rows, cols, dx, dy)
+
+    def _on_tab_changed(self, tab_index: int):
+        for item in self.scene.items():
+            if isinstance(item, (WellArea, FOVPoints)):
+                self.scene.removeItem(item)
+        if tab_index != 2:  # Center or Random
+            mode = "Center" if tab_index == 0 else "Random"
+            self._reset_center_random_scene(mode)
+        else:  # Grid
+            self._reset_grid_scene()
+
+    def _on_area_changed(self):
+        for item in self.scene.items():
+            if isinstance(item, (WellArea, FOVPoints)):
+                self.scene.removeItem(item)
+        self._reset_center_random_scene("Random")
 
     def _on_number_of_FOV_changed(self, value: int):
         for item in self.scene.items():
             if isinstance(item, FOVPoints):
                 self.scene.removeItem(item)
+        self._reset_center_random_scene("Random")
 
-        mode = "Random"
-        area_x = self.plate_area_x.value()
-        area_y = self.plate_area_y.value()
-
-        self._set_FOV_and_mode(value, mode, area_x, area_y)
+    def _on_grid_changed(self):
+        for item in self.scene.items():
+            if isinstance(item, FOVPoints):
+                self.scene.removeItem(item)
+        self._reset_grid_scene()
 
     def _load_plate_info(self, size_x, size_y, is_circular):
         self.scene.clear()
@@ -354,18 +319,6 @@ class SelectFOV(QWidget):
         self._plate_size_x = size_x
         self._plate_size_y = size_y
         self._is_circular = is_circular
-
-        self.plate_area_x.setEnabled(True)
-
-        self._set_spinboxes_values(self.plate_area_x, self.plate_area_y)
-        self._set_spinboxes_values(self.plate_area_x_c, self.plate_area_y_c)
-
-        self.plate_area_y.setEnabled(not self._is_circular)
-        self.plate_area_y.setButtonSymbols(
-            QAbstractSpinBox.NoButtons
-            if self._is_circular
-            else QAbstractSpinBox.UpDownArrows
-        )
 
         if (
             self._plate_size_x == self._plate_size_y
@@ -383,8 +336,8 @@ class SelectFOV(QWidget):
         else:
             self._scene_size_y = 180
 
-        self._scene_start_x = (self._view_size - self._scene_size_x) / 2  # 25 or 5
-        self._scene_start_y = (self._view_size - self._scene_size_y) / 2  # 25 or 5
+        self._scene_start_x = (self._view_size - self._scene_size_x) / 2
+        self._scene_start_y = (self._view_size - self._scene_size_y) / 2
 
         pen = QPen(Qt.green)
         pen.setWidth(4)
@@ -406,10 +359,20 @@ class SelectFOV(QWidget):
             )
 
         mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
-        nFOV = self.number_of_FOV.value()
-        area_x = self.plate_area_x.value()
-        area_y = self.plate_area_y.value()
-        self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
+        if mode in ["Center", "Random"]:
+            self.plate_area_x.setEnabled(True)
+            self._set_spinboxes_values(self.plate_area_x, self.plate_area_y)
+            self._set_spinboxes_values(self.plate_area_x_c, self.plate_area_y_c)
+
+            self.plate_area_y.setEnabled(not self._is_circular)
+            self.plate_area_y.setButtonSymbols(
+                QAbstractSpinBox.NoButtons
+                if self._is_circular
+                else QAbstractSpinBox.UpDownArrows
+            )
+            self._reset_center_random_scene(mode)
+        else:  # Grid
+            self._reset_grid_scene()
 
     def _set_spinboxes_values(self, spin_x, spin_y):
         with signals_blocked(spin_x):
@@ -426,12 +389,66 @@ class SelectFOV(QWidget):
                 self.scene.removeItem(item)
 
         mode = self.tab_wdg.tabText(self.tab_wdg.currentIndex())
-        nFOV = self.number_of_FOV.value()
-        area_x = self.plate_area_x.value()
-        area_y = self.plate_area_y.value()
-        self._set_FOV_and_mode(nFOV, mode, area_x, area_y)
+        self._reset_center_random_scene(mode)
 
-    def _set_FOV_and_mode(self, nFOV: int, mode: str, area_x: float, area_y: float):
+    def _update_FOV_grid(self, rows, cols, dx, dy):
+
+        if not self._mmc.getCameraDevice():
+            return
+
+        if not self._mmc.getPixelSizeUm():
+            raise ValueError("Pixel Size not defined! Set pixel size first.")
+
+        cr, cc = (self._view_size / 2, self._view_size / 2)
+
+        _cam_x = self._mmc.getROI(self._mmc.getCameraDevice())[-2]
+        _cam_y = self._mmc.getROI(self._mmc.getCameraDevice())[-1]
+        _image_size_mm_x = (_cam_x * self._mmc.getPixelSizeUm()) / 1000
+        _image_size_mm_y = (_cam_y * self._mmc.getPixelSizeUm()) / 1000
+
+        # cam fov size in scene pixels
+        self._x_size = (self._scene_size_x * _image_size_mm_x) / self._plate_size_x
+        self._y_size = (self._scene_size_x * _image_size_mm_y) / self._plate_size_x
+
+        one_scene_px_mm = self._plate_size_x / self._scene_size_x  # mm
+        dy = (dy / 1000) / one_scene_px_mm
+        dx = (dx / 1000) / one_scene_px_mm
+
+        if rows == 1 and cols == 1:
+            start_x = cr
+            start_y = cc
+        else:
+            start_x = cc - ((cols - 1) * (self._y_size / 2)) - ((dx / 2) * (cols - 1))
+            start_y = cr - ((rows - 1) * (self._x_size / 2)) - ((dy / 2) * (rows - 1))
+
+        move_x = self._x_size + dx
+        move_y = self._y_size + dy
+
+        points = []
+        x, y = (0, 0)
+        for r in range(rows):
+            y = start_y if r == 0 else y + move_y
+            for c in range(cols):
+                x = start_x if c == 0 else x + move_x
+                y = y
+                points.append((x, y))
+
+        for p in points:
+            self.scene.addItem(
+                FOVPoints(
+                    p[0],
+                    p[1],
+                    self._scene_size_x,
+                    self._scene_size_y,
+                    self._plate_size_x,
+                    _image_size_mm_x,
+                    _image_size_mm_y,
+                )
+            )
+
+    def _update_FOV_center_random(
+        self, nFOV: int, mode: str, area_x: float, area_y: float
+    ):
         if not self._mmc.getCameraDevice():
             return
 
@@ -464,7 +481,6 @@ class SelectFOV(QWidget):
                 FOVPoints(
                     center_x,
                     center_y,
-                    "Center",
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
@@ -486,7 +502,6 @@ class SelectFOV(QWidget):
                     FOVPoints(
                         p[0],
                         p[1],
-                        "Random",
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
@@ -504,7 +519,6 @@ class SelectFOV(QWidget):
                 FOVPoints(
                     center_x,
                     center_y,
-                    "Center",
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
@@ -531,7 +545,6 @@ class SelectFOV(QWidget):
                     FOVPoints(
                         p[0],
                         p[1],
-                        "Random",
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,

@@ -114,7 +114,6 @@ class FOVPoints(QGraphicsItem):
         self,
         x: int,
         y: int,
-        mode: str,
         scene_size_x: int,
         scene_size_y: int,
         plate_size_x: float,
@@ -127,11 +126,10 @@ class FOVPoints(QGraphicsItem):
 
         self._x = x
         self._y = y
-        self._mode = mode
 
         # fov width and height in scene px
-        self._x_size = (self._view_size * image_size_mm_x) / plate_size_x
-        self._y_size = (self._view_size * image_size_mm_y) / plate_size_x
+        self._x_size = (scene_size_x * image_size_mm_x) / plate_size_x
+        self._y_size = (scene_size_x * image_size_mm_y) / plate_size_x
 
         self.width = scene_size_x
         self.height = scene_size_y
@@ -143,8 +141,9 @@ class FOVPoints(QGraphicsItem):
         pen = QPen()
         pen.setWidth(2)
         painter.setPen(pen)
-        x, y = self.getCenter()
-        painter.drawPoint(x, y)
+
+        # x, y = self.getCenter()
+        # painter.drawPoint(x, y)
 
         start_x = self._x - (self._x_size / 2)
         start_y = self._y - (self._y_size / 2)
