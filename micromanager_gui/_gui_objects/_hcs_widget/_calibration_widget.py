@@ -89,6 +89,7 @@ class PlateCalibration(QWidget):
         cal_state_wdg_layout.addWidget(self.icon_lbl)
         cal_state_wdg_layout.addWidget(self.cal_lbl)
 
+        # TODO: add live button when merged in main
         calibrate_btn = QPushButton(text="Calibrate Plate")
         calibrate_btn.clicked.connect(self._calibrate_plate)
 
