@@ -214,12 +214,8 @@ class HCSWidget(HCSGui):
             if isinstance(item, FOVPoints)
         ]
 
-        mode = self.FOV_selector.tab_wdg.tabText(
-            self.FOV_selector.tab_wdg.currentIndex()
-        )
-
         pos_list = self._get_well_and_fovs_position_list(
-            plate_info, ordered_wells_list, fovs, mode
+            plate_info, ordered_wells_list, fovs
         )
 
         for r, f in enumerate(pos_list):
@@ -270,7 +266,7 @@ class HCSWidget(HCSGui):
         return correct_order
 
     def _get_well_and_fovs_position_list(
-        self, plate_info, ordered_wells_list, fovs, mode
+        self, plate_info, ordered_wells_list, fovs
     ) -> list:
 
         # center coord in px (of QGraphicsView))
@@ -286,6 +282,10 @@ class HCSWidget(HCSGui):
             # well dimensions from database (um)
             well_x_um = well_x * 1000
             well_y_um = well_y * 1000
+
+            mode = self.FOV_selector.tab_wdg.tabText(
+                self.FOV_selector.tab_wdg.currentIndex()
+            )
 
             fov_list = []
             for idx, fov in enumerate(fovs):
