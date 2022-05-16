@@ -92,7 +92,6 @@ class PlateCalibration(QWidget):
         calibrate_btn = QPushButton(text="Calibrate Plate")
         calibrate_btn.clicked.connect(self._calibrate_plate)
 
-        # bottom_group_layout.addWidget(self.info_lbl)
         bottom_group_layout.addWidget(calibrate_btn)
         bottom_group_layout.addWidget(cal_state_wdg)
 
@@ -120,11 +119,15 @@ class PlateCalibration(QWidget):
 
         if self.plate.get("circular"):
             text = (
+                "Calibrate Well A1\n"
+                "\n"
                 "Add 3 points on the circonference of the round well"
                 "and click on 'Calibrate Plate'."
             )
         else:
             text = (
+                "Calibrate Well A1\n"
+                "\n"
                 "Add 2 points (opposite vertices) "
                 "or 4 points (1 point per side) "
                 "and click on 'Calibrate Plate'."
@@ -299,9 +302,9 @@ class CalibrationTable(QWidget):
         hdr.setSectionResizeMode(hdr.Stretch)
         self.tb.verticalHeader().setVisible(False)
         self.tb.setTabKeyNavigation(True)
-        self.tb.setColumnCount(2)
+        self.tb.setColumnCount(3)
         self.tb.setRowCount(0)
-        self.tb.setHorizontalHeaderLabels(["X", "Y"])
+        self.tb.setHorizontalHeaderLabels(["Well", "X", "Y"])
         self.tb.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tb.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         layout.addWidget(self.tb, 1, 0, 3, 1)
@@ -332,9 +335,13 @@ class CalibrationTable(QWidget):
         if len(self._mmc.getLoadedDevices()) > 1:
             idx = self._add_position_row()
 
-            for c, ax in enumerate("XY"):
-                cur = getattr(self._mmc, f"get{ax}Position")()
-                item = QTableWidgetItem(str(cur))
+            for c, ax in enumerate("WXY"):
+                if ax == "W":
+                    item = QTableWidgetItem(f"A1_pos{idx:03d}")
+                else:
+                    cur = getattr(self._mmc, f"get{ax}Position")()
+                    item = QTableWidgetItem(str(cur))
+
                 item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
                 self.tb.setItem(idx, c, item)
 
