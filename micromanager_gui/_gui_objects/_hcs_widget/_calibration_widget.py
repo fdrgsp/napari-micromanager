@@ -258,8 +258,8 @@ class PlateCalibration(QWidget):
             _range = 4
 
         for r in range(_range):
-            x = float(self.table_1.tb.item(r, 0).text())
-            y = float(self.table_1.tb.item(r, 1).text())
+            x = float(self.table_1.tb.item(r, 1).text())
+            y = float(self.table_1.tb.item(r, 2).text())
             pos += ((x, y),)
 
         if self.plate.get("circular"):
