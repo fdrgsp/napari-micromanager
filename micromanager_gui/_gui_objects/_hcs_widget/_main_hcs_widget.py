@@ -2,42 +2,16 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 import yaml
-from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
-from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QGraphicsView,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QTableWidgetItem,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
-)
-from superqt.fonticon import icon
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QApplication, QTableWidgetItem, QWidget
 from superqt.utils import signals_blocked
 from useq import MDASequence
 
 from micromanager_gui._core import get_core_singleton
-from micromanager_gui._gui_objects._hcs_widget._calibration_widget import (
-    PlateCalibration,
-)
-from micromanager_gui._gui_objects._hcs_widget._generate_fov_widget import SelectFOV
 from micromanager_gui._gui_objects._hcs_widget._graphics_items import FOVPoints, Well
-from micromanager_gui._gui_objects._hcs_widget._graphics_scene_widget import (
-    GraphicsScene,
-)
-from micromanager_gui._gui_objects._hcs_widget._hcs_mda_widget import (
-    ChannelPositionWidget,
-)
+from micromanager_gui._gui_objects._hcs_widget._main_hcs_gui import HCSGui
 from micromanager_gui._gui_objects._hcs_widget._update_yaml_widget import UpdateYaml
 from micromanager_gui._gui_objects._hcs_widget._well_plate_database import WellPlate
 from micromanager_gui._mda import SEQUENCE_META, SequenceMeta
@@ -46,7 +20,7 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
-class HCSWidget(QWidget):
+class HCSWidget(HCSGui):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
@@ -55,197 +29,27 @@ class HCSWidget(QWidget):
     ):
         super().__init__(parent)
 
+        self.wp = None
+
+        # connect
         self._mmc = mmcore or get_core_singleton()
         self._mmc.mda.events.sequenceStarted.connect(self._on_mda_started)
         self._mmc.mda.events.sequenceFinished.connect(self._on_mda_finished)
         self._mmc.mda.events.sequencePauseToggled.connect(self._on_mda_paused)
         self._mmc.events.mdaEngineRegistered.connect(self._update_mda_engine)
 
-        self.wp = None
-
-        self._create_main_wdg()
-
-        self._update_wp_combo()
-
-    def _create_main_wdg(self):  # sourcery skip: class-extract-method
-
-        layout = QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(10, 10, 10, 10)
-        self.setLayout(layout)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setAlignment(AlignCenter)
-        widgets = self._add_tab_wdg()
-        scroll.setWidget(widgets)
-
-        layout.addWidget(scroll)
-
-        btns = self._create_btns_wdg()
-        layout.addWidget(btns)
-
-    def _add_tab_wdg(self):
-
-        tab = QTabWidget()
-        tab.setTabPosition(QTabWidget.West)
-
-        select_plate_tab = self._create_plate_and_fov_tab()
-        self.ch_and_pos_list = ChannelPositionWidget()
+        self.wp_combo.currentTextChanged.connect(self._on_combo_changed)
+        self.custom_plate.clicked.connect(self._update_plate_yaml)
+        self.clear_button.clicked.connect(self.scene._clear_selection)
+        self.run_Button.clicked.connect(self._on_run_clicked)
+        self.pause_Button.released.connect(lambda: self._mmc.mda.toggle_pause())
+        self.cancel_Button.released.connect(lambda: self._mmc.mda.cancel())
+        self.calibration.PlateFromCalibration.connect(self._on_plate_from_calobration)
         self.ch_and_pos_list.position_list_button.clicked.connect(
             self._generate_pos_list
         )
-        self.saving_tab = QWidget()
 
-        tab.addTab(select_plate_tab, "  Plate, FOVs and Calibration  ")
-        tab.addTab(self.ch_and_pos_list, "  Channel and Positions List  ")
-        tab.addTab(self.saving_tab, "  Saving  ")
-
-        return tab
-
-    def _create_plate_and_fov_tab(self):
-        wdg = QWidget()
-        wdg_layout = QVBoxLayout()
-        wdg_layout.setSpacing(20)
-        wdg_layout.setContentsMargins(10, 10, 10, 10)
-        wdg.setLayout(wdg_layout)
-
-        self.scene = GraphicsScene()
-        self.view = QGraphicsView(self.scene, self)
-        self.view.setStyleSheet("background:grey;")
-        self._width = 500
-        self._height = 300
-        self.view.setMinimumSize(self._width, self._height)
-
-        # well plate selector combo and clear selection QPushButton
-        upper_wdg = QWidget()
-        upper_wdg_layout = QHBoxLayout()
-        wp_combo_wdg = self._create_wp_combo_selector()
-        custom_plate = QPushButton(text="Custom Plate")
-        custom_plate.clicked.connect(self._update_plate_yaml)
-        clear_button = QPushButton(text="Clear Selection")
-        clear_button.clicked.connect(self.scene._clear_selection)
-        upper_wdg_layout.addWidget(wp_combo_wdg)
-        upper_wdg_layout.addWidget(custom_plate)
-        upper_wdg_layout.addWidget(clear_button)
-        upper_wdg.setLayout(upper_wdg_layout)
-
-        self.FOV_selector = SelectFOV()
-
-        # add widgets
-        view_group = QGroupBox("Plate Selection")
-        view_gp_layout = QVBoxLayout()
-        view_gp_layout.setSpacing(0)
-        view_gp_layout.setContentsMargins(10, 10, 10, 10)
-        view_group.setLayout(view_gp_layout)
-        view_gp_layout.addWidget(upper_wdg)
-        view_gp_layout.addWidget(self.view)
-        wdg_layout.addWidget(view_group)
-
-        FOV_group = QGroupBox(title="FOVs Selection")
-        FOV_group.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        FOV_gp_layout = QVBoxLayout()
-        FOV_gp_layout.setSpacing(0)
-        FOV_gp_layout.setContentsMargins(10, 10, 10, 10)
-        FOV_group.setLayout(FOV_gp_layout)
-        FOV_gp_layout.addWidget(self.FOV_selector)
-        wdg_layout.addWidget(FOV_group)
-
-        cal_group = QGroupBox(title="Plate Calibration")
-        cal_group_layout = QVBoxLayout()
-        cal_group_layout.setSpacing(0)
-        cal_group_layout.setContentsMargins(10, 10, 10, 10)
-        cal_group.setLayout(cal_group_layout)
-        self.calibration = PlateCalibration()
-        self.calibration.PlateFromCalibration.connect(self._on_plate_from_calobration)
-        cal_group_layout.addWidget(self.calibration)
-        wdg_layout.addWidget(cal_group)
-
-        verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        wdg_layout.addItem(verticalSpacer)
-
-        return wdg
-
-    def _create_btns_wdg(self):
-
-        wdg = QWidget()
-        wdg.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
-        wdg_layout = QHBoxLayout()
-        wdg_layout.setAlignment(Qt.AlignVCenter)
-        wdg_layout.setSpacing(10)
-        wdg_layout.setContentsMargins(10, 15, 10, 10)
-        wdg.setLayout(wdg_layout)
-
-        acq_wdg = QWidget()
-        acq_wdg_layout = QHBoxLayout()
-        acq_wdg_layout.setSpacing(0)
-        acq_wdg_layout.setContentsMargins(0, 0, 0, 0)
-        acq_wdg.setLayout(acq_wdg_layout)
-        acquisition_order_label = QLabel(text="Acquisition Order:")
-        lbl_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        acquisition_order_label.setSizePolicy(lbl_sizepolicy)
-        self.acquisition_order_comboBox = QComboBox()
-        self.acquisition_order_comboBox.setMinimumWidth(100)
-        self.acquisition_order_comboBox.addItems(["tpzc", "tpcz", "ptzc", "ptcz"])
-        acq_wdg_layout.addWidget(acquisition_order_label)
-        acq_wdg_layout.addWidget(self.acquisition_order_comboBox)
-
-        btn_sizepolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        min_width = 100
-        icon_size = 40
-        self.run_Button = QPushButton(text="Run")
-        self.run_Button.clicked.connect(self._on_run_clicked)
-        self.run_Button.setMinimumWidth(min_width)
-        self.run_Button.setStyleSheet("QPushButton { text-align: center; }")
-        self.run_Button.setSizePolicy(btn_sizepolicy)
-        self.run_Button.setIcon(icon(MDI6.play_circle_outline, color=(0, 255, 0)))
-        self.run_Button.setIconSize(QSize(icon_size, icon_size))
-        self.pause_Button = QPushButton("Pause")
-        self.pause_Button.released.connect(lambda: self._mmc.mda.toggle_pause())
-        self.pause_Button.setMinimumWidth(min_width)
-        self.pause_Button.setStyleSheet("QPushButton { text-align: center; }")
-        self.pause_Button.setSizePolicy(btn_sizepolicy)
-        self.pause_Button.setIcon(icon(MDI6.pause_circle_outline, color="green"))
-        self.pause_Button.setIconSize(QSize(icon_size, icon_size))
-        self.pause_Button.hide()
-        self.cancel_Button = QPushButton("Cancel")
-        self.cancel_Button.released.connect(lambda: self._mmc.mda.cancel())
-        self.cancel_Button.setMinimumWidth(min_width)
-        self.cancel_Button.setStyleSheet("QPushButton { text-align: center; }")
-        self.cancel_Button.setSizePolicy(btn_sizepolicy)
-        self.cancel_Button.setIcon(icon(MDI6.stop_circle_outline, color="magenta"))
-        self.cancel_Button.setIconSize(QSize(icon_size, icon_size))
-        self.cancel_Button.hide()
-
-        spacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        wdg_layout.addWidget(acq_wdg)
-        wdg_layout.addItem(spacer)
-        wdg_layout.addWidget(self.run_Button)
-        wdg_layout.addWidget(self.pause_Button)
-        wdg_layout.addWidget(self.cancel_Button)
-
-        return wdg
-
-    def _create_wp_combo_selector(self):
-        combo_wdg = QWidget()
-        wp_combo_layout = QHBoxLayout()
-        wp_combo_layout.setContentsMargins(0, 0, 0, 0)
-        wp_combo_layout.setSpacing(0)
-
-        combo_label = QLabel()
-        combo_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        combo_label.setText("Plate:")
-        combo_label.setMaximumWidth(75)
-
-        self.wp_combo = QComboBox()
-        self.wp_combo.currentTextChanged.connect(self._on_combo_changed)
-
-        wp_combo_layout.addWidget(combo_label)
-        wp_combo_layout.addWidget(self.wp_combo)
-        combo_wdg.setLayout(wp_combo_layout)
-
-        return combo_wdg
+        self._update_wp_combo()
 
     def _update_wp_combo(self):
         plates = self._plates_names_from_database()
@@ -402,6 +206,27 @@ class HCSWidget(QWidget):
 
         plate_info = self.wp.getAllInfo()
 
+        ordered_wells_list = self._get_wells_stage_coords(well_list, plate_info)
+
+        fovs = [
+            item.getPositionsInfo()
+            for item in self.FOV_selector.scene.items()
+            if isinstance(item, FOVPoints)
+        ]
+
+        mode = self.FOV_selector.tab_wdg.tabText(
+            self.FOV_selector.tab_wdg.currentIndex()
+        )
+
+        pos_list = self._get_well_and_fovs_position_list(
+            plate_info, ordered_wells_list, fovs, mode
+        )
+
+        for r, f in enumerate(pos_list):
+            well_name, stage_coord_x, stage_coord_y = f
+            self._add_to_table(r, well_name, stage_coord_x, stage_coord_y)
+
+    def _get_wells_stage_coords(self, well_list, plate_info) -> list:
         # center stage coords of calibrated well a1
         a1_x = self.calibration.A1_well[1]
         a1_y = self.calibration.A1_well[2]
@@ -409,7 +234,7 @@ class HCSWidget(QWidget):
         # distance between wells from plate database (mm)
         x_step, y_step = plate_info.get("well_distance")
 
-        ordered_well_list = []
+        well_list_to_order = []
         for pos in well_list:
             well, row, col = pos
             # find center stage coords for all the selected wells
@@ -420,31 +245,40 @@ class HCSWidget(QWidget):
                 x = a1_x + ((x_step * 1000) * col)
                 y = a1_y + ((y_step * 1000) * row)
 
-            # reorder wells for "snake" acquisition
-            if not row % 2 or col == 0:
-                ordered_well_list.append((well, x, y))
-            else:
-                ordered_well_list.insert(-col, (well, x, y))
+            well_list_to_order.append((row, well, x, y))
 
-        fovs = [
-            item.getPositionsInfo()
-            for item in self.FOV_selector.scene.items()
-            if isinstance(item, FOVPoints)
-        ]
+        # reorder wells for "snake" acquisition
+        correct_order = []
+        to_add = []
+        previous_row = 0
+        corrent_row = 0
+        for idx, wl in enumerate(well_list_to_order):
+            row, well, x, y = wl
+            if row > previous_row or idx == len(well_list_to_order) - 1:
+                if idx == len(well_list_to_order) - 1:
+                    to_add.append((well, x, y))
+                if corrent_row % 2 == 0:
+                    correct_order.extend(iter(to_add))
+                else:
+                    correct_order.extend(iter(reversed(to_add)))
+                to_add.clear()
+                corrent_row += 1
 
-        row = 0
+            to_add.append((well, x, y))
+            previous_row = row
+
+        return correct_order
+
+    def _get_well_and_fovs_position_list(
+        self, plate_info, ordered_wells_list, fovs, mode
+    ) -> list:
 
         # center coord in px (of QGraphicsView))
         cx = 100
         cy = 100
 
-        mode = self.FOV_selector.tab_wdg.tabText(
-            self.FOV_selector.tab_wdg.currentIndex()
-        )
-        print("mode:", mode)
-
         pos_list = []
-        for pos in ordered_well_list:
+        for pos in ordered_wells_list:
             well_name, center_stage_x, center_stage_y = pos
 
             # well dimensions from database (mm)
@@ -455,7 +289,6 @@ class HCSWidget(QWidget):
 
             fov_list = []
             for idx, fov in enumerate(fovs):
-
                 # center fov scene x, y coord fx and fov scene width and height
                 (
                     center_fov_scene_x,
@@ -479,19 +312,15 @@ class HCSWidget(QWidget):
                 stage_coord_y = center_stage_y + (new_fy * px_val_y)
 
                 # reorder fovs for "snake" acquisition
-                if mode == "Grid" and not fov_row % 2 or mode != "Grid":
-                    fov_list.append((row, well_name, stage_coord_x, stage_coord_y))
+                if (mode == "Grid" and not fov_row % 2) or mode != "Grid":
+                    fov_list.append((well_name, stage_coord_x, stage_coord_y))
                 else:
                     fov_list.insert(
-                        -fov_col * idx, (row, well_name, stage_coord_x, stage_coord_y)
+                        -fov_col * idx, (well_name, stage_coord_x, stage_coord_y)
                     )
-                row += 1
 
             pos_list.extend(iter(fov_list))
-
-        for r, f in enumerate(pos_list):
-            row, well_name, stage_coord_x, stage_coord_y = f
-            self._add_to_table(r, well_name, stage_coord_x, stage_coord_y)
+        return pos_list
 
     def _add_to_table(self, row, well_name, stage_coord_x, stage_coord_y):
         self._add_position_row()
