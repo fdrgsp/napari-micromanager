@@ -290,12 +290,6 @@ class CalibrationTable(QWidget):
         layout.setContentsMargins(10, 0, 0, 0)
         self.setLayout(layout)
 
-        self.well_lbl = QLabel()
-        self.well_lbl.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
-        self.well_lbl.setAlignment(Qt.AlignCenter)
-        self.well_lbl.setText("Well A1")
-        layout.addWidget(self.well_lbl, 0, 0, 1, 2)
-
         self.tb = QTableWidget()
         self.tb.setMinimumHeight(150)
         hdr = self.tb.horizontalHeader()
@@ -307,7 +301,7 @@ class CalibrationTable(QWidget):
         self.tb.setHorizontalHeaderLabels(["Well", "X", "Y"])
         self.tb.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tb.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        layout.addWidget(self.tb, 1, 0, 3, 1)
+        layout.addWidget(self.tb, 0, 0, 3, 1)
 
         btn_sizepolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         min_size = 100
@@ -323,9 +317,9 @@ class CalibrationTable(QWidget):
         clear_btn.clicked.connect(self._clear_table)
         clear_btn.setMinimumWidth(min_size)
         clear_btn.setSizePolicy(btn_sizepolicy)
-        layout.addWidget(add_btn, 1, 1, 1, 1)
-        layout.addWidget(remove_btn, 2, 1, 1, 2)
-        layout.addWidget(clear_btn, 3, 1, 1, 2)
+        layout.addWidget(add_btn, 0, 1, 1, 1)
+        layout.addWidget(remove_btn, 1, 1, 1, 2)
+        layout.addWidget(clear_btn, 2, 1, 1, 2)
 
     def _add_pos(self):
 
