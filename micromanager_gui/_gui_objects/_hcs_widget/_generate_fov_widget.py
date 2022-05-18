@@ -39,8 +39,6 @@ class SelectFOV(QWidget):
 
         self._mmc = mmcore or get_core_singleton()
 
-        self._mmc.loadSystemConfiguration()  # to remove
-
         self._plate_size_x = None
         self._plate_size_y = None
         self._is_circular = None
@@ -314,10 +312,11 @@ class SelectFOV(QWidget):
         self._reset_grid_scene()
 
     def _load_plate_info(self, size_x, size_y, is_circular):
+
         self.scene.clear()
 
-        self._plate_size_x = size_x
-        self._plate_size_y = size_y
+        self._plate_size_x = round(size_x, 3)
+        self._plate_size_y = round(size_y, 3)
         self._is_circular = is_circular
 
         if (
@@ -408,18 +407,19 @@ class SelectFOV(QWidget):
 
         # cam fov size in scene pixels
         self._x_size = (self._scene_size_x * _image_size_mm_x) / self._plate_size_x
-        self._y_size = (self._scene_size_x * _image_size_mm_y) / self._plate_size_x
+        self._y_size = (self._scene_size_y * _image_size_mm_y) / self._plate_size_y
 
-        one_scene_px_mm = self._plate_size_x / self._scene_size_x  # mm
-        dy = (dy / 1000) / one_scene_px_mm
-        dx = (dx / 1000) / one_scene_px_mm
+        scene_px_mm_x = self._plate_size_x / self._scene_size_x  # mm
+        scene_px_mm_y = self._plate_size_y / self._scene_size_y  # mm
+        dy = (dy / 1000) / scene_px_mm_y
+        dx = (dx / 1000) / scene_px_mm_x
 
         if rows == 1 and cols == 1:
             start_x = cr
             start_y = cc
         else:
-            start_x = cc - ((cols - 1) * (self._y_size / 2)) - ((dx / 2) * (cols - 1))
-            start_y = cr - ((rows - 1) * (self._x_size / 2)) - ((dy / 2) * (rows - 1))
+            start_x = cc - ((cols - 1) * (self._x_size / 2)) - ((dx / 2) * (cols - 1))
+            start_y = cr - ((rows - 1) * (self._y_size / 2)) - ((dy / 2) * (rows - 1))
 
         move_x = self._x_size + dx
         move_y = self._y_size + dy
@@ -441,6 +441,7 @@ class SelectFOV(QWidget):
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
+                    self._plate_size_y,
                     _image_size_mm_x,
                     _image_size_mm_y,
                     p[2],
@@ -486,6 +487,7 @@ class SelectFOV(QWidget):
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
+                    self._plate_size_y,
                     _image_size_mm_x,
                     _image_size_mm_y,
                 )
@@ -507,6 +509,7 @@ class SelectFOV(QWidget):
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
+                        self._plate_size_y,
                         _image_size_mm_x,
                         _image_size_mm_y,
                     )
@@ -524,6 +527,7 @@ class SelectFOV(QWidget):
                     self._scene_size_x,
                     self._scene_size_y,
                     self._plate_size_x,
+                    self._plate_size_y,
                     _image_size_mm_x,
                     _image_size_mm_y,
                 )
@@ -550,6 +554,7 @@ class SelectFOV(QWidget):
                         self._scene_size_x,
                         self._scene_size_y,
                         self._plate_size_x,
+                        self._plate_size_y,
                         _image_size_mm_x,
                         _image_size_mm_y,
                     )

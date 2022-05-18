@@ -74,8 +74,8 @@ class HCSWidget(HCSGui):
         x_max, x_min = (max(x_list), min(x_list))
         y_max, y_min = (max(y_list), min(y_list))
 
-        width_mm = (abs(x_max) + abs(x_min)) / 1000
-        height_mm = (abs(y_max) + abs(y_min)) / 1000
+        width_mm = (x_max - x_min) / 1000
+        height_mm = (y_max - y_min) / 1000
 
         with open(PLATE_DATABASE) as file:
             f = yaml.safe_load(file)
@@ -111,7 +111,7 @@ class HCSWidget(HCSGui):
             if self.wp.circular or self.wp.well_size_x == self.wp.well_size_y
             else (max_w / self.wp.cols)
         )
-        text_size = size_y / 2.3
+        text_size = size_y / 3  # 2.3
 
         width = size_x * self.wp.cols
 
@@ -214,6 +214,8 @@ class HCSWidget(HCSGui):
             if isinstance(item, FOVPoints)
         ]
 
+        fovs.reverse()
+
         pos_list = self._get_well_and_fovs_position_list(
             plate_info, ordered_wells_list, fovs
         )
@@ -273,7 +275,12 @@ class HCSWidget(HCSGui):
         cx = 100
         cy = 100
 
+        mode = self.FOV_selector.tab_wdg.tabText(
+            self.FOV_selector.tab_wdg.currentIndex()
+        )
+
         pos_list = []
+        to_add = []
         for pos in ordered_wells_list:
             well_name, center_stage_x, center_stage_y = pos
 
@@ -283,11 +290,7 @@ class HCSWidget(HCSGui):
             well_x_um = well_x * 1000
             well_y_um = well_y * 1000
 
-            mode = self.FOV_selector.tab_wdg.tabText(
-                self.FOV_selector.tab_wdg.currentIndex()
-            )
-
-            fov_list = []
+            previous_row = 0
             for idx, fov in enumerate(fovs):
                 # center fov scene x, y coord fx and fov scene width and height
                 (
@@ -296,7 +299,6 @@ class HCSWidget(HCSGui):
                     w_fov_scene,
                     h_fov_scene,
                     fov_row,
-                    fov_col,
                 ) = fov
 
                 # find 1 px value in um depending on well dimension
@@ -311,15 +313,22 @@ class HCSWidget(HCSGui):
                 stage_coord_x = center_stage_x + (new_fx * px_val_x)
                 stage_coord_y = center_stage_y + (new_fy * px_val_y)
 
-                # reorder fovs for "snake" acquisition
-                if (mode == "Grid" and not fov_row % 2) or mode != "Grid":
-                    fov_list.append((well_name, stage_coord_x, stage_coord_y))
-                else:
-                    fov_list.insert(
-                        -fov_col * idx, (well_name, stage_coord_x, stage_coord_y)
-                    )
+                if mode == "Grid":
+                    if fov_row > previous_row or idx == len(fovs) - 1:
+                        if idx == len(fovs) - 1:
+                            to_add.append((well_name, stage_coord_x, stage_coord_y))
+                        if previous_row % 2 == 0:
+                            pos_list.extend(iter(to_add))
+                        else:
+                            pos_list.extend(iter(reversed(to_add)))
+                        to_add.clear()
 
-            pos_list.extend(iter(fov_list))
+                    to_add.append((well_name, stage_coord_x, stage_coord_y))
+                    previous_row = fov_row
+
+                else:
+                    pos_list.append((well_name, stage_coord_x, stage_coord_y))
+
         return pos_list
 
     def _add_to_table(self, row, well_name, stage_coord_x, stage_coord_y):

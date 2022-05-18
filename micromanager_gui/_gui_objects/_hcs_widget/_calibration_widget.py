@@ -89,7 +89,6 @@ class PlateCalibration(QWidget):
         cal_state_wdg_layout.addWidget(self.icon_lbl)
         cal_state_wdg_layout.addWidget(self.cal_lbl)
 
-        # TODO: add live button when merged in main
         calibrate_btn = QPushButton(text="Calibrate Plate")
         calibrate_btn.clicked.connect(self._calibrate_plate)
 
@@ -237,6 +236,9 @@ class PlateCalibration(QWidget):
     def _calibrate_plate(self):
 
         self._set_calibrated(False)
+
+        if not self._mmc.getPixelSizeUm():
+            raise ValueError("Pixel Size not defined! Set pixel size first.")
 
         if self._mmc.isSequenceRunning():
             self._mmc.stopSequenceAcquisition()

@@ -1,12 +1,21 @@
+VWR 24  Plastic:
+  circular: true
+  cols: 6
+  id: VWR 24  Plastic
+  rows: 4
+  well_size_x: 15.7
+  well_size_y: 15.7
+  well_spacing_x: 19.2
+  well_spacing_y: 19.2
 _from calibration:
   circular: false
   cols: 1
   id: _from calibration
   rows: 1
-  well_size_x: 2.0
-  well_size_y: 1.0
-  well_spacing_x: 0.0
-  well_spacing_y: 0.0
+  well_size_x: 1.536
+  well_size_y: 1.536
+  well_spacing_x: 0
+  well_spacing_y: 0
 coverslip 1mm:
   circular: false
   cols: 1
