@@ -649,7 +649,7 @@ class SelectFOV(QWidget):
                 return points
         return points
 
-    def dist(self, new_point: tuple, points: list, min_distance: tuple):
+    def dist(self, new_point: tuple, points: list, min_distance: tuple) -> bool:
         for point in points:
             x_new, y_new = new_point[0], new_point[1]
             x, y = point[0], point[1]
