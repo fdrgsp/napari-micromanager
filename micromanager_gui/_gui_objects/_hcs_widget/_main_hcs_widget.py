@@ -271,7 +271,7 @@ class HCSWidget(HCSGui):
             well_x_um = well_x * 1000
             well_y_um = well_y * 1000
 
-            for fov in fovs:
+            for idx, fov in enumerate(fovs):
                 # center fov scene x, y coord fx and fov scene width and height
                 (
                     center_fov_scene_x,
@@ -291,13 +291,15 @@ class HCSWidget(HCSGui):
                 # find stage coords of fov point
                 stage_coord_x = center_stage_x + (new_fx * px_val_x)
                 stage_coord_y = center_stage_y + (new_fy * px_val_y)
-                pos_list.append((well_name, stage_coord_x, stage_coord_y))
+                pos_list.append(
+                    (f"{well_name}_pos{idx:03d}", stage_coord_x, stage_coord_y)
+                )
 
         return pos_list
 
     def _add_to_table(self, row, well_name, stage_coord_x, stage_coord_y):
         self._add_position_row()
-        name = QTableWidgetItem(f"{well_name}_pos{row:03d}")
+        name = QTableWidgetItem(well_name)
         name.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
         self.ch_and_pos_list.stage_tableWidget.setItem(row, 0, name)
         stage_x = QTableWidgetItem(str(stage_coord_x))
@@ -361,6 +363,7 @@ class HCSWidget(HCSGui):
 
         for r in range(self.ch_and_pos_list.stage_tableWidget.rowCount()):
             pos = {
+                "name": self.ch_and_pos_list.stage_tableWidget.item(r, 0).text(),
                 "x": float(self.ch_and_pos_list.stage_tableWidget.item(r, 1).text()),
                 "y": float(self.ch_and_pos_list.stage_tableWidget.item(r, 2).text()),
             }
@@ -369,6 +372,11 @@ class HCSWidget(HCSGui):
                     self.ch_and_pos_list.stage_tableWidget.item(r, 3).text()
                 )
             state["stage_positions"].append(pos)
+
+        print("_____________")
+        print("experiment:")
+        print(state)
+        print("_____________")
 
         return MDASequence(**state)
 
