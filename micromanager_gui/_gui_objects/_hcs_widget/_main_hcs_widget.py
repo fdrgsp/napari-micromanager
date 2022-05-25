@@ -54,7 +54,7 @@ class HCSWidget(HCSGui):
         self._update_wp_combo()
 
     def _on_sys_cfg(self):
-        self._on_combo_changed( self.wp_combo.currentText())
+        self._on_combo_changed(self.wp_combo.currentText())
 
     def _update_wp_combo(self):
         plates = self._plates_names_from_database()
@@ -376,11 +376,6 @@ class HCSWidget(HCSGui):
                     self.ch_and_pos_list.stage_tableWidget.item(r, 3).text()
                 )
             state["stage_positions"].append(pos)
-
-        print("_____________")
-        print("experiment:")
-        print(state)
-        print("_____________")
 
         return MDASequence(**state)
 
