@@ -326,37 +326,31 @@ class MainWindow(MicroManagerWidget):
 
         elif meta.mode == "hcs":
 
-            # To be removed once the event has the pos_name info______
-            pos_name = ""
-            for p in event.sequence.stage_positions:
-                if (p.x, p.y, p.z) == (event.x_pos, event.y_pos, event.z_pos):
-                    pos_name = p.name
-                    break
-
             # pick layer name
-            file_name = pos_name.split("_")[0] if pos_name else "HCS"
+            file_name = meta.file_name if meta.should_save else "HCS"
 
             layer_name = f"{file_name}_{event.sequence.uid}"
 
             try:  # see if we already have a layer with this sequence
+
                 layer = self.viewer.layers[layer_name]
 
                 # get indices of new image
                 im_idx = tuple(event.index[k] for k in event_indices(event))
-
                 # make sure array shape contains im_idx, or pad with zeros
                 new_array = extend_array_for_index(layer.data, im_idx)
                 # add the incoming index at the appropriate index
                 new_array[im_idx] = image
                 # set layer data
                 layer.data = new_array
+
                 for a, v in enumerate(im_idx):
                     self.viewer.dims.set_point(a, v)
 
             except KeyError:  # add the new layer to the viewer
                 seq = event.sequence
                 _image = image[(np.newaxis,) * len(seq.shape)]
-                layer = self.viewer.add_image(_image, name=layer_name,)
+                layer = self.viewer.add_image(_image, name=layer_name)
 
                 # dimensions labels
                 labels = [i for i in seq.axis_order if i in event.index] + ["y", "x"]
@@ -370,6 +364,7 @@ class MainWindow(MicroManagerWidget):
                 layer.metadata[
                     "ch_id"
                 ] = f'{event.channel.config}_idx{event.index["c"]}'
+                layer.metadata["positions"] = [p.name for p in seq.stage_positions]
 
     def _on_mda_finished(self, sequence: useq.MDASequence):
         """Save layer and add increment to save name."""
