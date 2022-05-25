@@ -244,16 +244,16 @@ class HCSGui(QWidget):
         return wdg
 
     def _create_save_group(self):
-        self.save_groupBox = QGroupBox(title="Save HCS Acquisition")
-        self.save_groupBox.setSizePolicy(
+        self.save_hcs_groupBox = QGroupBox(title="Save HCS Acquisition")
+        self.save_hcs_groupBox.setSizePolicy(
             QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         )
-        self.save_groupBox.setCheckable(True)
-        self.save_groupBox.setChecked(False)
+        self.save_hcs_groupBox.setCheckable(True)
+        self.save_hcs_groupBox.setChecked(False)
         group_layout = QVBoxLayout()
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 10, 10, 10)
-        self.save_groupBox.setLayout(group_layout)
+        self.save_hcs_groupBox.setLayout(group_layout)
 
         # directory
         dir_group = QWidget()
@@ -297,7 +297,7 @@ class HCSGui(QWidget):
         group_layout.addWidget(fname_group)
         group_layout.addWidget(self.checkBox_save_pos)
 
-        return self.save_groupBox
+        return self.save_hcs_groupBox
 
 
 if __name__ == "__main__":
