@@ -412,15 +412,20 @@ class HCSWidget(HCSGui):
         if self.ch_and_pos_list.stage_tableWidget.rowCount() <= 0:
             raise ValueError("Select at least one position.")
 
+        if self.save_groupBox.isChecked() and not (
+            self.fname_lineEdit.text() and Path(self.dir_lineEdit.text()).is_dir()
+        ):
+            raise ValueError("Select a filename and a valid directory.")
+
         experiment = self.get_state()
 
         SEQUENCE_META[experiment] = SequenceMeta(
             mode="hcs",
             split_channels=False,
             should_save=False,
-            file_name="",
-            save_dir="",
-            save_pos=False,
+            file_name=self.fname_lineEdit.text(),
+            save_dir=self.dir_lineEdit.text(),
+            save_pos=self.checkBox_save_pos.isChecked(),
         )
         self._mmc.run_mda(experiment)  # run the MDA experiment asynchronously
         return
