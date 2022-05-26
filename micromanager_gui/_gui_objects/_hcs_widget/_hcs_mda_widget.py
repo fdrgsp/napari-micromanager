@@ -7,6 +7,7 @@ from qtpy.QtWidgets import (
     QAbstractItemView,
     QAbstractSpinBox,
     QApplication,
+    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QGridLayout,
@@ -73,7 +74,7 @@ class ChannelPositionWidget(QWidget):
 
     def _create_positions_list_wdg(self):
         group = QGroupBox(title="Positions")
-        group.setMinimumHeight(230)
+        group.setMinimumHeight(300)
         group_layout = QVBoxLayout()
         group_layout.setSpacing(10)
         group_layout.setContentsMargins(10, 10, 10, 10)
@@ -99,7 +100,7 @@ class ChannelPositionWidget(QWidget):
         self.stage_tableWidget = QTableWidget()
         self.stage_tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.stage_tableWidget.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.stage_tableWidget.setMinimumHeight(90)
+        self.stage_tableWidget.setMinimumHeight(110)
         hdr = self.stage_tableWidget.horizontalHeader()
         hdr.setSectionResizeMode(hdr.Stretch)
         self.stage_tableWidget.verticalHeader().setVisible(True)
@@ -127,6 +128,9 @@ class ChannelPositionWidget(QWidget):
         assign_z_wdg_layout.addWidget(self.z_doublespinbox)
         assign_z_wdg_layout.addWidget(self.assign_z)
         group_layout.addWidget(assign_z_wdg)
+
+        self.checkBox_split_pos = QCheckBox(text="Split Positions")
+        group_layout.addWidget(self.checkBox_split_pos)
 
         return group
 
