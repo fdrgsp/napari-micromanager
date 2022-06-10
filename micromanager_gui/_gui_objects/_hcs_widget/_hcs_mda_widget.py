@@ -128,11 +128,23 @@ class ChannelPositionWidget(QWidget):
         assign_z_wdg_layout.addWidget(self.z_doublespinbox)
         assign_z_wdg_layout.addWidget(self.assign_z)
         group_layout.addWidget(assign_z_wdg)
+        
+        # checkbox
+        self.checkBox_split_pos = QCheckBox(
+            text="Split Positions"
+        )
+        self.checkBox_split_pos.toggled.connect(self._on_checkbox_toggle)
+        group_layout.addWidget(self.checkBox_split_pos)
 
         self.checkBox_split_pos = QCheckBox(text="Split Positions")
         group_layout.addWidget(self.checkBox_split_pos)
 
         return group
+
+    def _on_checkbox_toggle(self):
+        if self.stage_tableWidget.rowCount() <= 1:
+            with signals_blocked(self.checkBox_split_pos):
+                self.checkBox_split_pos.setCheckState(Qt.CheckState.Unchecked)
 
     def _create_channel_group(self):
 
