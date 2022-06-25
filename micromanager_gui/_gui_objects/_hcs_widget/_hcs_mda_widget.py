@@ -23,6 +23,7 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.utils import signals_blocked
 
 from micromanager_gui._core import get_core_singleton
 
@@ -128,15 +129,10 @@ class ChannelPositionWidget(QWidget):
         assign_z_wdg_layout.addWidget(self.z_doublespinbox)
         assign_z_wdg_layout.addWidget(self.assign_z)
         group_layout.addWidget(assign_z_wdg)
-        
-        # checkbox
-        self.checkBox_split_pos = QCheckBox(
-            text="Split Positions"
-        )
-        self.checkBox_split_pos.toggled.connect(self._on_checkbox_toggle)
-        group_layout.addWidget(self.checkBox_split_pos)
 
+        # checkbox
         self.checkBox_split_pos = QCheckBox(text="Split Positions")
+        self.checkBox_split_pos.toggled.connect(self._on_checkbox_toggle)
         group_layout.addWidget(self.checkBox_split_pos)
 
         return group
