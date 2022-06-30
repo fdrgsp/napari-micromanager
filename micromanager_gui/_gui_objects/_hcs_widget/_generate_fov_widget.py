@@ -36,6 +36,8 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class SelectFOV(QWidget):
+    """Widget to select the FOVs of the sample plate."""
+
     def __init__(self, *, mmcore: Optional[CMMCorePlus] = None):
         super().__init__()
 
@@ -600,7 +602,7 @@ class SelectFOV(QWidget):
     ) -> list:
         radius = diameter / 2
         _to_add = center + radius
-        points = []
+        points: list[tuple] = []
         t = time.time()
         while len(points) < nFOV:
             # random angle
@@ -631,7 +633,8 @@ class SelectFOV(QWidget):
         y_up = (max_size_y - size_y) / 2  # upper bound
         y_down = y_up + size_y  # lower bound
 
-        points = []
+        points: list[tuple] = []
+
         t = time.time()
         while len(points) < nFOV:
             x = np.random.randint(x_left, x_right)

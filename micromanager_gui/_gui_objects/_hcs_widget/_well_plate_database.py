@@ -3,12 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Tuple
 
-import yaml
+import yaml  # type: ignore
 
 PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 
 
 class WellPlate:
+    """General well plates calss."""
+
     def __init__(self):
         super().__init__()
 
@@ -59,7 +61,7 @@ class WellPlate:
 
 
 class PlateFromDatabase(WellPlate):
-    """Standard well plates from the yaml database"""
+    """Standard well plates from the yaml database."""
 
     def __init__(self, plate_name: str):
         super().__init__()

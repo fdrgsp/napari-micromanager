@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Tuple
 
-import yaml
+import yaml  # type: ignore
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
 from qtpy.QtCore import Qt
@@ -22,6 +22,8 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class HCSWidget(HCSGui):
+    """Main HCS widget."""
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
@@ -106,19 +108,22 @@ class HCSWidget(HCSGui):
         self._draw_well_plate("_from calibration")
 
     def _draw_well_plate(self, well_plate: str):
-        self.wp = WellPlate.set_format(well_plate)
+        self.wp = WellPlate.set_format(well_plate)  # type: ignore
 
         max_w = self._width - 10
         max_h = self._height - 10
-        size_y = max_h / self.wp.rows
+        size_y = max_h / self.wp.rows  # type: ignore
         size_x = (
             size_y
-            if self.wp.circular or self.wp.well_size_x == self.wp.well_size_y
-            else (max_w / self.wp.cols)
+            if (
+                self.wp.circular  # type: ignore
+                or self.wp.well_size_x == self.wp.well_size_y  # type: ignore
+            )
+            else (max_w / self.wp.cols)  # type: ignore
         )
         text_size = size_y / 3  # 2.3
 
-        width = size_x * self.wp.cols
+        width = size_x * self.wp.cols  # type: ignore
 
         if width != self.scene.width() and self.scene.width() > 0:
             start_x = (self.scene.width() - width) / 2
@@ -127,13 +132,13 @@ class HCSWidget(HCSGui):
             start_x = 0
 
         self._create_well_plate(
-            self.wp.rows,
-            self.wp.cols,
+            self.wp.rows,  # type: ignore
+            self.wp.cols,  # type: ignore
             start_x,
             size_x,
             size_y,
             text_size,
-            self.wp.circular,
+            self.wp.circular,  # type: ignore
         )
 
         # select the plate area if is not a multi well
@@ -144,7 +149,7 @@ class HCSWidget(HCSGui):
             item.setBrush(QBrush(Qt.magenta))
 
         self.FOV_selector._load_plate_info(
-            self.wp.well_size_x, self.wp.well_size_y, self.wp.circular
+            self.wp.well_size_x, self.wp.well_size_y, self.wp.circular  # type: ignore
         )
 
     def _create_well_plate(

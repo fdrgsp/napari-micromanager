@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional, Tuple, overload
 
-import yaml
+import yaml  # type: ignore
 from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import QSize, Qt, Signal
@@ -28,6 +28,7 @@ PLATE_DATABASE = Path(__file__).parent / "_well_plate.yaml"
 
 
 class PlateCalibration(QWidget):
+    """Widget to calibrate the sample plate."""
 
     PlateFromCalibration = Signal(tuple)
 
@@ -42,7 +43,7 @@ class PlateCalibration(QWidget):
         self._mmc = mmcore or get_core_singleton()
 
         self.plate = None
-        self.A1_well = tuple()
+        self.A1_well: tuple = ()
         self.is_calibrated = False
 
         self._create_gui()
@@ -161,7 +162,7 @@ class PlateCalibration(QWidget):
     def get_circle_center_(
         self, a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]
     ) -> Tuple[int, int]:
-        """Find the center of a round well given 3 edge points"""
+        """Find the center of a round well given 3 edge points."""
         # eq circle (x - x1)^2 + (y - y1)^2 = r^2
         # for point a: (x - ax)^2 + (y - ay)^2 = r^2
         # for point b: = (x - bx)^2 + (y - by)^2 = r^2
@@ -200,14 +201,13 @@ class PlateCalibration(QWidget):
     def get_rect_center(self, a: Tuple, b: Tuple) -> Tuple:
         ...
 
-    def get_rect_center(self, *args) -> Tuple:
+    def get_rect_center(self, *args) -> Tuple:  # type: ignore
         """
-        Find the center of a rectanle/square well given
-        two opposite verices coordinates or 4 points on the edges.
-        """
+        Find the center of a rectangle/square well.
 
+        (given two opposite verices coordinates or 4 points on the edges).
+        """
         # add block if wrong coords!!!
-
         x_list = [x[0] for x in [*args]]
         y_list = [y[1] for y in [*args]]
         x_max, x_min = (max(x_list), min(x_list))
@@ -282,6 +282,8 @@ class PlateCalibration(QWidget):
 
 
 class CalibrationTable(QWidget):
+    """Table widget for the calibration widget."""
+
     def __init__(self, *, mmcore: Optional[CMMCorePlus] = None):
         super().__init__()
 

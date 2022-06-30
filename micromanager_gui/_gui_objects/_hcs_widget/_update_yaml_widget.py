@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-import yaml
+import yaml  # type: ignore
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (
     QApplication,
@@ -25,6 +25,7 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class UpdateYaml(QDialog):
+    """Class to update the yaml well plate database."""
 
     yaml_updated = Signal(object)
 
@@ -233,6 +234,8 @@ class UpdateYaml(QDialog):
 
 
 class Table(QTableWidget):
+    """QTableWidget setup."""
+
     def __init__(self):
         super().__init__()
 

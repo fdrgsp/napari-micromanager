@@ -32,6 +32,8 @@ AlignCenter = Qt.AlignmentFlag.AlignCenter
 
 
 class ChannelPositionWidget(QWidget):
+    """Widget to select channels and positions."""
+
     def __init__(
         self, parent: Optional[QWidget] = None, *, mmcore: Optional[CMMCorePlus] = None
     ):
@@ -417,7 +419,7 @@ class ChannelPositionWidget(QWidget):
 
         channel_group = self._mmc.getChannelGroup()
         if not channel_group:
-            return
+            return False
 
         idx = self.channel_tableWidget.rowCount()
         self.channel_tableWidget.insertRow(idx)
