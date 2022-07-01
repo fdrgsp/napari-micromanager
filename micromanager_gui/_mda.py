@@ -22,7 +22,6 @@ class SequenceMeta:
 
     mode: Union[Literal["mda"], Literal["explorer"], Literal[""]] = ""
     split_channels: bool = False
-    split_positions: bool = False
     should_save: bool = False
     file_name: str = ""
     save_dir: str = ""
