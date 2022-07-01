@@ -7,7 +7,6 @@ from qtpy.QtWidgets import (
     QAbstractItemView,
     QAbstractSpinBox,
     QApplication,
-    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QGridLayout,
@@ -133,9 +132,9 @@ class ChannelPositionWidget(QWidget):
         group_layout.addWidget(assign_z_wdg)
 
         # checkbox
-        self.checkBox_split_pos = QCheckBox(text="Split Positions")
-        self.checkBox_split_pos.toggled.connect(self._on_checkbox_toggle)
-        group_layout.addWidget(self.checkBox_split_pos)
+        # self.checkBox_split_pos = QCheckBox(text="Split Positions")
+        # self.checkBox_split_pos.toggled.connect(self._on_checkbox_toggle)
+        # group_layout.addWidget(self.checkBox_split_pos)
 
         return group
 
