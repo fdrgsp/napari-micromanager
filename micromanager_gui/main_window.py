@@ -241,6 +241,9 @@ class MainWindow(MicroManagerWidget):
             if self._mda_meta.mode != "hcs":
                 self._mda_meta.mode = "mda"
 
+            if self._mda_meta.hcs_engine == "Find Wells":  # type: ignore
+                return
+
         if self._mda_meta.mode == "mda":
 
             # work out what the shapes of the layers will be
