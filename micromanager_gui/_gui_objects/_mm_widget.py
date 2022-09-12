@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from napari_micromanager_plugins import HCSWidget
 from pymmcore_widgets import (
     ConfigurationWidget,
     GroupPresetTableWidget,
@@ -93,6 +94,9 @@ class MicroManagerWidget(QtW.QWidget):
         self.tab_wdg.tabWidget.addTab(self.mda, "Multi-D Acquisition")
         self.tab_wdg.tabWidget.addTab(self.explorer, "Sample Explorer")
         self.tab_wdg.tabWidget.addTab(self.group_preset_table_wdg, "Groups and Presets")
+
+        self.hcs = HCSWidget()
+        self.tab_wdg.tabWidget.addTab(self.hcs, "HCS")
 
         # set main_layout layout
         self.setLayout(self.main_layout)
