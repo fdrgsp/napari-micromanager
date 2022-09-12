@@ -35,8 +35,10 @@ def save_sequence(sequence: MDASequence, layers: LayerList, meta: SequenceMeta):
         return
     if meta.mode == "mda":
         return _save_mda_sequence(sequence, layers, meta)
-    if meta.mode == "explorer":
+    elif meta.mode == "explorer":
         return _save_explorer_scan(sequence, layers, meta)
+    elif meta.mode == "hcs":
+        return _save_hcs(sequence, layers, meta)
     raise NotImplementedError(f"cannot save experiment with mode: {meta.mode}")
 
 
@@ -119,3 +121,21 @@ def _save_explorer_scan(sequence: MDASequence, layers: LayerList, meta: Sequence
         if scan_stack.shape[0] > 1:
             ch_name = layer.metadata.get("ch_name")
             _imsave(folder_name / f"{ch_name}.tif", scan_stack)
+
+
+def _save_hcs(sequence: MDASequence, layers: LayerList, meta: SequenceMeta):
+
+    path = Path(meta.save_dir)
+
+    file_name = (
+        f"{meta.file_name}" if meta.file_name == "HCS" else f"HCS_{meta.file_name}"
+    )
+
+    folder_name = ensure_unique(path / file_name, extension="", ndigits=3)
+    folder_name.mkdir(parents=True, exist_ok=True)
+
+    for lay in layers:
+        if lay.metadata.get("uid") != sequence.uid:
+            continue
+        fname = f'{lay.metadata.get("well")}.tif'
+        _imsave(folder_name / fname, np.squeeze(lay.data))
