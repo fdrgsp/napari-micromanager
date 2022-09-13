@@ -290,7 +290,7 @@ class HCSWidget(HCSGui):
 
             ordered_well_list.append((well, x, y))
 
-        # self._plot_plate(ordered_well_list, original_pos_list)  # to remove
+        self._plot_plate(ordered_well_list, original_pos_list)  # to remove
 
         return ordered_well_list
 

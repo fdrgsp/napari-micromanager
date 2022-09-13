@@ -46,9 +46,6 @@ class SelectFOV(QWidget):
         self._create_widget()
 
         self._mmc.events.pixelSizeChanged.connect(self._on_px_size_changed)
-        # TODO:
-        # on objective changed -> pixelSizeChanged is not
-        # triggered when obj is changed
 
     def _create_widget(self) -> None:
 
