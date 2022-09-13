@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from napari_micromanager_plugins import HCSWidget
+# from napari_micromanager_plugins import HCSWidget
 from pymmcore_widgets import (
     ConfigurationWidget,
     GroupPresetTableWidget,
@@ -12,6 +12,7 @@ from qtpy.QtCore import Qt
 from superqt import QCollapsible
 
 from ._camera_widget import MMCameraWidget
+from ._hcs_widget._main_hcs_widget import HCSWidget
 from ._mda_widget._mda_widget import MMMultiDWidget
 from ._sample_explorer_widget._sample_explorer_widget import MMExploreSample
 from ._shutters_widget import MMShuttersWidget

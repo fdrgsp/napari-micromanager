@@ -25,6 +25,7 @@ class SequenceMeta:
     file_name: str = ""
     save_dir: str = ""
     save_pos: bool = False
+    hcs_engine: str = "MDAEngine"
 
 
 SEQUENCE_META: dict[MDASequence, SequenceMeta] = {}

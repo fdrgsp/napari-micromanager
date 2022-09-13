@@ -235,14 +235,8 @@ class MainWindow(MicroManagerWidget):
             return
 
         elif self._mda_meta.mode == "":
-            # temporary solution to get SEQUENCE_META from HCSWidget
-            self._mda_meta = self.hcs._seq
 
-            if self._mda_meta.mode != "hcs":
-                self._mda_meta.mode = "mda"
-
-            if self._mda_meta.hcs_engine == "Find Wells":  # type: ignore
-                return
+            self._mda_meta.mode = "mda"
 
         if self._mda_meta.mode == "mda":
 
@@ -254,6 +248,9 @@ class MainWindow(MicroManagerWidget):
             self._add_mda_channel_layers(tuple(shape), channels, sequence)
 
         elif self._mda_meta.mode == "hcs":
+
+            if self._mda_meta.hcs_engine == "Find Wells":
+                return
 
             shape, positions, labels = self._interpret_hcs_positions(sequence)
 
