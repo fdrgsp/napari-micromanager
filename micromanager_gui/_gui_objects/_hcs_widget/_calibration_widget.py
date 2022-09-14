@@ -512,14 +512,24 @@ class CalibrationTable(QWidget):
         self._rename_positions()
 
     def _rename_positions(self) -> None:
+        pos_list = []
+        name = ""
         for r in range(self.tb.rowCount()):
             curr_name = self.tb.item(r, 0).text()
+
+            if r == 0:
+                name = curr_name.split("_")[0]
+
             curr_pos = int(curr_name[-3:])
-            if curr_pos == 0:
-                continue
-            new_pos = curr_pos - 1
-            pos_name = f"{curr_name[:-3]}{new_pos:03d}"
-            item = QTableWidgetItem(pos_name)
+            pos_list.append(curr_pos)
+
+        missing = [x for x in range(pos_list[0], pos_list[-1] + 1) if x not in pos_list]
+
+        full = sorted(missing + pos_list)[: self.tb.rowCount()]
+
+        for r in range(self.tb.rowCount()):
+            new_name = f"{name}_pos{full[r]:03d}"
+            item = QTableWidgetItem(new_name)
             item.setTextAlignment(int(Qt.AlignHCenter | Qt.AlignVCenter))
             self.tb.setItem(r, 0, item)
 
