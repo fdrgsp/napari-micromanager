@@ -22,6 +22,7 @@ from useq import MDASequence
 from . import _mda_meta
 
 # from ._camera_roi import _CameraROI
+from ._cellpose import RunCellpose
 from ._gui_objects._mm_widget import MicroManagerWidget
 from ._mda_meta import SequenceMeta
 from ._saving import save_sequence
@@ -47,6 +48,10 @@ class MainWindow(MicroManagerWidget):
         self._mmc = CMMCorePlus.instance()
 
         self.viewer = viewer
+
+        self._cellpose = True
+        if self._cellpose:
+            self.cp = RunCellpose(viewer=self.viewer, mmcore=self._mmc)
 
         adapter_path = find_micromanager()
         if not adapter_path:
@@ -491,6 +496,11 @@ class MainWindow(MicroManagerWidget):
             # move the viewer step to the most recently added image
             for a, v in enumerate(im_idx):
                 self.viewer.dims.set_point(a, v)
+
+            for lr in self.viewer.layers:
+                lr.visible = False
+                lr.visible = True
+                lr.reset_contrast_limits()
 
         elif meta.mode == "explorer":
 
