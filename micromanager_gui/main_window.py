@@ -20,10 +20,10 @@ from superqt.utils import create_worker, ensure_main_thread
 from useq import MDASequence
 
 from . import _mda_meta
-from ._cellpose import CellposeWidget
 from ._gui_objects._mm_widget import MicroManagerWidget
 from ._mda_meta import SequenceMeta
 from ._saving import save_sequence
+from ._stardist import StardistWidget
 from ._util import event_indices
 
 if TYPE_CHECKING:
@@ -132,8 +132,8 @@ class MainWindow(MicroManagerWidget):
         action_1 = self._menu.addAction("Set Pixel Size...")
         action_1.triggered.connect(self._show_pixel_size_table)
 
-        self._cellpose_menu = QtW.QMenu("&Cellpose", w._qt_window)
-        cp_action = self._cellpose_menu.addAction("Cellpose Options...")
+        self._cellpose_menu = QtW.QMenu("&Stardist", w._qt_window)
+        cp_action = self._cellpose_menu.addAction("Stardist Options...")
         cp_action.triggered.connect(self._show_cellpose_options)
 
         bar = w._qt_window.menuBar()
@@ -153,14 +153,14 @@ class MainWindow(MicroManagerWidget):
 
     def _show_cellpose_options(self):
         if not hasattr(self, "_cellpose"):
-            self._cellpose = CellposeWidget(
+            self._stardist = StardistWidget(
                 parent=self,
                 metadata_from_wdgs=[self.mda],
                 mmcore=self._mmc,
                 viewer=self.viewer,
             )
-            self._cellpose._reset_channel_list()
-        self._cellpose.show()
+            self._stardist._reset_channel_list()
+        self._stardist.show()
 
     def _on_system_cfg_loaded(self):
         if len(self._mmc.getLoadedDevices()) > 1:
