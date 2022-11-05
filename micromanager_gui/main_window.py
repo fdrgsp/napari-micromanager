@@ -127,18 +127,18 @@ class MainWindow(MicroManagerWidget):
     def _add_menu(self):
         w = getattr(self.viewer, "__wrapped__", self.viewer).window  # don't do this.
         self._menu = QtW.QMenu("&Micro-Manager", w._qt_window)
-
         action = self._menu.addAction("Device Property Browser...")
         action.triggered.connect(self._show_prop_browser)
-
         action_1 = self._menu.addAction("Set Pixel Size...")
         action_1.triggered.connect(self._show_pixel_size_table)
 
-        action_2 = self._menu.addAction("Cellpose...")
-        action_2.triggered.connect(self._show_cellpose_options)
+        self._cellpose_menu = QtW.QMenu("&Cellpose", w._qt_window)
+        cp_action = self._cellpose_menu.addAction("Cellpose Options...")
+        cp_action.triggered.connect(self._show_cellpose_options)
 
         bar = w._qt_window.menuBar()
         bar.insertMenu(list(bar.actions())[-1], self._menu)
+        bar.insertMenu(list(bar.actions())[-1], self._cellpose_menu)
 
     def _show_prop_browser(self):
         if not hasattr(self, "_prop_browser"):

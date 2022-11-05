@@ -10,12 +10,14 @@ from cellpose.models import CellposeModel
 from napari.qt.threading import thread_worker
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
     QHBoxLayout,
     QLabel,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -88,6 +90,19 @@ class CellposeWidget(QDialog):
         ch_layout.addWidget(self._cellpose_channel)
         main_layout.addWidget(ch)
 
+        nuclei_size_wdg = QWidget()
+        nuclei_size_layout = QHBoxLayout()
+        nuclei_size_layout.setSpacing(5)
+        nuclei_size_layout.setContentsMargins(0, 0, 0, 0)
+        nuclei_size_wdg.setLayout(nuclei_size_layout)
+        nuclei_size_lbl = QLabel(text="nuclei min size:")
+        self._cellpose_nuclei_diameter = QSpinBox()
+        self._cellpose_nuclei_diameter.setAlignment(Qt.AlignCenter)
+        self._cellpose_nuclei_diameter.setMaximum(10000)
+        nuclei_size_layout.addWidget(nuclei_size_lbl)
+        nuclei_size_layout.addWidget(self._cellpose_nuclei_diameter)
+        main_layout.addWidget(nuclei_size_wdg)
+
     def _reset_channel_list(self):
         self._cellpose_channel.clear()
 
@@ -159,12 +174,10 @@ class CellposeWidget(QDialog):
 
         else:
             nuclei = "nuclei"
-            nuclei_cell_diameter = 100
             model_nuclei = CellposeModel(model_type=nuclei)
 
             mask_nuclei, *_ = model_nuclei.eval(
-                image,
-                diameter=nuclei_cell_diameter,
+                image, diameter=self._cellpose_nuclei_diameter.value()
             )
             yield (mask_nuclei, event)
 
