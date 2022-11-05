@@ -10,7 +10,15 @@ from cellpose.models import CellposeModel
 from napari.qt.threading import thread_worker
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
-from qtpy.QtWidgets import QCheckBox, QDialog, QVBoxLayout, QWidget
+from qtpy.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 from useq import MDAEvent, MDASequence
 
 from micromanager_gui._util import event_indices
@@ -66,6 +74,28 @@ class CellposeWidget(QDialog):
         self._cellpose_checkbox.toggled.connect(self._on_cellpose_checkbox_toggle)
         main_layout.addWidget(self._cellpose_checkbox)
 
+        ch = QWidget()
+        ch_layout = QHBoxLayout()
+        ch_layout.setSpacing(5)
+        ch_layout.setContentsMargins(0, 0, 0, 0)
+        ch.setLayout(ch_layout)
+        ch_lbl = QLabel(text="nuclei channel:")
+        self._cellpose_channel = QComboBox()
+        self._reset_channel_list()
+        ch_layout.addWidget(ch_lbl)
+        ch_layout.addWidget(self._cellpose_channel)
+        main_layout.addWidget(ch)
+
+    def _reset_channel_list(self):
+        self._cellpose_channel.clear()
+
+        if not self._mmc.getChannelGroup():
+            return
+
+        self._cellpose_channel.addItems(
+            list(self._mmc.getAvailableConfigs(self._mmc.getChannelGroup()))
+        )
+
     def _on_cellpose_checkbox_toggle(self, state: bool):
         self._cellpose_is_active = state
 
@@ -120,8 +150,7 @@ class CellposeWidget(QDialog):
     @thread_worker
     def _run_cellpose(self, image: np.ndarray, event: MDAEvent) -> Generator:
 
-        # TODO: set channel name before
-        if event.channel.config != "Cy5":
+        if event.channel.config != self._cellpose_channel.currentText():
             yield (event,)
 
         else:

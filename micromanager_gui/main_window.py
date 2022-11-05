@@ -156,6 +156,7 @@ class MainWindow(MicroManagerWidget):
             self._cellpose = CellposeWidget(
                 parent=self, mmcore=self._mmc, viewer=self.viewer
             )
+            self._cellpose._reset_channel_list()
         self._cellpose.show()
 
     def _on_system_cfg_loaded(self):
