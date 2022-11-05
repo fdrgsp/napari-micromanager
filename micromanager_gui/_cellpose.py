@@ -106,6 +106,8 @@ class CellposeWidget(QDialog):
         self._mmc.mda.events.sequenceStarted.disconnect(self._create_zarr)
         self._mmc.mda.events.frameReady.disconnect(self._cellpose_module)
 
+        self._mmc.events.channelGroupChanged.disconnect(self._reset_channel_list)
+
     def _update_mda_engine(self, newEngine: PMDAEngine, oldEngine: PMDAEngine) -> None:
         oldEngine.events.frameReady.disconnect(self._cellpose_module)
         newEngine.events.frameReady.connect(self._cellpose_module)
