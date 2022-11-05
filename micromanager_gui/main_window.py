@@ -154,7 +154,10 @@ class MainWindow(MicroManagerWidget):
     def _show_cellpose_options(self):
         if not hasattr(self, "_cellpose"):
             self._cellpose = CellposeWidget(
-                parent=self, mmcore=self._mmc, viewer=self.viewer
+                parent=self,
+                metadata_from_wdgs=[self.mda],
+                mmcore=self._mmc,
+                viewer=self.viewer,
             )
             self._cellpose._reset_channel_list()
         self._cellpose.show()
