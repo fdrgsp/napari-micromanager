@@ -20,9 +20,7 @@ from superqt.utils import create_worker, ensure_main_thread
 from useq import MDASequence
 
 from . import _mda_meta
-
-# from ._camera_roi import _CameraROI
-from ._cellpose import RunCellpose
+from ._cellpose import CellposeWidget
 from ._gui_objects._mm_widget import MicroManagerWidget
 from ._mda_meta import SequenceMeta
 from ._saving import save_sequence
@@ -48,10 +46,6 @@ class MainWindow(MicroManagerWidget):
         self._mmc = CMMCorePlus.instance()
 
         self.viewer = viewer
-
-        self._cellpose = True
-        if self._cellpose:
-            self.cp = RunCellpose(viewer=self.viewer, mmcore=self._mmc)
 
         adapter_path = find_micromanager()
         if not adapter_path:
@@ -140,6 +134,9 @@ class MainWindow(MicroManagerWidget):
         action_1 = self._menu.addAction("Set Pixel Size...")
         action_1.triggered.connect(self._show_pixel_size_table)
 
+        action_2 = self._menu.addAction("Cellpose...")
+        action_2.triggered.connect(self._show_cellpose_options)
+
         bar = w._qt_window.menuBar()
         bar.insertMenu(list(bar.actions())[-1], self._menu)
 
@@ -154,22 +151,24 @@ class MainWindow(MicroManagerWidget):
             self._px_size_wdg = PixelSizeWidget(parent=self)
         self._px_size_wdg.show()
 
+    def _show_cellpose_options(self):
+        if not hasattr(self, "_cellpose"):
+            self._cellpose = CellposeWidget(
+                parent=self, mmcore=self._mmc, viewer=self.viewer
+            )
+        self._cellpose.show()
+
     def _on_system_cfg_loaded(self):
         if len(self._mmc.getLoadedDevices()) > 1:
             self._set_enabled(True)
 
     def _set_enabled(self, enabled):
         if self._mmc.getCameraDevice():
-            # self._camera_group_wdg(enabled)
             self.tab_wdg.snap_live_tab.setEnabled(enabled)
             self.tab_wdg.snap_live_tab.setEnabled(enabled)
         else:
-            # self._camera_group_wdg(False)
             self.tab_wdg.snap_live_tab.setEnabled(False)
             self.tab_wdg.snap_live_tab.setEnabled(False)
-
-        # self.illum_btn.setEnabled(enabled)
-        # self.ill.setEnabled(enabled)
 
         self.mda._set_enabled(enabled)
         self.mda.save_groupBox.setEnabled(enabled)
@@ -180,9 +179,6 @@ class MainWindow(MicroManagerWidget):
             self.explorer._set_enabled(False)
 
         self.explorer.save_explorer_groupBox.setEnabled(enabled)
-
-    # def _camera_group_wdg(self, enabled):
-    #     self.cam_wdg.setEnabled(enabled)
 
     @ensure_main_thread
     def update_viewer(self, data=None):

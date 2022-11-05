@@ -10,20 +10,28 @@ from cellpose.models import CellposeModel
 from napari.qt.threading import thread_worker
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
+from qtpy.QtWidgets import QCheckBox, QDialog, QVBoxLayout, QWidget
 from useq import MDAEvent, MDASequence
 
-from ._util import event_indices
+from micromanager_gui._util import event_indices
 
 if TYPE_CHECKING:
     import napari.viewer
 
 
-class RunCellpose:
-    """Running Cellpose when core emit 'frameReady' signal."""
+class CellposeWidget(QDialog):
+    """Widget to run Cellpose when core emits 'frameReady' signal."""
 
     def __init__(
-        self, viewer: napari.viewer.Viewer, mmcore: Optional[CMMCorePlus] = None
+        self,
+        viewer: napari.viewer.Viewer,
+        parent: Optional[QWidget] = None,
+        *,
+        mmcore: Optional[CMMCorePlus] = None,
     ) -> None:
+        super().__init__(parent)
+
+        self._cellpose_is_active = False
 
         self.viewer = viewer
 
@@ -33,8 +41,12 @@ class RunCellpose:
         self._mmc.mda.events.sequenceStarted.connect(self._create_zarr)
         self._mmc.mda.events.frameReady.connect(self._cellpose_module)
 
+        self.destroyed.connect(self._disconnect)
+
         self._mda_temp_arrays: Dict[str, zarr.Array] = {}
         self._mda_temp_files: Dict[str, tempfile.TemporaryDirectory] = {}
+
+        self._create_cellpose_wdg()
 
         @atexit.register
         def cleanup():
@@ -42,6 +54,25 @@ class RunCellpose:
             for v in self._mda_temp_files.values():
                 with contextlib.suppress(NotADirectoryError):
                     v.cleanup()
+
+    def _create_cellpose_wdg(self):
+
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        self.setLayout(main_layout)
+
+        self._cellpose_checkbox = QCheckBox(text="activate Cellpose")
+        self._cellpose_checkbox.toggled.connect(self._on_cellpose_checkbox_toggle)
+        main_layout.addWidget(self._cellpose_checkbox)
+
+    def _on_cellpose_checkbox_toggle(self, state: bool):
+        self._cellpose_is_active = state
+
+    def _disconnect(self):
+        self._mmc.events.mdaEngineRegistered.disconnect(self._update_mda_engine)
+        self._mmc.mda.events.sequenceStarted.disconnect(self._create_zarr)
+        self._mmc.mda.events.frameReady.disconnect(self._cellpose_module)
 
     def _update_mda_engine(self, newEngine: PMDAEngine, oldEngine: PMDAEngine) -> None:
         oldEngine.events.frameReady.disconnect(self._cellpose_module)
@@ -59,6 +90,9 @@ class RunCellpose:
         return shape
 
     def _create_zarr(self, sequence: MDASequence):
+        if not self._cellpose_is_active:
+            return
+
         shape = self._get_shape_and_labels(sequence)
         dtype = f"uint{self._mmc.getImageBitDepth()}"
 
@@ -77,6 +111,8 @@ class RunCellpose:
         layer.metadata["useq_sequence"] = sequence
 
     def _cellpose_module(self, image: np.ndarray, event: MDAEvent):
+        if not self._cellpose_is_active:
+            return
         worker = self._run_cellpose(image, event)
         worker.yielded.connect(self._add_to_viewer)
         worker.start()
