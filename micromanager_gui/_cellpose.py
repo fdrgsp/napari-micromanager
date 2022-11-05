@@ -49,6 +49,8 @@ class CellposeWidget(QDialog):
         self._mmc.mda.events.sequenceStarted.connect(self._create_zarr)
         self._mmc.mda.events.frameReady.connect(self._cellpose_module)
 
+        self._mmc.events.channelGroupChanged.connect(self._reset_channel_list)
+
         self.destroyed.connect(self._disconnect)
 
         self._mda_temp_arrays: Dict[str, zarr.Array] = {}
