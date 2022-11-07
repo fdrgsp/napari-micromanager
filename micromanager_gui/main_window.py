@@ -131,14 +131,11 @@ class MainWindow(MicroManagerWidget):
         action.triggered.connect(self._show_prop_browser)
         action_1 = self._menu.addAction("Set Pixel Size...")
         action_1.triggered.connect(self._show_pixel_size_table)
-
-        self._stardist_menu = QtW.QMenu("&Stardist", w._qt_window)
-        st_action = self._stardist_menu.addAction("Stardist Options...")
+        st_action = self._menu.addAction("Stardist Options...")
         st_action.triggered.connect(self._show_stardist_options)
 
         bar = w._qt_window.menuBar()
         bar.insertMenu(list(bar.actions())[-1], self._menu)
-        bar.insertMenu(list(bar.actions())[-1], self._stardist_menu)
 
     def _show_prop_browser(self):
         if not hasattr(self, "_prop_browser"):
