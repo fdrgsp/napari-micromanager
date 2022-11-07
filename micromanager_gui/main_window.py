@@ -133,8 +133,8 @@ class MainWindow(MicroManagerWidget):
         action_1.triggered.connect(self._show_pixel_size_table)
 
         self._stardist_menu = QtW.QMenu("&Stardist", w._qt_window)
-        cp_action = self._stardist_menu.addAction("Stardist Options...")
-        cp_action.triggered.connect(self._show_stardist_options)
+        st_action = self._stardist_menu.addAction("Stardist Options...")
+        st_action.triggered.connect(self._show_stardist_options)
 
         bar = w._qt_window.menuBar()
         bar.insertMenu(list(bar.actions())[-1], self._menu)
