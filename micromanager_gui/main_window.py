@@ -152,7 +152,7 @@ class MainWindow(MicroManagerWidget):
         self._px_size_wdg.show()
 
     def _show_stardist_options(self):
-        if not hasattr(self, "_cellpose"):
+        if not hasattr(self, "_stardist"):
             self._stardist = StardistWidget(
                 parent=self,
                 metadata_from_wdgs=[self.mda],
