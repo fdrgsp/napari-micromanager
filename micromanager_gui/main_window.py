@@ -132,13 +132,13 @@ class MainWindow(MicroManagerWidget):
         action_1 = self._menu.addAction("Set Pixel Size...")
         action_1.triggered.connect(self._show_pixel_size_table)
 
-        self._cellpose_menu = QtW.QMenu("&Stardist", w._qt_window)
-        cp_action = self._cellpose_menu.addAction("Stardist Options...")
-        cp_action.triggered.connect(self._show_cellpose_options)
+        self._stardist_menu = QtW.QMenu("&Stardist", w._qt_window)
+        cp_action = self._stardist_menu.addAction("Stardist Options...")
+        cp_action.triggered.connect(self._show_stardist_options)
 
         bar = w._qt_window.menuBar()
         bar.insertMenu(list(bar.actions())[-1], self._menu)
-        bar.insertMenu(list(bar.actions())[-1], self._cellpose_menu)
+        bar.insertMenu(list(bar.actions())[-1], self._stardist_menu)
 
     def _show_prop_browser(self):
         if not hasattr(self, "_prop_browser"):
@@ -151,7 +151,7 @@ class MainWindow(MicroManagerWidget):
             self._px_size_wdg = PixelSizeWidget(parent=self)
         self._px_size_wdg.show()
 
-    def _show_cellpose_options(self):
+    def _show_stardist_options(self):
         if not hasattr(self, "_cellpose"):
             self._stardist = StardistWidget(
                 parent=self,
