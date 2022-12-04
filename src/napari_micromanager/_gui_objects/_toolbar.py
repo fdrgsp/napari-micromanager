@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Tuple, cast
 
 from fonticon_mdi6 import MDI6
@@ -19,7 +18,6 @@ from pymmcore_widgets import (
     SnapButton,
 )
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
@@ -44,7 +42,6 @@ if TYPE_CHECKING:
 
     import napari.viewer
 
-PX_ICON = str(Path(__file__).parent / "icons/px_icon.png")
 TOOLBAR_SIZE = 45
 TOOL_SIZE = 35
 GROUPBOX_STYLE = "QGroupBox { border-radius: 3px; }"
@@ -57,12 +54,12 @@ PUSHBUTTON_STYLE = """
 
 # Dict for QObject and its QPushButton icon
 DOCK_WIDGETS: Dict[str, Tuple[type[QWidget], str | None]] = {  # noqa: U006
-    "Device Property Browser": (PropertyBrowser, "table_large"),
-    "Groups and Presets Table": (GroupPresetTableWidget, "table_large_plus"),
-    "Illumination Control": (IlluminationWidget, "lightbulb_on"),
-    "Stages Control": (MMStagesWidget, "arrow_all"),
-    "Camera ROI": (CameraRoiWidget, "crop"),
-    "Pixel Size Table": (PixelSizeWidget, PX_ICON),
+    "Device Property Browser": (PropertyBrowser, MDI6.table_large),
+    "Groups and Presets Table": (GroupPresetTableWidget, MDI6.table_large_plus),
+    "Illumination Control": (IlluminationWidget, MDI6.lightbulb_on),
+    "Stages Control": (MMStagesWidget, MDI6.arrow_all),
+    "Camera ROI": (CameraRoiWidget, MDI6.crop),
+    "Pixel Size Table": (PixelSizeWidget, MDI6.ruler),
     "MDA": (MultiDWidget, None),
     "Explorer": (SampleExplorer, None),
 }
@@ -265,11 +262,7 @@ class MicroManagerToolbar(QMainWindow):
         btn = QPushButton()
         btn.setToolTip(tooltip)
         btn.setFixedSize(TOOL_SIZE, TOOL_SIZE)
-        try:
-            _icon = getattr(MDI6, btn_icon)
-            btn.setIcon(icon(_icon, color=(0, 255, 0)))
-        except AttributeError:
-            btn.setIcon(QIcon(btn_icon))
+        btn.setIcon(icon(btn_icon, color=(0, 255, 0)))
         btn.setIconSize(QSize(30, 30))
         return btn
 
