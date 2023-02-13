@@ -7,6 +7,7 @@ from fonticon_mdi6 import MDI6
 from pymmcore_plus import CMMCorePlus
 from pymmcore_widgets import (
     CameraRoiWidget,
+    ChannelGroupWidget,
     ChannelWidget,
     ConfigurationWidget,
     DefaultCameraExposureWidget,
@@ -95,9 +96,13 @@ class MicroManagerToolbar(QMainWindow):
             self._add_snap_live_toolbar(),
             self._add_tools_toolsbar(),
             self._add_plugins_toolbar(),
+            "",
             self._add_shutter_toolbar(),
         ]
         for item in toolbar_items:
+            if not item:
+                self.addToolBarBreak(Qt.ToolBarArea.TopToolBarArea)
+                continue
             self.addToolBar(Qt.ToolBarArea.TopToolBarArea, item)
 
         self.installEventFilter(self)
@@ -209,10 +214,12 @@ class MicroManagerToolbar(QMainWindow):
         ch_toolbar.setMinimumHeight(TOOLBAR_SIZE)
 
         wdg = self._create_groupbox()
+        wdg.layout().setSpacing(5)
         wdg.setStyleSheet(GROUPBOX_STYLE)
 
         ch_lbl = QLabel(text="Channel:")
         wdg.layout().addWidget(ch_lbl)
+        wdg.layout().addWidget(ChannelGroupWidget())
         wdg.layout().addWidget(ChannelWidget())
 
         ch_toolbar.addWidget(wdg)
@@ -298,7 +305,7 @@ class MicroManagerToolbar(QMainWindow):
     def _add_plugins_toolbar(self) -> QToolBar:
         """Add a QToolBar containing plugins QPushButtons.
 
-        e.g. MDA, Explore, ...
+        e.g. MDA, ...
 
         QPushButtons are connected to the `_show_dock_widget` method.
 
@@ -336,6 +343,7 @@ class MicroManagerToolbar(QMainWindow):
         `key` must be a key in the DOCK_WIDGETS dict or a `str` stored in
         the `whatsThis` property of a `sender` `QPushButton`.
         """
+        floating = False
         if not key:
             # using QPushButton.whatsThis() property to get the key.
             btn = cast(QPushButton, self.sender())
@@ -366,8 +374,9 @@ class MicroManagerToolbar(QMainWindow):
                 wdg._prop_table.setVerticalScrollBarPolicy(
                     Qt.ScrollBarPolicy.ScrollBarAlwaysOff
                 )
+                floating = True
 
-            dock_wdg = self._add_dock_widget(wdg, key, tabify=True)
+            dock_wdg = self._add_dock_widget(wdg, key, floating=floating, tabify=True)
             self._dock_widgets[key] = dock_wdg
 
     def _add_dock_widget(
@@ -380,7 +389,7 @@ class MicroManagerToolbar(QMainWindow):
             area="right",
             tabify=tabify,
         )
-        dock_wdg.setFloating(floating)
         with contextlib.suppress(AttributeError):
             dock_wdg._close_btn = False
+        dock_wdg.setFloating(floating)
         return dock_wdg
