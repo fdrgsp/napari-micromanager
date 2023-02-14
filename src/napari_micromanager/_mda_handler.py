@@ -11,7 +11,7 @@ import zarr
 from napari.experimental import link_layers, unlink_layers
 from pymmcore_plus import CMMCorePlus
 from superqt.utils import ensure_main_thread
-from useq import MDAEvent, MDASequence
+from useq import MDAEvent, MDASequence, NoGrid  # type: ignore
 
 from ._mda_meta import SEQUENCE_META_KEY, SequenceMeta
 from ._saving import save_sequence
@@ -109,6 +109,7 @@ class _NapariMDAHandler:
         # determine the new layers that need to be created for this experiment
         # (based on the sequence mode, and whether we're splitting C/P, etc.)
         axis_labels, layers_to_create = _determine_sequence_layers(sequence)
+
         yx_shape = [self._mmc.getImageHeight(), self._mmc.getImageWidth()]
 
         # now create a zarr array in a temporary directory for each layer
@@ -138,6 +139,7 @@ class _NapariMDAHandler:
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
         seq_meta = getattr(event.sequence, "metadata", None)
+
         if not (seq_meta and seq_meta.get(SEQUENCE_META_KEY)):
             # this is not an MDA we started
             return
@@ -145,6 +147,7 @@ class _NapariMDAHandler:
 
         # get info about the layer we need to update
         _id, im_idx, layer_name = _id_idx_layer(event)
+
         # update the zarr array backing the layer
         self._tmp_arrays[_id][0][im_idx] = image
 
@@ -278,27 +281,35 @@ def _determine_sequence_layers(
     # each item is a tuple of (id, shape, layer_metadata)
     _layer_info: list[tuple[str, list[int], dict[str, Any]]] = []
 
-    # in explorer/translate mode, we need to create a layer for each position
-    if meta.mode == "explorer" and meta.translate_explorer:
+    if [p.sequence for p in sequence.stage_positions if p.sequence]:  # type: ignore
         p_idx = axis_labels.index("p")
         axis_labels.pop(p_idx)
         layer_shape.pop(p_idx)
-        for p in sequence.stage_positions:
-            # TODO: modify id_ to try and divide the grids when saving
-            # see also line 378 (layer.metadata["grid"])
-            if not p.name or "_" not in p.name:
-                raise ValueError(
-                    f"Invalid stage position name: {p.name!r}. "
-                    "Expected something like 'Grid_001_Pos000'"
-                )
-            # FIXME: the location of a stage position within a grid should not
-            # be stored in the position name, but rather in the metadata.
-            # e.g. sequence.metata["grid"] = {(x,y,z): (grid, grid_pos)}
-            *_, grid, grid_pos = p.name.split("_")
-            id_ = f"{p.name}_{sequence.uid}"
-            _layer_info.append((id_, layer_shape, {"grid": grid, "grid_pos": grid_pos}))
 
-    # in split channels mode, we need to create a layer for each channel
+        # add 'g' from position sequence
+        if "g" not in axis_labels:
+            axis_labels.extend("g")
+            layer_shape.append(1)
+
+        for idx, p in enumerate(sequence.stage_positions):
+            new_layer_shape = list(layer_shape)
+
+            if p.sequence:  # type: ignore
+
+                if isinstance(p.sequence.grid_plan, NoGrid):  # type: ignore
+                    continue
+
+                # give same meta as main sequence
+                p.sequence.metadata["napari_mm_sequence_meta"] = meta  # type: ignore
+
+                pos_g_shape = p.sequence.sizes["g"]  # type: ignore
+                index = axis_labels.index("g")
+                new_layer_shape[index] = pos_g_shape
+
+            name = p.name or f"Pos{idx:03d}"
+            id_ = f"{name}_{sequence.uid}"
+            _layer_info.append((id_, new_layer_shape, {}))
+
     elif meta.split_channels:
         c_idx = axis_labels.index("c")
         axis_labels.pop(c_idx)
@@ -308,7 +319,6 @@ def _determine_sequence_layers(
             id_ = f"{sequence.uid}_{channel_id}"
             _layer_info.append((id_, layer_shape, {"ch_id": channel_id}))
 
-    # otherwise, we just need one layer
     else:
         _layer_info.append((str(sequence.uid), layer_shape, {}))
 
@@ -335,27 +345,47 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
             - `layer_name` is the name of the corresponding layer in the viewer.
     """
     meta = cast("SequenceMeta", event.sequence.metadata.get(SEQUENCE_META_KEY))
-    axis_order = list(event.sequence.used_axes)
+    axis_order = [i[0] for i in event.index]
 
     suffix = ""
     prefix = meta.file_name if meta.should_save else "Exp"
-    if meta.split_channels and event.channel:
+
+    p_seq = bool(
+        [
+            p.sequence  # type: ignore
+            for p in event.sequence.stage_positions
+            if p.sequence  # type: ignore
+        ]
+    )
+    if p_seq:
+        axis_order.remove("p")
+        name = event.pos_name or f"Pos{event.index['p']}"
+        prefix += f"_{name}"
+        _id = f"{name}_{event.sequence.uid}{suffix}"
+
+    elif meta.split_channels and event.channel:
         # Remove 'c' from idxs if we are splitting channels
         # also prepare the channel suffix that we use for keeping track of arrays
         suffix = f"_{event.channel.config}_{event.index['c']:03d}"
         axis_order.remove("c")
 
-    if meta.mode == "explorer" and meta.translate_explorer:
-        axis_order.remove("p")
-        prefix += f"_{event.pos_name}"
-        _id = f"{event.pos_name}_{event.sequence.uid}"  # TODO: unify logic for tmp_keys
+    # if meta.mode == "explorer" and meta.translate_explorer:
+    #     axis_order.remove("p")
+    #     prefix += f"_{event.pos_name}"
+    #     _id = f"{event.pos_name}_{event.sequence.uid}"
+    # TODO: unify logic for tmp_keys
     else:
         _id = f"{event.sequence.uid}{suffix}"
 
     # the index of this event in the full zarr array
     im_idx = tuple(event.index[k] for k in axis_order)
+
+    if p_seq and "g" not in event.index:
+        im_idx = (*im_idx, 0)
+
     # the name of this layer in the napari viewer
     layer_name = f"{prefix}_{event.sequence.uid}{suffix}"
+
     return _id, im_idx, layer_name
 
 
