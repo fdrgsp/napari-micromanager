@@ -248,7 +248,7 @@ def _determine_sequence_layers(
 
     This function is called at the beginning of a new MDA sequence to determine
     how many layers we're going to create, and what their shapes and metadata
-    should be.  The data is used to create new empty zarr arrays and napari layers.
+    should be. The data is used to create new empty zarr arrays and napari layers.
 
     Parameters
     ----------
@@ -263,10 +263,11 @@ def _determine_sequence_layers(
     -------
     tuple[list[str], list[tuple[str, list[int], dict[str, Any]]]]
         A 2-tuple of `(axis_labels, layer_info)` where:
-            - `axis_labels` is a list of axis names, like: `['t', 'c', 'z', 'y', 'x']`
+            - `axis_labels` is a list of axis names.
+            e.g. `['t', 'c', 'g', 'z', 'y', 'x']`
             - `layer_info` is a list of `(id, layer_shape, layer_meta)` tuples, where
               `id` is a unique id for the layer, `layer_shape` is the shape of the
-              layer, and `layer_meta` is metadata to add to `layer.metadata`.  e.g.:
+              layer, and `layer_meta` is metadata to add to `layer.metadata`. e.g.:
               `[('3670fc63-c570-4920-949f-16601143f2e3', [4, 2, 4], {})]`
     """
     # sourcery skip: extract-duplicate-method
@@ -291,6 +292,11 @@ def _determine_sequence_layers(
             axis_labels.extend("g")
             layer_shape.append(1)
 
+        if meta.split_channels:
+            c_idx = axis_labels.index("c")
+            axis_labels.pop(c_idx)
+            layer_shape.pop(c_idx)
+
         for idx, p in enumerate(sequence.stage_positions):
             new_layer_shape = list(layer_shape)
 
@@ -306,9 +312,18 @@ def _determine_sequence_layers(
                 index = axis_labels.index("g")
                 new_layer_shape[index] = pos_g_shape
 
-            name = p.name or f"Pos{idx:03d}"
-            id_ = f"{name}_{sequence.uid}"
-            _layer_info.append((id_, new_layer_shape, {}))
+            if meta.split_channels:
+
+                for i, ch in enumerate(sequence.channels):
+                    channel_id = f"{ch.config}_{i:03d}"
+                    name = p.name or f"Pos{idx:03d}"
+                    id_ = f"{name}_{sequence.uid}_{channel_id}"
+                    _layer_info.append((id_, new_layer_shape, {"ch_id": channel_id}))
+
+            else:
+                name = p.name or f"Pos{idx:03d}"
+                id_ = f"{name}_{sequence.uid}"
+                _layer_info.append((id_, new_layer_shape, {}))
 
     elif meta.split_channels:
         c_idx = axis_labels.index("c")
@@ -358,24 +373,33 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
         ]
     )
     if p_seq:
+
+        if meta.split_channels and event.channel:
+            suffix = f"_{event.channel.config}_{event.index['c']:03d}"
+            axis_order.remove("c")
+
         axis_order.remove("p")
         name = event.pos_name or f"Pos{event.index['p']}"
         prefix += f"_{name}"
         _id = f"{name}_{event.sequence.uid}{suffix}"
 
-    elif meta.split_channels and event.channel:
-        # Remove 'c' from idxs if we are splitting channels
-        # also prepare the channel suffix that we use for keeping track of arrays
-        suffix = f"_{event.channel.config}_{event.index['c']:03d}"
-        axis_order.remove("c")
+    else:
+
+        if meta.split_channels and event.channel:
+            # Remove 'c' from idxs if we are splitting channels
+            # also prepare the channel suffix that we use for keeping track of arrays
+            suffix = f"_{event.channel.config}_{event.index['c']:03d}"
+            axis_order.remove("c")
+
+        _id = f"{event.sequence.uid}{suffix}"
 
     # if meta.mode == "explorer" and meta.translate_explorer:
     #     axis_order.remove("p")
     #     prefix += f"_{event.pos_name}"
     #     _id = f"{event.pos_name}_{event.sequence.uid}"
     # TODO: unify logic for tmp_keys
-    else:
-        _id = f"{event.sequence.uid}{suffix}"
+    # else:
+    #     _id = f"{event.sequence.uid}{suffix}"
 
     # the index of this event in the full zarr array
     im_idx = tuple(event.index[k] for k in axis_order)
