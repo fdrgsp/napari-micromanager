@@ -241,9 +241,20 @@ class _NapariMDAHandler:
         self.viewer.reset_view()
 
 
+def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
+    if not sequence.stage_positions:
+        return list(sequence.used_axes), False
+    for p in sequence.stage_positions:
+        if p.sequence:  # type: ignore
+            axis_labels = list(p.sequence.used_axes)  # type: ignore
+            return axis_labels, True
+    return list(sequence.used_axes), False
+
+
 def _determine_sequence_layers(
     sequence: ActiveMDASequence,
 ) -> tuple[list[str], list[tuple[str, list[int], dict[str, Any]]]]:
+    # sourcery skip: extract-duplicate-method
     """Return (axis_labels, (id, shape, and metadata)) for each layer to add for seq.
 
     This function is called at the beginning of a new MDA sequence to determine
@@ -270,27 +281,18 @@ def _determine_sequence_layers(
               layer, and `layer_meta` is metadata to add to `layer.metadata`. e.g.:
               `[('3670fc63-c570-4920-949f-16601143f2e3', [4, 2, 4], {})]`
     """
-    # sourcery skip: extract-duplicate-method
-
     # if we got to this point, sequence.metadata[SEQUENCE_META_KEY] should exist
     meta = sequence.metadata["napari_mm_sequence_meta"]
-
-    axis_labels = list(sequence.used_axes)
-    layer_shape = [sequence.sizes[k] for k in axis_labels]
 
     # these are all the layers we're going to create
     # each item is a tuple of (id, shape, layer_metadata)
     _layer_info: list[tuple[str, list[int], dict[str, Any]]] = []
 
-    if [p.sequence for p in sequence.stage_positions if p.sequence]:  # type: ignore
-        p_idx = axis_labels.index("p")
-        axis_labels.pop(p_idx)
-        layer_shape.pop(p_idx)
+    axis_labels, pos_sequence = _get_axis_labels(sequence)
 
-        # add 'g' from position sequence
-        if "g" not in axis_labels:
-            axis_labels.extend("g")
-            layer_shape.append(1)
+    layer_shape = [sequence.sizes[k] or 1 for k in axis_labels]
+
+    if pos_sequence:
 
         if meta.split_channels:
             c_idx = axis_labels.index("c")
@@ -338,6 +340,13 @@ def _determine_sequence_layers(
         _layer_info.append((str(sequence.uid), layer_shape, {}))
 
     axis_labels += ["y", "x"]
+
+    print("##############")
+    print(axis_labels)
+    for lay in _layer_info:
+        print(lay[1])
+    print("##############")
+
     return axis_labels, _layer_info
 
 
@@ -360,37 +369,22 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
             - `layer_name` is the name of the corresponding layer in the viewer.
     """
     meta = cast("SequenceMeta", event.sequence.metadata.get(SEQUENCE_META_KEY))
-    axis_order = [i[0] for i in event.index]
+
+    axis_order, pos_sequence = _get_axis_labels(event.sequence)
 
     suffix = ""
     prefix = meta.file_name if meta.should_save else "Exp"
 
-    p_seq = bool(
-        [
-            p.sequence  # type: ignore
-            for p in event.sequence.stage_positions
-            if p.sequence  # type: ignore
-        ]
-    )
-    if p_seq:
+    if meta.split_channels and event.channel:
+        suffix = f"_{event.channel.config}_{event.index['c']:03d}"
+        axis_order.remove("c")
 
-        if meta.split_channels and event.channel:
-            suffix = f"_{event.channel.config}_{event.index['c']:03d}"
-            axis_order.remove("c")
-
-        axis_order.remove("p")
-        name = event.pos_name or f"Pos{event.index['p']}"
+    if pos_sequence:
+        name = event.pos_name or f"Pos{event.index['p']:03d}"
         prefix += f"_{name}"
         _id = f"{name}_{event.sequence.uid}{suffix}"
 
     else:
-
-        if meta.split_channels and event.channel:
-            # Remove 'c' from idxs if we are splitting channels
-            # also prepare the channel suffix that we use for keeping track of arrays
-            suffix = f"_{event.channel.config}_{event.index['c']:03d}"
-            axis_order.remove("c")
-
         _id = f"{event.sequence.uid}{suffix}"
 
     # if meta.mode == "explorer" and meta.translate_explorer:
@@ -402,10 +396,14 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
     #     _id = f"{event.sequence.uid}{suffix}"
 
     # the index of this event in the full zarr array
-    im_idx = tuple(event.index[k] for k in axis_order)
-
-    if p_seq and "g" not in event.index:
-        im_idx = (*im_idx, 0)
+    im_idx: tuple[int, ...] = ()
+    for k in axis_order:
+        try:
+            im_idx += (event.index[k],)
+        # if axis not in event.index
+        # e.g. if we have bot a position sequence grid and a single position
+        except KeyError:
+            im_idx += (0,)
 
     # the name of this layer in the napari viewer
     layer_name = f"{prefix}_{event.sequence.uid}{suffix}"
