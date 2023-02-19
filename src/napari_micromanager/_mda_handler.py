@@ -341,12 +341,6 @@ def _determine_sequence_layers(
 
     axis_labels += ["y", "x"]
 
-    print("##############")
-    print(axis_labels)
-    for lay in _layer_info:
-        print(lay[1])
-    print("##############")
-
     return axis_labels, _layer_info
 
 
