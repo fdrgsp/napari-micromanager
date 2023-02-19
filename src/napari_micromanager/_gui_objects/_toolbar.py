@@ -69,6 +69,8 @@ class MicroManagerToolbar(QMainWindow):
         self._mmc = CMMCorePlus.instance()
         self.viewer: napari.viewer.Viewer = getattr(viewer, "__wrapped__", viewer)
 
+        self._mda: MultiDWidget | None = None
+
         # min max widget
         self.minmax = MinMax(parent=self)
 
@@ -375,6 +377,9 @@ class MicroManagerToolbar(QMainWindow):
                     Qt.ScrollBarPolicy.ScrollBarAlwaysOff
                 )
                 floating = True
+
+            if isinstance(wdg, MultiDWidget):
+                self._mda = wdg
 
             dock_wdg = self._add_dock_widget(wdg, key, floating=floating, tabify=True)
             self._dock_widgets[key] = dock_wdg
