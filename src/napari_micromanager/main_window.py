@@ -258,8 +258,9 @@ class MainWindow(MicroManagerToolbar):
         x0 = float(x - (central_px[1] * self._mmc.getPixelSizeUm()))
         y0 = float(y + (central_px[0] * self._mmc.getPixelSizeUm()))
 
-        stage_x = x0 + (viewer_coords[1] * self._mmc.getPixelSizeUm())
-        stage_y = y0 - (viewer_coords[0] * self._mmc.getPixelSizeUm())
+        # viewer_coords is in um because of layer scale
+        stage_x = x0 + viewer_coords[1]
+        stage_y = y0 - viewer_coords[0]
 
         return stage_x, stage_y, z
 
