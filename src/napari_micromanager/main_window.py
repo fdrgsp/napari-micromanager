@@ -322,4 +322,4 @@ class MainWindow(MicroManagerToolbar):
         if not self._mda:
             return
         x, y, z = xyz_positions
-        self._mda.position_groupbox.set_state([{"x": x, "y": y, "z": z}])
+        self._mda.position_groupbox.set_state([{"x": x, "y": y, "z": z}], clear=False)
