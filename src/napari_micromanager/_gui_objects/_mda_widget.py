@@ -36,11 +36,11 @@ class MultiDWidget(MDAWidget):
         g_layout = cast(QGridLayout, self.channel_groupbox.layout())
         g_layout.addWidget(self.checkBox_split_channels, 1, 0)
 
-        # TODO: stage_pos_groupbox should have a valueChanged signal
-        # and that should be connected to _toggle_checkbox_save_pos
         self._save_groupbox.toggled.connect(self._toggle_checkbox_save_pos)
         self.position_groupbox.valueChanged.connect(self._toggle_checkbox_save_pos)
         self.channel_groupbox.valueChanged.connect(self._toggle_split_channel)
+
+        self.time_groupbox.layout().setContentsMargins(0, 10, 0, 10)
 
     def _toggle_split_channel(self) -> None:
         if not self.channel_groupbox.value():
