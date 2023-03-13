@@ -43,7 +43,10 @@ class MultiDWidget(MDAWidget):
         self.time_groupbox.layout().setContentsMargins(0, 10, 0, 10)
 
     def _toggle_split_channel(self) -> None:
-        if not self.channel_groupbox.value():
+        if (
+            not self.channel_groupbox.value()
+            or self.channel_groupbox._table.rowCount() == 1
+        ):
             self.checkBox_split_channels.setChecked(False)
 
     def _toggle_checkbox_save_pos(self) -> None:
