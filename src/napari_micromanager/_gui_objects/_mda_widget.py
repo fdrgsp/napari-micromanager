@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
+from pymmcore_mda_writers import SimpleMultiFileTiffWriter
 from pymmcore_plus import CMMCorePlus
 from pymmcore_widgets import MDAWidget
 from qtpy.QtCore import Qt
@@ -22,6 +23,8 @@ class MultiDWidget(MDAWidget):
     ) -> None:
         super().__init__(include_run_button=True, parent=parent, mmcore=mmcore)
 
+        self._writer = SimpleMultiFileTiffWriter(core=self._mmc)
+
         v_layout = cast(QVBoxLayout, self._central_widget.layout())
         self._save_groupbox = SaveWidget()
         self._save_groupbox.setSizePolicy(
@@ -36,8 +39,11 @@ class MultiDWidget(MDAWidget):
         g_layout = cast(QGridLayout, self.channel_groupbox.layout())
         g_layout.addWidget(self.checkBox_split_channels, 1, 0)
 
-        self._save_groupbox.toggled.connect(self._toggle_checkbox_save_pos)
-        self.position_groupbox.valueChanged.connect(self._toggle_checkbox_save_pos)
+        self._save_groupbox.toggled.connect(self._on_split_pos_toggled)
+        self._save_groupbox.toggled.connect(self._on_save_toggled)
+        self._save_groupbox._directory.textChanged.connect(self._on_linedit_changed)
+        self._save_groupbox._fname.textChanged.connect(self._on_linedit_changed)
+        self.position_groupbox.valueChanged.connect(self._on_split_pos_toggled)
         self.channel_groupbox.valueChanged.connect(self._toggle_split_channel)
 
         self.time_groupbox.layout().setContentsMargins(0, 10, 0, 10)
@@ -49,7 +55,18 @@ class MultiDWidget(MDAWidget):
         ):
             self.checkBox_split_channels.setChecked(False)
 
-    def _toggle_checkbox_save_pos(self) -> None:
+    def _on_save_toggled(self, checked: bool) -> None:
+        self._writer._save = checked
+        self._writer._data_folder_name = (
+            self._save_groupbox._directory.text() if checked else None
+        )
+        self._writer._data_name = self._save_groupbox._fname.text() if checked else None
+
+    def _on_linedit_changed(self) -> None:
+        self._writer._data_folder_name = self._save_groupbox._directory.text()
+        self._writer._data_name = self._save_groupbox._fname.text()
+
+    def _on_split_pos_toggled(self) -> None:
         if (
             self.position_groupbox.isChecked()
             and len(self.position_groupbox.value()) > 0
