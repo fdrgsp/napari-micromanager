@@ -234,15 +234,22 @@ class _NapariMDAHandler:
 
 
 def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
-    # sourcery skip: assign-if-exp, inline-variable, reintroduce-else,
-    # swap-if-expression, use-next
+    # sourcery skip: use-next
+    main_seq_axis = list(sequence.used_axes)
+
     if not sequence.stage_positions:
-        return list(sequence.used_axes), False
+        return main_seq_axis, False
+
+    sub_seq_axis: list | None = None
     for p in sequence.stage_positions:
         if p.sequence:  # type: ignore
-            axis_labels = list(p.sequence.used_axes)  # type: ignore
-            return axis_labels, True
-    return list(sequence.used_axes), False
+            sub_seq_axis = list(p.sequence.used_axes)  # type: ignore
+            break
+
+    if sub_seq_axis:
+        main_seq_axis.extend(sub_seq_axis)
+
+    return main_seq_axis, bool(sub_seq_axis)
 
 
 def _determine_sequence_layers(
