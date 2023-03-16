@@ -117,6 +117,7 @@ class MultiDWidget(MDAWidget):
             return
 
         if not Path(self._save_groupbox._directory.text()).exists():
+            # TODO: ask to create the directory if it does not exist
             warnings.warn("The selected directory does not exist.")
             return
 
