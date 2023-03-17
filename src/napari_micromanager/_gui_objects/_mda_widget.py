@@ -24,7 +24,7 @@ class MultiDWidget(MDAWidget):
     ) -> None:
         super().__init__(include_run_button=True, parent=parent, mmcore=mmcore)
 
-        self._writer = SimpleMultiFileTiffWriter("", core=self._mmc)
+        self._writer = SimpleMultiFileTiffWriter(core=self._mmc)
 
         v_layout = cast(QVBoxLayout, self._central_widget.layout())
         self._save_groupbox = SaveWidget()
