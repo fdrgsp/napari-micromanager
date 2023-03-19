@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from typing import cast
 
-from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrMDASequenceWriter
+from pymmcore_mda_writers import MiltiTiffMDASequenceWriter, ZarrMDASequenceWriter
 from pymmcore_plus import CMMCorePlus
 from pymmcore_widgets import MDAWidget
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QSizePolicy, QVBoxLayout, QWidget
@@ -23,7 +23,7 @@ class MultiDWidget(MDAWidget):
     ) -> None:
         super().__init__(include_run_button=True, parent=parent, mmcore=mmcore)
 
-        self._tiff_writer = SimpleMultiFileTiffWriter(core=self._mmc)
+        self._tiff_writer = MiltiTiffMDASequenceWriter(core=self._mmc)
         self._zarr_writer = ZarrMDASequenceWriter(core=self._mmc)
 
         v_layout = cast(QVBoxLayout, self._central_widget.layout())
@@ -66,21 +66,21 @@ class MultiDWidget(MDAWidget):
             self.checkBox_split_channels.setChecked(False)
 
     def _on_save_toggled(self, checked: bool) -> None:
-        self._tiff_writer._data_folder_path = (
+        self._tiff_writer.folder_path = (
             self._save_groupbox._directory.text()
             if (checked and self._save_groupbox.tiff_radiobutton.isChecked())
             else None
         )
-        self._tiff_writer._data_folder_name = (
+        self._tiff_writer.file_name = (
             self._save_groupbox._fname.text() if checked else ""
         )
 
-        self._zarr_writer._path = (
+        self._zarr_writer.folder_path = (
             self._save_groupbox._directory.text()
             if (checked and self._save_groupbox.zarr_radiobutton.isChecked())
             else None
         )
-        self._zarr_writer._file_name = (
+        self._zarr_writer.file_name = (
             self._save_groupbox._fname.text() if checked else ""
         )
 
