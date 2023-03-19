@@ -4,10 +4,9 @@ import warnings
 from pathlib import Path
 from typing import cast
 
-from pymmcore_mda_writers import SimpleMultiFileTiffWriter
+from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrNapariMicromanagerWriter
 from pymmcore_plus import CMMCorePlus
 from pymmcore_widgets import MDAWidget
-from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QSizePolicy, QVBoxLayout, QWidget
 from useq import MDASequence
 
@@ -24,7 +23,8 @@ class MultiDWidget(MDAWidget):
     ) -> None:
         super().__init__(include_run_button=True, parent=parent, mmcore=mmcore)
 
-        self._writer = SimpleMultiFileTiffWriter(core=self._mmc)
+        self._tiff_writer = SimpleMultiFileTiffWriter(core=self._mmc)
+        self._zarr_writer = ZarrNapariMicromanagerWriter(core=self._mmc)
 
         v_layout = cast(QVBoxLayout, self._central_widget.layout())
         self._save_groupbox = SaveWidget()
@@ -40,7 +40,6 @@ class MultiDWidget(MDAWidget):
         g_layout = cast(QGridLayout, self.channel_groupbox.layout())
         g_layout.addWidget(self.checkBox_split_channels, 1, 0)
 
-        self._save_groupbox.toggled.connect(self._on_split_pos_toggled)
         self._save_groupbox.toggled.connect(self._on_save_toggled)
         self._save_groupbox._directory.textChanged.connect(
             lambda x: self._on_save_toggled(True)
@@ -48,7 +47,13 @@ class MultiDWidget(MDAWidget):
         self._save_groupbox._fname.textChanged.connect(
             lambda x: self._on_save_toggled(True)
         )
-        self.position_groupbox.valueChanged.connect(self._on_split_pos_toggled)
+        self._save_groupbox.zarr_radiobutton.toggled.connect(
+            lambda x: self._on_save_toggled(True)
+        )
+        self._save_groupbox.tiff_radiobutton.toggled.connect(
+            lambda x: self._on_save_toggled(True)
+        )
+
         self.channel_groupbox.valueChanged.connect(self._toggle_split_channel)
 
         self.time_groupbox.layout().setContentsMargins(0, 10, 0, 10)
@@ -61,25 +66,23 @@ class MultiDWidget(MDAWidget):
             self.checkBox_split_channels.setChecked(False)
 
     def _on_save_toggled(self, checked: bool) -> None:
-        self._writer._data_folder_path = (
-            self._save_groupbox._directory.text() if checked else ""
+        self._tiff_writer._data_folder_path = (
+            self._save_groupbox._directory.text()
+            if (checked and self._save_groupbox.tiff_radiobutton.isChecked())
+            else ""
         )
-        self._writer._data_folder_name = (
+        self._tiff_writer._data_folder_name = (
             self._save_groupbox._fname.text() if checked else ""
         )
 
-    def _on_split_pos_toggled(self) -> None:
-        if (
-            self.position_groupbox.isChecked()
-            and len(self.position_groupbox.value()) > 0
-        ):
-            self._save_groupbox._split_pos_checkbox.setEnabled(True)
-
-        else:
-            self._save_groupbox._split_pos_checkbox.setCheckState(
-                Qt.CheckState.Unchecked
-            )
-            self._save_groupbox._split_pos_checkbox.setEnabled(False)
+        self._zarr_writer._path = (
+            self._save_groupbox._directory.text()
+            if (checked and self._save_groupbox.zarr_radiobutton.isChecked())
+            else ""
+        )
+        self._zarr_writer._file_name = (
+            self._save_groupbox._fname.text() if checked else ""
+        )
 
     def get_state(self) -> MDASequence:
         sequence = cast(MDASequence, super().get_state())

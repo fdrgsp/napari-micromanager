@@ -22,7 +22,6 @@ class SequenceMeta:
     should_save: bool = False
     file_name: str = ""
     save_dir: str = ""
-    save_pos: bool = False
     translate_explorer: bool = False
     # [(x, y, r, c), ...] for each row in the scan
     explorer_translation_points: list[tuple[float, float, int, int]] = field(

@@ -12,7 +12,6 @@ from superqt.utils import ensure_main_thread
 from useq import MDAEvent, MDASequence
 
 from ._mda_meta import SEQUENCE_META_KEY, SequenceMeta
-from ._saving import save_sequence
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -182,10 +181,7 @@ class _NapariMDAHandler:
             ]
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
-        # Save layer and add increment to save name.
-        if (meta := sequence.metadata.get(SEQUENCE_META_KEY)) is not None:
-            sequence = cast("ActiveMDASequence", sequence)
-            save_sequence(sequence, self.viewer.layers, meta)
+        pass
 
     def _create_empty_image_layer(
         self,
@@ -363,45 +359,3 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
     layer_name = f"{prefix}_{event.sequence.uid}{suffix}"
 
     return _id, im_idx, layer_name
-
-
-# if pos_sequence:
-#     if meta.split_channels:
-#         c_idx = axis_labels.index("c")
-#         axis_labels.pop(c_idx)
-#         layer_shape.pop(c_idx)
-
-#     for idx, p in enumerate(sequence.stage_positions):
-#         new_layer_shape = list(layer_shape)
-
-#         if p.sequence:  # type: ignore
-#             if isinstance(p.sequence.grid_plan, NoGrid):  # type: ignore
-#                 continue
-
-#             # give same meta as main sequence
-#             p.sequence.metadata["napari_mm_sequence_meta"] = meta  # type: ignore
-
-#             pos_g_shape = p.sequence.sizes["g"]  # type: ignore
-#             index = axis_labels.index("g")
-#             new_layer_shape[index] = pos_g_shape
-
-#         if meta.split_channels:
-#             for i, ch in enumerate(sequence.channels):
-#                 channel_id = f"{ch.config}_{i:03d}"
-#                 name = p.name or f"Pos{idx:03d}"
-#                 id_ = f"{name}_{sequence.uid}_{channel_id}"
-#                 _layer_info.append((id_, new_layer_shape, {"ch_id": channel_id}))
-
-#         else:
-#             name = p.name or f"Pos{idx:03d}"
-#             id_ = f"{name}_{sequence.uid}"
-#             _layer_info.append((id_, new_layer_shape, {}))
-
-
-# if pos_sequence:
-#     name = event.pos_name or f"Pos{event.index['p']:03d}"
-#     prefix += f"_{name}"
-#     _id = f"{name}_{event.sequence.uid}{suffix}"
-
-# else:
-#     _id = f"{event.sequence.uid}{suffix}"
