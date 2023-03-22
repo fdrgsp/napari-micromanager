@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from typing import cast
 
-from pymmcore_mda_writers import MiltiTiffMDASequenceWriter, ZarrMDASequenceWriter
+from pymmcore_mda_writers import MiltiTiffWriter, ZarrWriter
 from pymmcore_plus import CMMCorePlus
 from pymmcore_widgets import MDAWidget
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QSizePolicy, QVBoxLayout, QWidget
@@ -23,8 +23,8 @@ class MultiDWidget(MDAWidget):
     ) -> None:
         super().__init__(include_run_button=True, parent=parent, mmcore=mmcore)
 
-        self._tiff_writer = MiltiTiffMDASequenceWriter(core=self._mmc)
-        self._zarr_writer = ZarrMDASequenceWriter(core=self._mmc)
+        self._tiff_writer = MiltiTiffWriter(core=self._mmc)
+        self._zarr_writer = ZarrWriter(core=self._mmc)
 
         v_layout = cast(QVBoxLayout, self._central_widget.layout())
         self._save_groupbox = SaveWidget()
