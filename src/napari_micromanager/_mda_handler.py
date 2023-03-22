@@ -245,7 +245,7 @@ def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
     if sub_seq_axis:
         main_seq_axis.extend(sub_seq_axis)
 
-    return main_seq_axis, bool(sub_seq_axis)
+    return list(set(main_seq_axis)), bool(sub_seq_axis)
 
 
 def _determine_sequence_layers(
