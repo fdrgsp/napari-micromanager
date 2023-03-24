@@ -86,10 +86,22 @@ class MultiDWidget(MDAWidget):
 
     def get_state(self) -> MDASequence:
         sequence = cast(MDASequence, super().get_state())
+
+        try:
+            _split_channels = self.checkBox_split_channels.isChecked()
+            _save_info = self._save_groupbox.get_state()
+        except AttributeError:
+            _split_channels = False
+            _save_info = {
+                "file_name": "",
+                "save_dir": "",
+                "should_save": False,
+            }
+
         sequence.metadata[SEQUENCE_META_KEY] = SequenceMeta(
             mode="mda",
-            split_channels=self.checkBox_split_channels.isChecked(),
-            **self._save_groupbox.get_state(),
+            split_channels=_split_channels,
+            **_save_info,
         )
         return sequence
 
