@@ -56,8 +56,6 @@ class MultiDWidget(MDAWidget):
 
         self.channel_groupbox.valueChanged.connect(self._toggle_split_channel)
 
-        self.time_groupbox.layout().setContentsMargins(0, 10, 0, 10)
-
     def _toggle_split_channel(self) -> None:
         if (
             not self.channel_groupbox.value()
