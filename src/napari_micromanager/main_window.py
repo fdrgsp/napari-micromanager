@@ -45,7 +45,6 @@ class MainWindow(MicroManagerToolbar):
 
         # get global CMMCorePlus instance
         self._mmc = CMMCorePlus.instance()
-        self.viewer = viewer
 
         self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
         self.streaming_timer: QTimer | None = None
