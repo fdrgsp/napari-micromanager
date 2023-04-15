@@ -213,6 +213,8 @@ class _NapariMDAHandler:
                 if meta.split_channels and sequence.used_axes.find("c") < index:
                     index -= 1
                 scale[index] = getattr(sequence.z_plan, "step", 1)
+        else:
+            scale = None
 
         return self.viewer.add_image(
             arr,
