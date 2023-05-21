@@ -34,10 +34,10 @@ class MultiDWidget(MDAWidget):
         self._save_groupbox.setChecked(False)
         v_layout.insertWidget(0, self._save_groupbox)
 
-        self.channel_groupbox.setMinimumHeight(230)
+        self.channel_widget.setMinimumHeight(230)
         self.checkBox_split_channels = QCheckBox(text="Split Channels")
         self.checkBox_split_channels.toggled.connect(self._toggle_split_channel)
-        g_layout = cast(QGridLayout, self.channel_groupbox.layout())
+        g_layout = cast(QGridLayout, self.channel_widget.layout())
         g_layout.addWidget(self.checkBox_split_channels, 1, 0)
 
         self._save_groupbox.toggled.connect(self._on_save_toggled)
@@ -54,12 +54,12 @@ class MultiDWidget(MDAWidget):
             lambda x: self._on_save_toggled(True)
         )
 
-        self.channel_groupbox.valueChanged.connect(self._toggle_split_channel)
+        self.channel_widget.valueChanged.connect(self._toggle_split_channel)
 
     def _toggle_split_channel(self) -> None:
         if (
-            not self.channel_groupbox.value()
-            or self.channel_groupbox._table.rowCount() == 1
+            not self.channel_widget.value()
+            or self.channel_widget._table.rowCount() == 1
         ):
             self.checkBox_split_channels.setChecked(False)
 
