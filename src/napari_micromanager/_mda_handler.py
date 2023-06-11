@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import contextlib
 import tempfile
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Generator, cast
 
 import napari
 import numpy as np
 import zarr
+from csbdeep.utils import normalize
+from napari.qt.threading import thread_worker
 from pymmcore_plus import CMMCorePlus
+from stardist.models import StarDist2D
 from superqt.utils import ensure_main_thread
 from useq import MDAEvent, MDASequence
 
@@ -76,6 +79,7 @@ class _NapariMDAHandler:
             (self._mmc.mda.events.frameReady, self._on_mda_frame),
             (self._mmc.mda.events.sequenceStarted, self._on_mda_started),
             (self._mmc.mda.events.sequenceFinished, self._on_mda_finished),
+            (self._mmc.mda.events.frameReady, self._stardist_module),  # FOR STARDIST
         ]
         for signal, slot in self._connections:
             signal.connect(slot)
@@ -116,7 +120,11 @@ class _NapariMDAHandler:
 
             # create the zarr array and add it to the viewer
             z = zarr.open(str(tmp.name), shape=shape + yx_shape, dtype=dtype)
-            fname = meta.file_name if meta.should_save else "Exp"
+
+            if "stardist" in id_:  # FOR STARDIST
+                fname = "Exp"  # FOR STARDIST
+            else:
+                fname = meta.file_name if meta.should_save else "Exp"
             self._create_empty_image_layer(z, f"{fname}_{id_}", sequence, **kwargs)
 
             # store the zarr array and temporary directory for later cleanup
@@ -230,6 +238,31 @@ class _NapariMDAHandler:
             },
         )
 
+    # FOR STARDIST
+    def _stardist_module(self, image: np.ndarray, event: MDAEvent) -> None:
+        worker = self._run_stardist(image, event)
+        worker.yielded.connect(self._add_to_viewer)
+        worker.start()
+
+    @thread_worker  # type: ignore
+    def _run_stardist(self, image: np.ndarray, event: MDAEvent) -> Generator:
+        model = StarDist2D.from_pretrained("2D_versatile_fluo")
+        labels_nuclei, _ = model.predict_instances(normalize(image))
+        yield (labels_nuclei, event)
+
+    def _add_to_viewer(
+        self, frame_ready_args: tuple[np.ndarray, ActiveMDAEvent]
+    ) -> None:
+        labels_nuclei, event = frame_ready_args
+        _id = f"stardist_{event.sequence.uid}"
+        _, im_idx, _ = _id_idx_layer(event)
+        self._tmp_arrays[_id][0][im_idx] = labels_nuclei
+        name = f"Exp_stardist_{event.sequence.uid}"
+        self.viewer.layers[name].colormap = "turbo"
+        self.viewer.layers[name].opacity = 0.3
+        self.viewer.layers[name].visible = False
+        self.viewer.layers[name].visible = True
+
 
 def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
     # sourcery skip: use-next
@@ -309,8 +342,13 @@ def _determine_sequence_layers(
             _layer_info.append((id_, layer_shape, {"ch_id": channel_id}))
 
     else:
-        _layer_info.append((str(sequence.uid), layer_shape, {}))
-
+        # _layer_info.append((str(sequence.uid), layer_shape, {}))
+        _layer_info.extend(
+            (
+                (str(sequence.uid), layer_shape, {}),
+                (f"stardist_{sequence.uid}", layer_shape, {}),  # FOR STARDIST
+            )
+        )
     axis_labels += ["y", "x"]
 
     return axis_labels, _layer_info
