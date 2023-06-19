@@ -77,7 +77,7 @@ class FastTimeSequence(PMDAEngine):
 
         self._mmc.startSequenceAcquisition(images, 0, True)
         while self._mmc.isSequenceRunning():
-            if self._mmc.mda._check_canceled():
+            if cancelled := self._mmc.mda._check_canceled():
                 self._mmc.mda.cancel()
                 self._mmc.stopSequenceAcquisition()
 
@@ -98,7 +98,7 @@ class FastTimeSequence(PMDAEngine):
 
         self._mmc.stopSequenceAcquisition()
 
-        if img_idx < images:
+        if img_idx < images and not cancelled:
             for n, idx in enumerate(range(img_idx + 1, images)):
                 img = self._mmc.getNBeforeLastImageAndMD(n)
                 self._mmc.mda.events.frameReady.emit(img[0], self._event(event, idx))
@@ -109,7 +109,7 @@ class FastTimeSequence(PMDAEngine):
                 )
                 data_indexes.append(idx)
 
-        if len(data_indexes) != images:
+        if len(data_indexes) != images and not cancelled:
             raise RuntimeError(f"Expected {images} images, got {len(data_indexes)}.")
 
     def _event(self, event: MDAEvent, img_idx: int) -> MDAEvent:
