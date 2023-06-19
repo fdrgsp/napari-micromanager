@@ -14,7 +14,7 @@ from useq import MDASequence
 
 from napari_micromanager._mda_meta import SEQUENCE_META_KEY, SequenceMeta
 
-from ._fast_sequence_engine import FastTimeSequence
+from ._fast_time_sequence_engine import FastTimeSequence
 from ._save_widget import SaveWidget
 
 
