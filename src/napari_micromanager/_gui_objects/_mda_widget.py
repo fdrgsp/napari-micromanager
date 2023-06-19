@@ -161,6 +161,14 @@ class MultiDWidget(MDAWidget):
             warnings.warn("The selected directory does not exist.")
             return
 
+        if (
+            self._is_fast_sequence()
+            and self.buttons_wdg.acquisition_order_comboBox.currentText()[:2] != "tp"
+        ):
+            raise ValueError(
+                "For 'FastTimeSequence', the acquisition order must start with 'tp...'"
+            )
+
         # set engine
         self._mmc.mda.set_engine(
             FastTimeSequence(self._mmc)
