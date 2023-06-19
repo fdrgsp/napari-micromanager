@@ -54,6 +54,10 @@ class FastTimeSequence(PMDAEngine):
                 z_after_af = self._execute_autofocus(z_af_device, z_af_pos)
                 self._mmc.setZPosition(z_after_af)
 
+                # TODO: maybe here we want to set the autofocus engaged and locked
+                # so it will stay on for the rest of the sequence. If so, maybe we need
+                # disable it before running self._execute_autofocus(...).
+
         self._mmc.waitForSystem()
 
     def _execute_autofocus(self, z_af_device_name: str, z_af_pos: float) -> float:
