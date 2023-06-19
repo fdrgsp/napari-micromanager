@@ -7,6 +7,7 @@ from typing import cast
 
 from pymmcore_mda_writers import MiltiTiffWriter, ZarrWriter
 from pymmcore_plus import CMMCorePlus
+from pymmcore_plus.mda import MDAEngine
 from pymmcore_widgets import MDAWidget
 from qtpy.QtWidgets import QCheckBox, QGridLayout, QSizePolicy, QVBoxLayout, QWidget
 from useq import MDASequence
@@ -133,6 +134,20 @@ class MultiDWidget(MDAWidget):
             and self.time_widget.value()["phases"][0]["loops"] > 1
         )
 
+    def _on_mda_started(self) -> None:
+        """Override the default method to hide the pause button.
+
+        It does not work with fast sequences at the moment.
+        """
+        self._enable_widgets(False)
+        if self._include_run_button:
+            if self._is_fast_sequence():
+                self.buttons_wdg.pause_button.hide()
+            else:
+                self.buttons_wdg.pause_button.show()
+            self.buttons_wdg.cancel_button.show()
+        self.buttons_wdg.run_button.hide()
+
     def _on_run_clicked(self) -> None:
         if (
             self._save_groupbox.isChecked()
@@ -146,8 +161,11 @@ class MultiDWidget(MDAWidget):
             warnings.warn("The selected directory does not exist.")
             return
 
-        # fast sequence
-        if self._is_fast_sequence():
-            self._mmc.mda.set_engine(FastTimeSequence(self._mmc))
+        # set engine
+        self._mmc.mda.set_engine(
+            FastTimeSequence(self._mmc)
+            if self._is_fast_sequence()
+            else MDAEngine(self._mmc)
+        )
 
         super()._on_run_clicked()
