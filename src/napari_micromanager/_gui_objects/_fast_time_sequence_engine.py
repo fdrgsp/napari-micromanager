@@ -72,7 +72,9 @@ class FastTimeSequence(PMDAEngine):
         Only executed if t=0.
         """
         if event.index["t"] != 0:
-            self._mmc.mda.cancel()
+            # if t > 0, we can stop the sequence since it has been already
+            # executed by 'startSequenceAcquisition'.
+            self._mmc.mda._running = False
             return
 
         images = len(event.sequence.time_plan)  # type: ignore
