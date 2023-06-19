@@ -13,7 +13,7 @@ from useq import MDASequence
 
 from napari_micromanager._mda_meta import SEQUENCE_META_KEY, SequenceMeta
 
-from ._fast_sequence_engine import FastSequence
+from ._fast_sequence_engine import FastTimeSequence
 from ._save_widget import SaveWidget
 
 
@@ -148,6 +148,6 @@ class MultiDWidget(MDAWidget):
 
         # fast sequence
         if self._is_fast_sequence():
-            self._mmc.mda.set_engine(FastSequence(self._mmc))
+            self._mmc.mda.set_engine(FastTimeSequence(self._mmc))
 
         super()._on_run_clicked()

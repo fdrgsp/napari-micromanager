@@ -7,7 +7,7 @@ from pymmcore_plus.mda import PMDAEngine
 from useq import MDAEvent, MDASequence
 
 
-class FastSequence(PMDAEngine):
+class FastTimeSequence(PMDAEngine):
     """Fast sequence engine.
 
     Used only if the sequence is a timelapse with 0 interval, a single channel,
