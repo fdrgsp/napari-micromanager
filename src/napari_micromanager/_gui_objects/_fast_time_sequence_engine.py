@@ -87,10 +87,10 @@ class FastTimeSequence(PMDAEngine):
                 if img_idx in data_indexes:
                     continue
                 self._mmc.mda.events.frameReady.emit(
-                    img[0], self._event(event, img_idx)
+                    img[0], self._update_event(event, img_idx)
                 )
                 logger.info(
-                    f"event: {self._event(event, img_idx)},"
+                    f"event: {self._update_event(event, img_idx)},"
                     f"image n: {img_idx}, "
                     f"elapsed_time: {img[1]['ElapsedTime-ms']}"
                 )
@@ -101,9 +101,11 @@ class FastTimeSequence(PMDAEngine):
         if img_idx < images and not cancelled:
             for n, idx in enumerate(range(img_idx + 1, images)):
                 img = self._mmc.getNBeforeLastImageAndMD(n)
-                self._mmc.mda.events.frameReady.emit(img[0], self._event(event, idx))
+                self._mmc.mda.events.frameReady.emit(
+                    img[0], self._update_event(event, idx)
+                )
                 logger.info(
-                    f"event: {self._event(event, idx)},"
+                    f"event: {self._update_event(event, idx)},"
                     f"image n: {idx}, "
                     f"elapsed_time: {img[1]['ElapsedTime-ms']}"
                 )
@@ -112,6 +114,6 @@ class FastTimeSequence(PMDAEngine):
         if len(data_indexes) != images and not cancelled:
             raise RuntimeError(f"Expected {images} images, got {len(data_indexes)}.")
 
-    def _event(self, event: MDAEvent, img_idx: int) -> MDAEvent:
+    def _update_event(self, event: MDAEvent, img_idx: int) -> MDAEvent:
         update = {"index": {"c": event.index["c"], "t": img_idx, "p": event.index["p"]}}
         return event.copy(update=update)
