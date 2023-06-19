@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from datetime import timedelta
 from pathlib import Path
 from typing import cast
 
@@ -12,6 +13,7 @@ from useq import MDASequence
 
 from napari_micromanager._mda_meta import SEQUENCE_META_KEY, SequenceMeta
 
+from ._fast_sequence_engine import FastSequence
 from ._save_widget import SaveWidget
 
 
@@ -97,7 +99,7 @@ class MultiDWidget(MDAWidget):
             }
 
         sequence.metadata[SEQUENCE_META_KEY] = SequenceMeta(
-            mode="mda",
+            mode="fast" if self._is_fast_sequence() else "mda",
             split_channels=_split_channels,
             **_save_info,
         )
@@ -121,6 +123,16 @@ class MultiDWidget(MDAWidget):
         self.checkBox_split_channels.setChecked(meta.split_channels)
         self._save_groupbox.set_state(meta)
 
+    def _is_fast_sequence(self) -> bool:
+        """Check if the sequence is a fast sequence."""
+        return (
+            not self.z_cbox.isChecked()
+            and not self.g_cbox.isChecked()
+            and len(self.time_widget.value()["phases"]) == 1
+            and self.time_widget.value()["phases"][0]["interval"] == timedelta(0)
+            and self.time_widget.value()["phases"][0]["loops"] > 1
+        )
+
     def _on_run_clicked(self) -> None:
         if (
             self._save_groupbox.isChecked()
@@ -133,5 +145,9 @@ class MultiDWidget(MDAWidget):
             # TODO: ask to create the directory if it does not exist
             warnings.warn("The selected directory does not exist.")
             return
+
+        # fast sequence
+        if self._is_fast_sequence():
+            self._mmc.mda.set_engine(FastSequence(self._mmc))
 
         super()._on_run_clicked()

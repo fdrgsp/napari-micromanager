@@ -94,6 +94,7 @@ class _NapariMDAHandler:
     def _on_mda_started(self, sequence: MDASequence) -> None:
         """Create temp folder and block gui when mda starts."""
         meta: SequenceMeta | None = sequence.metadata.get(SEQUENCE_META_KEY)
+
         if meta is None:
             # this is not an MDA we started
             # TODO: should we still handle this with some sane defaults?
