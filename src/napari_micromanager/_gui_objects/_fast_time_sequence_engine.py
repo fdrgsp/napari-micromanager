@@ -22,7 +22,7 @@ class FastTimeSequence(PMDAEngine):
         """Setup the hardware for the fast sequence."""
         self._mmc = self._mmc or CMMCorePlus.instance()
 
-    def setup_event(self, event: MDAEvent) -> MDAEvent:
+    def setup_event(self, event: MDAEvent) -> MDAEvent:  # type: ignore
         """Set the system hardware.
 
         Only executed if t=0.
@@ -32,8 +32,13 @@ class FastTimeSequence(PMDAEngine):
         event : MDAEvent
             The event to use for the Hardware config
         """
+        update_event = {}  # to update the event in case of any autofocus correction
+
         if event.index["t"] != 0:
-            return
+            # if t > 0, we can stop the sequence since it has been already
+            # executed by 'startSequenceAcquisition'.
+            self._mmc.mda._running = False
+            return MDAEvent()
 
         if event.channel is not None:
             self._mmc.setConfig(event.channel.group, event.channel.config)
@@ -53,6 +58,7 @@ class FastTimeSequence(PMDAEngine):
                 z_af_device, z_af_pos = event.autofocus  # type: ignore
                 z_after_af = self._execute_autofocus(z_af_device, z_af_pos)
                 self._mmc.setZPosition(z_after_af)
+                update_event = {"z_pos": z_after_af}
 
                 # TODO: maybe here we want to set the autofocus engaged and locked
                 # so it will stay on for the rest of the sequence. If so, maybe we need
@@ -60,7 +66,7 @@ class FastTimeSequence(PMDAEngine):
 
         self._mmc.waitForSystem()
 
-        return event
+        return event.copy(update=update_event) if update_event else event
 
     def _execute_autofocus(self, z_af_device_name: str, z_af_pos: float) -> float:
         """Perform the autofocus."""
@@ -73,7 +79,7 @@ class FastTimeSequence(PMDAEngine):
 
         Only executed if t=0.
         """
-        if event is None or event.index["t"] != 0:
+        if event.index["t"] != 0:
             # if t > 0, we can stop the sequence since it has been already
             # executed by 'startSequenceAcquisition'.
             self._mmc.mda._running = False
