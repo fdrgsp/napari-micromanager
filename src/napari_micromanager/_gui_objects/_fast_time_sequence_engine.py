@@ -22,7 +22,7 @@ class FastTimeSequence(PMDAEngine):
         """Setup the hardware for the fast sequence."""
         self._mmc = self._mmc or CMMCorePlus.instance()
 
-    def setup_event(self, event: MDAEvent) -> None:
+    def setup_event(self, event: MDAEvent) -> MDAEvent:
         """Set the system hardware.
 
         Only executed if t=0.
@@ -73,7 +73,7 @@ class FastTimeSequence(PMDAEngine):
 
         Only executed if t=0.
         """
-        if event.index["t"] != 0:
+        if event is None or event.index["t"] != 0:
             # if t > 0, we can stop the sequence since it has been already
             # executed by 'startSequenceAcquisition'.
             self._mmc.mda._running = False
