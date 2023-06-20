@@ -22,7 +22,7 @@ class FastTimeSequence(PMDAEngine):
         """Setup the hardware for the fast sequence."""
         self._mmc = self._mmc or CMMCorePlus.instance()
 
-    def setup_event(self, event: MDAEvent) -> MDAEvent:  # type: ignore
+    def setup_event(self, event: MDAEvent) -> None:
         """Set the system hardware.
 
         Only executed if t=0.
@@ -38,7 +38,7 @@ class FastTimeSequence(PMDAEngine):
             # if t > 0, we can stop the sequence since it has been already
             # executed by 'startSequenceAcquisition'.
             self._mmc.mda._running = False
-            return MDAEvent()
+            return
 
         if event.channel is not None:
             self._mmc.setConfig(event.channel.group, event.channel.config)
@@ -64,9 +64,10 @@ class FastTimeSequence(PMDAEngine):
                 # so it will stay on for the rest of the sequence. If so, maybe we need
                 # disable it before running self._execute_autofocus(...).
 
-        self._mmc.waitForSystem()
+        if update_event:
+            logger.info(f"Update event: {event.copy(update=update_event)}")
 
-        return event.copy(update=update_event) if update_event else event
+        self._mmc.waitForSystem()
 
     def _execute_autofocus(self, z_af_device_name: str, z_af_pos: float) -> float:
         """Perform the autofocus."""
