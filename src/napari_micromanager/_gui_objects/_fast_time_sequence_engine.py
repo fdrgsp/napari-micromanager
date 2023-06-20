@@ -60,6 +60,8 @@ class FastTimeSequence(PMDAEngine):
 
         self._mmc.waitForSystem()
 
+        return event
+
     def _execute_autofocus(self, z_af_device_name: str, z_af_pos: float) -> float:
         """Perform the autofocus."""
         self._mmc.setPosition(z_af_device_name, z_af_pos)
