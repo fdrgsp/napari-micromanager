@@ -22,6 +22,10 @@ class FastTimeSequence(PMDAEngine):
         """Setup the hardware for the fast sequence."""
         self._mmc = self._mmc or CMMCorePlus.instance()
 
+        # switch off autofocus device if it is on to let each position set it in setup_event
+        with contextlib.suppress(RuntimeError):
+            self._mmc.setProperty(self._mmc.getAutoFocusDevice(), "State", "Off")
+
     def setup_event(self, event: MDAEvent) -> None:
         """Set the system hardware.
 
