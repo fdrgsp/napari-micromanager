@@ -31,8 +31,8 @@ class SaveWidget(QGroupBox):
         self._fname = QLineEdit("Experiment")
 
         self.zarr_radiobutton = QRadioButton(text="Save as zarr")
-        self.zarr_radiobutton.setChecked(True)
         self.tiff_radiobutton = QRadioButton(text="Save as single tiff")
+        self.tiff_radiobutton.setChecked(True)
 
         grid = QGridLayout()
         self.setLayout(grid)
