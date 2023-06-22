@@ -22,7 +22,8 @@ class FastTimeSequence(PMDAEngine):
         """Setup the hardware for the fast sequence."""
         self._mmc = self._mmc or CMMCorePlus.instance()
 
-        # switch off autofocus device if it is on to let each position set it in setup_event
+        # switch off autofocus device if it is on to let each position set
+        # it in setup_event
         with contextlib.suppress(RuntimeError):
             self._mmc.setProperty(self._mmc.getAutoFocusDevice(), "State", "Off")
 
@@ -37,12 +38,6 @@ class FastTimeSequence(PMDAEngine):
             The event to use for the Hardware config
         """
         update_event = {}  # to update the event in case of any autofocus correction
-
-        if event.index["t"] != 0:
-            # if t > 0, we can stop the sequence since it has been already
-            # executed by 'startSequenceAcquisition'.
-            self._mmc.mda._running = False
-            return
 
         if event.channel is not None:
             self._mmc.setConfig(event.channel.group, event.channel.config)
@@ -80,16 +75,7 @@ class FastTimeSequence(PMDAEngine):
         return self._mmc.getZPosition()
 
     def exec_event(self, event: MDAEvent) -> Any:
-        """Execute the event.
-
-        Only executed if t=0.
-        """
-        if event.index["t"] != 0:
-            # if t > 0, we can stop the sequence since it has been already
-            # executed by 'startSequenceAcquisition'.
-            self._mmc.mda._running = False
-            return
-
+        """Execute the event."""
         images = len(event.sequence.time_plan)  # type: ignore
 
         data_indexes: list[int] = []
@@ -132,6 +118,17 @@ class FastTimeSequence(PMDAEngine):
 
         if len(data_indexes) != images and not cancelled:
             raise RuntimeError(f"Expected {images} images, got {len(data_indexes)}.")
+
+        # we can stop the sequence since it has been already executed
+        # by 'startSequenceAcquisition'.
+        latest_event = self._update_event(event, data_indexes[-1])
+        timepoints = len(event.sequence.time_plan) - 1  # type: ignore
+        positions = len(event.sequence.stage_positions) - 1  # type: ignore
+        if (
+            latest_event.index["t"] == timepoints
+            and latest_event.index["p"] == positions
+        ):
+            self._mmc.mda._running = False
 
     def _update_event(self, event: MDAEvent, img_idx: int) -> MDAEvent:
         update = {"index": {"c": event.index["c"], "t": img_idx, "p": event.index["p"]}}
