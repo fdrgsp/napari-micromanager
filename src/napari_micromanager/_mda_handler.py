@@ -167,23 +167,19 @@ class _NapariMDAHandler:
         # update the zarr array backing the layer
         self._tmp_arrays[_id][0][im_idx] = image
 
-        self._add_stage_pos_metadata(layer_name, event, im_idx)
+        self._add_stage_pos_metadata(layer_name, im_idx)
 
-        # Processing the most recent event
-        # update the viewer in the main thread
-        if not self._mmc.mda.is_running():
-            return
-        if im_idx > self._largest_idx:
-            self._largest_idx = im_idx
-            cs = list(self.viewer.dims.current_step)
-            for a, v in enumerate(im_idx):
-                cs[a] = v
-            self._update_viewer_dims(cs, layer_name)
+        # if im_idx > self._largest_idx:
+        # self._largest_idx = im_idx
+        self._update_viewer_dims(layer_name, im_idx)
 
     @ensure_main_thread  # type: ignore [misc]
-    def _update_viewer_dims(self, step: tuple, layer_name: str) -> None:
-        # move the viewer step to the most recently added image
-        self.viewer.dims.current_step = step
+    def _update_viewer_dims(self, layer_name: str, im_idx: tuple[int, ...]) -> None:
+        cs = list(self.viewer.dims.current_step)
+        for a, v in enumerate(im_idx):
+            cs[a] = v
+        self.viewer.dims.current_step = cs
+
         # update display
         layer: Image = self.viewer.layers[layer_name]
         if not layer.visible:
@@ -191,12 +187,12 @@ class _NapariMDAHandler:
         # layer.reset_contrast_limits()
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
-        # self._mda_running = False
         # process remaining frames
         while len(self._deck) > 0:
-            print("______", len(self._deck))
-            continue
-            # self._process_frame(*self._deck.pop())
+            i, e = self._deck.pop()
+            create_worker(self._process_frame, i, e, _start_thread=True)
+        # while len(self._deck) > 0:
+        #     continue
         self._mda_running = False
 
         # reset the _deck to be sure to start fresh next time
@@ -208,23 +204,20 @@ class _NapariMDAHandler:
         #         layer.data = np.squeeze(layer.data)
         #         break
 
-    def _add_stage_pos_metadata(
-        self, layer_name: str, event: MDAEvent, image_idx: tuple
-    ) -> None:
+    def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
         """Add positions info to layer metadata.
 
         This info is used in the `_mouse_right_click` method.
         """
         layer = self.viewer.layers[layer_name]
+        x, y = self._mmc.getXPosition(), self._mmc.getYPosition()
+        z = self._mmc.getZPosition()
+        info = (image_idx, x, y, z)
 
         try:
-            layer.metadata["positions"].append(
-                ((image_idx), event.x_pos, event.y_pos, event.z_pos)
-            )
+            layer.metadata["positions"].append(info)
         except KeyError:
-            layer.metadata["positions"] = [
-                (image_idx, event.x_pos, event.y_pos, event.z_pos)
-            ]
+            layer.metadata["positions"] = [info]
 
     def _create_empty_image_layer(
         self,
