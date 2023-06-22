@@ -171,6 +171,8 @@ class _NapariMDAHandler:
 
         # Processing the most recent event
         # update the viewer in the main thread
+        if not self._mmc.mda.is_running():
+            return
         if im_idx > self._largest_idx:
             self._largest_idx = im_idx
             cs = list(self.viewer.dims.current_step)
@@ -192,7 +194,7 @@ class _NapariMDAHandler:
         # self._mda_running = False
         # process remaining frames
         while len(self._deck) > 0:
-            print('______', len(self._deck))
+            print("______", len(self._deck))
             continue
             # self._process_frame(*self._deck.pop())
         self._mda_running = False
