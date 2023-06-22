@@ -189,10 +189,13 @@ class _NapariMDAHandler:
         # layer.reset_contrast_limits()
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
-        self._mda_running = False
+        # self._mda_running = False
         # process remaining frames
         while len(self._deck) > 0:
-            self._process_frame(*self._deck.pop())
+            print('______', len(self._deck))
+            continue
+            # self._process_frame(*self._deck.pop())
+        self._mda_running = False
 
         # reset the _deck to be sure to start fresh next time
         self._deck = Deque()
