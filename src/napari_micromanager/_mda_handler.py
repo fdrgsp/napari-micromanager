@@ -169,21 +169,18 @@ class _NapariMDAHandler:
 
         self._add_stage_pos_metadata(layer_name, event, im_idx)
 
-        # move the viewer step to the most recently added image
-        # this seems to work better than self.viewer.dims.set_point(a, v)
+        # Processing the most recent event
+        # update the viewer in the main thread
         if im_idx > self._largest_idx:
             self._largest_idx = im_idx
-            # Processing the most recent event
-            # update the viewer in the main thread
             cs = list(self.viewer.dims.current_step)
             for a, v in enumerate(im_idx):
                 cs[a] = v
-            self._update_viewer_dims(cs, layer_name, event)
+            self._update_viewer_dims(cs, layer_name)
 
     @ensure_main_thread  # type: ignore [misc]
-    def _update_viewer_dims(
-        self, step: tuple, layer_name: str, event: ActiveMDAEvent
-    ) -> None:
+    def _update_viewer_dims(self, step: tuple, layer_name: str) -> None:
+        # move the viewer step to the most recently added image
         self.viewer.dims.current_step = step
         # update display
         layer: Image = self.viewer.layers[layer_name]
@@ -193,12 +190,14 @@ class _NapariMDAHandler:
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
-        # the last frame(s) is not added so we add it here
-        if self._deck:
+        # process remaining frames
+        while len(self._deck) > 0:
             self._process_frame(*self._deck.pop())
+
         # reset the _deck to be sure to start fresh next time
         self._deck = Deque()
 
+        # sqeeze the data to remove any extra dimensions
         # for layer in self.viewer.layers:
         #     if layer.metadata.get("uid") == sequence.uid:
         #         layer.data = np.squeeze(layer.data)
