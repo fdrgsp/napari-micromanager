@@ -136,7 +136,7 @@ class _NapariMDAHandler:
                 break
 
         # init index will always be less than any event index
-        self._largest_idx: tuple[int, ...] = (-1,)
+        # self._largest_idx: tuple[int, ...] = (-1,)
         self._deck = Deque()
         self._mda_running = True
         self._io_t = create_worker(self._watch_mda, _start_thread=True)
