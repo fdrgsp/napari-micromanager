@@ -193,9 +193,6 @@ class _NapariMDAHandler:
 
         self._mda_running = False
 
-        # reset the _deck to be sure to start fresh next time
-        self._deck = Deque()
-
         # sqeeze the data to remove any extra dimensions
         for layer in self.viewer.layers:
             if layer.metadata.get("uid") == sequence.uid:
