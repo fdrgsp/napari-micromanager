@@ -189,20 +189,18 @@ class _NapariMDAHandler:
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         # process remaining frames
         while len(self._deck) > 0:
-            i, e = self._deck.pop()
-            create_worker(self._process_frame, i, e, _start_thread=True)
-        # while len(self._deck) > 0:
-        #     continue
+            continue
+
         self._mda_running = False
 
         # reset the _deck to be sure to start fresh next time
         self._deck = Deque()
 
         # sqeeze the data to remove any extra dimensions
-        # for layer in self.viewer.layers:
-        #     if layer.metadata.get("uid") == sequence.uid:
-        #         layer.data = np.squeeze(layer.data)
-        #         break
+        for layer in self.viewer.layers:
+            if layer.metadata.get("uid") == sequence.uid:
+                layer.data = np.squeeze(layer.data)
+                break
 
     def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
         """Add positions info to layer metadata.
