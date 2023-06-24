@@ -10,6 +10,7 @@ import numpy as np
 import zarr
 from pymmcore_plus import CMMCorePlus
 from superqt.utils import create_worker, ensure_main_thread
+from tqdm import tqdm
 from useq import MDAEvent, MDASequence
 
 from ._mda_meta import SEQUENCE_META_KEY, SequenceMeta
@@ -139,7 +140,11 @@ class _NapariMDAHandler:
         # self._largest_idx: tuple[int, ...] = (-1,)
         self._deck = Deque()
         self._mda_running = True
-        self._io_t = create_worker(self._watch_mda, _start_thread=True)
+        self._io_t = create_worker(
+            self._watch_mda,
+            _start_thread=True,
+            _connect={"finished": self._on_io_finished},
+        )
 
     def _watch_mda(self) -> Generator[None, None, None]:
         while self._mda_running:
@@ -148,6 +153,15 @@ class _NapariMDAHandler:
             else:
                 time.sleep(0.1)
             yield
+
+    def _on_io_finished(self) -> None:
+        # process remaining frames
+        with tqdm(
+            total=len(self._deck), desc="Processing remaining MDA frames:"
+        ) as progress:
+            while self._deck:
+                self._process_frame(*self._deck.pop())
+                progress.update()
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
@@ -187,9 +201,6 @@ class _NapariMDAHandler:
         # layer.reset_contrast_limits()
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
-        # process remaining frames
-        while len(self._deck) > 0:
-            continue
         self._mda_running = False
 
     def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
