@@ -143,7 +143,7 @@ class _NapariMDAHandler:
         self._io_t = create_worker(
             self._watch_mda,
             _start_thread=True,
-            _connect={"finished": self._on_io_finished},
+            _connect={"finished": self._process_remaining_frames},
         )
 
     def _watch_mda(self) -> Generator[None, None, None]:
@@ -154,8 +154,7 @@ class _NapariMDAHandler:
                 time.sleep(0.1)
             yield
 
-    def _on_io_finished(self) -> None:
-        # process remaining frames
+    def _process_remaining_frames(self) -> None:
         with tqdm(
             total=len(self._deck), desc="Processing remaining MDA frames:"
         ) as progress:
