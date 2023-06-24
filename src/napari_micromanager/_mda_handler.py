@@ -162,6 +162,7 @@ class _NapariMDAHandler:
             while self._deck:
                 self._process_frame(*self._deck.pop())
                 progress.update()
+            self.viewer.status = ""
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
@@ -202,6 +203,7 @@ class _NapariMDAHandler:
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
+        self.viewer.status = "Processing remaining MDA frames..."
 
     def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
         """Add positions info to layer metadata.
