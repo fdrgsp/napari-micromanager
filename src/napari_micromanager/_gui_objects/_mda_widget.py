@@ -130,6 +130,7 @@ class MultiDWidget(MDAWidget):
             not self.z_cbox.isChecked()
             and not self.g_cbox.isChecked()
             and len(self.time_widget.value()["phases"]) == 1
+            and self.t_cbox.isChecked()
             and self.time_widget.value()["phases"][0]["interval"] == timedelta(0)
             and self.time_widget.value()["phases"][0]["loops"] > 1
         )
