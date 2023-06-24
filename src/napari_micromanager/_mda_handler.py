@@ -214,7 +214,8 @@ class _NapariMDAHandler:
                     index -= 1
                 scale[index] = getattr(sequence.z_plan, "step", 1)
         else:
-            scale = None
+            # return to default
+            scale = [1.0, 1.0]
 
         return self.viewer.add_image(
             arr,
