@@ -147,6 +147,7 @@ class _NapariMDAHandler:
         )
 
     def _watch_mda(self) -> Generator[None, None, None]:
+        """Watch the MDA for new frames and process them as they come in."""
         while self._mda_running:
             if self._deck:
                 self._process_frame(*self._deck.pop())
@@ -155,13 +156,35 @@ class _NapariMDAHandler:
             yield
 
     def _process_remaining_frames(self) -> None:
+        """Process any remaining frames after the MDA has finished."""
+        create_worker(
+            self._update_zarr,
+            _start_thread=True,
+            _connect={"yielded": self._update_status_bar},
+        )
+
+    def _update_zarr(self) -> Generator[str, Any, None]:
+        """Update the zarr arrays with the remaining frames from the MDA.
+
+        It also updates the viewer status bar with the progress.
+        """
         with tqdm(
-            total=len(self._deck), desc="Processing remaining MDA frames:"
+            total=len(self._deck),
+            unit="frames",
+            desc="Processing remaining MDA frames",
+            colour="green",
         ) as progress:
             while self._deck:
                 self._process_frame(*self._deck.pop())
                 progress.update()
-            self.viewer.status = ""
+                yield (
+                    "Processing remaining MDA frames: "
+                    f"{progress.n / progress.total * 100:.2f}%"
+                )
+
+    def _update_status_bar(self, msg: str) -> None:
+        """Update the viewer status bar with the given message."""
+        self.viewer.status = msg
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
