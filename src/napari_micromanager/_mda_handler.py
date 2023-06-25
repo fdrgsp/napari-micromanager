@@ -167,10 +167,7 @@ class _NapariMDAHandler:
             while self._deck:
                 self._process_frame(*self._deck.pop())
                 progress.update()
-
-    def _update_status_bar(self, msg: str) -> None:
-        """Update the viewer status bar with the given message."""
-        self.viewer.status = msg
+            self.viewer.dims.current_step = (0,) * self.viewer.dims.ndim
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
@@ -197,13 +194,13 @@ class _NapariMDAHandler:
 
         return layer_name, im_idx
 
-    # @ensure_main_thread  # type: ignore [misc]
-    # def _update_viewer_dims(self, layer_name: str, im_idx: tuple[int, ...]) -> None:
     @ensure_main_thread  # type: ignore [misc]
     def _update_viewer_dims(
         self, args: tuple[str | None, tuple[int, ...] | None]
     ) -> None:
+        """Update the viewer dims to match the current image."""
         layer_name, im_idx = args
+
         if layer_name is None or im_idx is None:
             return
 
@@ -216,7 +213,6 @@ class _NapariMDAHandler:
         layer: Image = self.viewer.layers[layer_name]
         if not layer.visible:
             layer.visible = True
-        # layer.reset_contrast_limits()
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
