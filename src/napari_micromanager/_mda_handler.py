@@ -129,6 +129,17 @@ class _NapariMDAHandler:
         # set axis_labels after adding the images to ensure that the dims exist
         self.viewer.dims.axis_labels = axis_labels
 
+        self._deck = Deque()
+        self._mda_running = True
+        self._io_t = create_worker(
+            self._watch_mda,
+            _start_thread=True,
+            _connect={
+                "yielded": self._update_viewer_dims,
+                "finished": self._process_remaining_frames,
+            },
+        )
+
         # resume acquisition after zarr layer(s) is(are) added
         # FIXME: this isn't in an event loop... so shouldn't we just call toggle_pause?
         for i in self.viewer.layers:
@@ -136,51 +147,26 @@ class _NapariMDAHandler:
                 self._mmc.mda.toggle_pause()
                 break
 
-        # init index will always be less than any event index
-        # self._largest_idx: tuple[int, ...] = (-1,)
-        self._deck = Deque()
-        self._mda_running = True
-        self._io_t = create_worker(
-            self._watch_mda,
-            _start_thread=True,
-            _connect={"finished": self._process_remaining_frames},
-        )
-
-    def _watch_mda(self) -> Generator[None, None, None]:
+    def _watch_mda(
+        self,
+    ) -> Generator[tuple[str | None, tuple[int, ...] | None], None, None]:
         """Watch the MDA for new frames and process them as they come in."""
         while self._mda_running:
             if self._deck:
-                self._process_frame(*self._deck.pop())
+                layer_name, im_idx = self._process_frame(*self._deck.pop())
             else:
+                layer_name, im_idx = None, None
                 time.sleep(0.1)
-            yield
+            yield layer_name, im_idx
 
     def _process_remaining_frames(self) -> None:
         """Process any remaining frames after the MDA has finished."""
-        create_worker(
-            self._update_zarr,
-            _start_thread=True,
-            _connect={"yielded": self._update_status_bar},
-        )
-
-    def _update_zarr(self) -> Generator[str, Any, None]:
-        """Update the zarr arrays with the remaining frames from the MDA.
-
-        It also updates the viewer status bar with the progress.
-        """
         with tqdm(
-            total=len(self._deck),
-            unit="frames",
-            desc="Processing remaining MDA frames",
-            colour="green",
+            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
         ) as progress:
             while self._deck:
                 self._process_frame(*self._deck.pop())
                 progress.update()
-                yield (
-                    "Processing remaining MDA frames: "
-                    f"{progress.n / progress.total * 100:.2f}%"
-                )
 
     def _update_status_bar(self, msg: str) -> None:
         """Update the viewer status bar with the given message."""
@@ -190,12 +176,15 @@ class _NapariMDAHandler:
         """Called on the `frameReady` event from the core."""
         self._deck.append((image, event))
 
-    def _process_frame(self, image: np.ndarray, event: MDAEvent) -> None:
+    def _process_frame(
+        self, image: np.ndarray, event: MDAEvent
+    ) -> tuple[str | None, tuple[int, ...] | None]:
         seq_meta = getattr(event.sequence, "metadata", None)
 
         if not (seq_meta and seq_meta.get(SEQUENCE_META_KEY)):
             # this is not an MDA we started
-            return
+            return None, None
+
         event = cast("ActiveMDAEvent", event)
 
         # get info about the layer we need to update
@@ -206,12 +195,18 @@ class _NapariMDAHandler:
 
         self._add_stage_pos_metadata(layer_name, im_idx)
 
-        # if im_idx > self._largest_idx:
-        # self._largest_idx = im_idx
-        self._update_viewer_dims(layer_name, im_idx)
+        return layer_name, im_idx
 
+    # @ensure_main_thread  # type: ignore [misc]
+    # def _update_viewer_dims(self, layer_name: str, im_idx: tuple[int, ...]) -> None:
     @ensure_main_thread  # type: ignore [misc]
-    def _update_viewer_dims(self, layer_name: str, im_idx: tuple[int, ...]) -> None:
+    def _update_viewer_dims(
+        self, args: tuple[str | None, tuple[int, ...] | None]
+    ) -> None:
+        layer_name, im_idx = args
+        if layer_name is None or im_idx is None:
+            return
+
         cs = list(self.viewer.dims.current_step)
         for a, v in enumerate(im_idx):
             cs[a] = v
@@ -225,7 +220,6 @@ class _NapariMDAHandler:
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
-        self.viewer.status = "Processing remaining MDA frames..."
 
     def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
         """Add positions info to layer metadata.
