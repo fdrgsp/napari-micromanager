@@ -134,10 +134,7 @@ class _NapariMDAHandler:
         self._io_t = create_worker(
             self._watch_mda,
             _start_thread=True,
-            _connect={
-                "yielded": self._update_viewer_dims,
-                "finished": self._process_remaining_frames,
-            },
+            _connect={"yielded": self._update_viewer_dims},
         )
 
         # resume acquisition after zarr layer(s) is(are) added
@@ -154,20 +151,9 @@ class _NapariMDAHandler:
         while self._mda_running:
             if self._deck:
                 layer_name, im_idx = self._process_frame(*self._deck.pop())
+                yield layer_name, im_idx
             else:
-                layer_name, im_idx = None, None
                 time.sleep(0.1)
-            yield layer_name, im_idx
-
-    def _process_remaining_frames(self) -> None:
-        """Process any remaining frames after the MDA has finished."""
-        with tqdm(
-            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
-        ) as progress:
-            while self._deck:
-                self._process_frame(*self._deck.pop())
-                progress.update()
-            self.viewer.dims.current_step = (0,) * self.viewer.dims.ndim
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
@@ -209,13 +195,34 @@ class _NapariMDAHandler:
             cs[a] = v
         self.viewer.dims.current_step = cs
 
-        # update display
-        layer: Image = self.viewer.layers[layer_name]
-        if not layer.visible:
-            layer.visible = True
-
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
+        # creating a new thread and not connecting self._io_t
+        # '"finished": self._process_remaining_frames' because it will block the gui
+        # until all frames are processed. This way the gui is free and we can also show
+        # the progress in the viewer status bar.
+        create_worker(
+            self._process_remaining_frames,
+            _start_thread=True,
+            _connect={"yielded": self._update_viewer_status},
+        )
+
+    def _process_remaining_frames(self) -> Generator[str, None, None]:
+        """Process any remaining frames after the MDA has finished."""
+        with tqdm(
+            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
+        ) as progress:
+            while self._deck:
+                self._process_frame(*self._deck.pop())
+                progress.update()
+                yield (
+                    "Processing remaining MDA frames: "
+                    f"{progress.n / progress.total * 100:.2f}%."
+                )
+
+    def _update_viewer_status(self, text: str) -> None:
+        """Update the viewer status bar."""
+        self.viewer.status = text
 
     def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
         """Add positions info to layer metadata.
@@ -263,13 +270,14 @@ class _NapariMDAHandler:
                     index -= 1
                 scale[index] = getattr(sequence.z_plan, "step", 1)
         else:
-            scale = None
+            # return to default
+            scale = [1.0, 1.0]
 
         return self.viewer.add_image(
             arr,
             name=name,
             blending="additive",
-            visible=False,
+            visible=True,
             scale=scale,
             metadata={
                 "mode": meta.mode,
