@@ -201,24 +201,47 @@ class _NapariMDAHandler:
         # '"finished": self._process_remaining_frames' because it will block the gui
         # until all frames are processed. This way the gui is free and we can also show
         # the progress in the viewer status bar.
-        create_worker(
-            self._process_remaining_frames,
-            _start_thread=True,
-            _connect={"yielded": self._update_viewer_status},
-        )
 
-    def _process_remaining_frames(self) -> Generator[str, None, None]:
+        _d = list(self._deck)
+        chunk_size = 10
+        while _d:
+            chunk, _d = _d[:chunk_size], _d[chunk_size:]
+            
+            create_worker(
+                self._process_remaining_frames,
+                chunk,
+                _start_thread=True,
+                _connect={"yielded": self._update_viewer_status}
+            )
+        self._deck = Deque()
+
+    def _process_remaining_frames(self, data: list) -> Generator[str, None, None]:
         """Process any remaining frames after the MDA has finished."""
         with tqdm(
-            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
+            total=len(data), unit="frames", desc="Processing remaining MDA frames"
         ) as progress:
-            while self._deck:
-                self._process_frame(*self._deck.pop())
-                progress.update()
-                yield (
-                    "Processing remaining MDA frames: "
-                    f"{progress.n / progress.total * 100:.2f}%."
-                )
+            while data:
+                try:
+                    self._process_frame(*data.pop())
+                    progress.update()
+                    yield (
+                        "Processing remaining MDA frames: "
+                        f"{progress.n / progress.total * 100:.2f}%."
+                    )
+                except PermissionError:
+                    time.sleep(0.05)
+    # def _process_remaining_frames(self) -> Generator[str, None, None]:
+    #     """Process any remaining frames after the MDA has finished."""
+    #     with tqdm(
+    #         total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
+    #     ) as progress:
+    #         while self._deck:
+    #             self._process_frame(*self._deck.pop())
+    #             progress.update()
+    #             yield (
+    #                 "Processing remaining MDA frames: "
+    #                 f"{progress.n / progress.total * 100:.2f}%."
+    #             )
 
     def _update_viewer_status(self, text: str) -> None:
         """Update the viewer status bar."""
