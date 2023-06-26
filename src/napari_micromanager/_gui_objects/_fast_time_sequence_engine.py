@@ -94,11 +94,11 @@ class FastTimeSequence(PMDAEngine):
                 self._mmc.mda.events.frameReady.emit(
                     img[0], self._update_event(event, img_idx)
                 )
-                logger.info(
-                    f"event: {self._update_event(event, img_idx)},"
-                    f"image n: {img_idx}, "
-                    f"elapsed_time: {img[1]['ElapsedTime-ms']}"
-                )
+                # logger.info(
+                #     f"event: {self._update_event(event, img_idx)},"
+                #     f"image n: {img_idx}, "
+                #     f"elapsed_time: {img[1]['ElapsedTime-ms']}"
+                # )
                 data_indexes.append(img_idx)
 
         self._mmc.stopSequenceAcquisition()
@@ -109,11 +109,11 @@ class FastTimeSequence(PMDAEngine):
                 self._mmc.mda.events.frameReady.emit(
                     img[0], self._update_event(event, idx)
                 )
-                logger.info(
-                    f"event: {self._update_event(event, idx)},"
-                    f"image n: {idx}, "
-                    f"elapsed_time: {img[1]['ElapsedTime-ms']}"
-                )
+                # logger.info(
+                #     f"event: {self._update_event(event, idx)},"
+                #     f"image n: {idx}, "
+                #     f"elapsed_time: {img[1]['ElapsedTime-ms']}"
+                # )
                 data_indexes.append(idx)
 
         if len(data_indexes) != images and not cancelled:

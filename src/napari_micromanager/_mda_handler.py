@@ -3,7 +3,8 @@ from __future__ import annotations
 import contextlib
 import tempfile
 import time
-from typing import TYPE_CHECKING, Any, Callable, Deque, Generator, cast
+from collections import deque
+from typing import TYPE_CHECKING, Any, Callable, Generator, cast
 
 import napari
 import numpy as np
@@ -71,7 +72,7 @@ class _NapariMDAHandler:
 
         # mapping of id -> (zarr.Array, temporary directory) for each layer created
         self._tmp_arrays: dict[str, tuple[zarr.Array, tempfile.TemporaryDirectory]] = {}
-        self._deck: Deque[tuple[np.ndarray, MDAEvent]] = Deque()
+        self._deck: deque[tuple[np.ndarray, MDAEvent]] = deque()
 
         # Add all core connections to this list.  This makes it easy to disconnect
         # from core when this widget is closed.
@@ -117,9 +118,11 @@ class _NapariMDAHandler:
         for id_, shape, kwargs in layers_to_create:
             tmp = tempfile.TemporaryDirectory()
             dtype = f"uint{self._mmc.getImageBitDepth()}"
-
+            chunk_size = [1] * len(shape) + yx_shape
             # create the zarr array and add it to the viewer
-            z = zarr.open(str(tmp.name), shape=shape + yx_shape, dtype=dtype)
+            z = zarr.open_array(
+                str(tmp.name), shape=shape + yx_shape, dtype=dtype, chunks=chunk_size
+            )
             fname = meta.file_name if meta.should_save else "Exp"
             self._create_empty_image_layer(z, f"{fname}_{id_}", sequence, **kwargs)
 
@@ -129,7 +132,7 @@ class _NapariMDAHandler:
         # set axis_labels after adding the images to ensure that the dims exist
         self.viewer.dims.axis_labels = axis_labels
 
-        self._deck = Deque()
+        self._deck = deque()
         self._mda_running = True
         self._io_t = create_worker(
             self._watch_mda,
@@ -177,7 +180,7 @@ class _NapariMDAHandler:
         t = time.perf_counter()
         self._tmp_arrays[_id][0][im_idx] = image
         print()
-        print('TO ZARR', time.perf_counter() - t)
+        print("TO ZARR", time.perf_counter() - t)
 
         self._add_stage_pos_metadata(layer_name, im_idx)
 
@@ -207,7 +210,7 @@ class _NapariMDAHandler:
         create_worker(
             self._process_remaining_frames,
             _start_thread=True,
-            _connect={"yielded": self._update_viewer_status}
+            _connect={"yielded": self._update_viewer_status},
         )
 
     def _process_remaining_frames(self) -> Generator[str, None, None]:
@@ -222,35 +225,6 @@ class _NapariMDAHandler:
                     "Processing remaining MDA frames: "
                     f"{progress.n / progress.total * 100:.2f}%."
                 )
-
-        # _d = list(self._deck)
-        # chunk_size = int(len(_d) / 5)
-        # while _d:
-        #     chunk, _d = _d[:chunk_size], _d[chunk_size:]
-            
-        #     create_worker(
-        #         self._process_remaining_frames,
-        #         chunk,
-        #         _start_thread=True,
-        #         _connect={"yielded": self._update_viewer_status}
-        #     )
-        # self._deck = Deque()
-
-    # def _process_remaining_frames(self, data: list) -> Generator[str, None, None]:
-    #     """Process any remaining frames after the MDA has finished."""
-    #     with tqdm(
-    #         total=len(data), unit="frames", desc="Processing remaining MDA frames"
-    #     ) as progress:
-    #         while data:
-    #             try:
-    #                 self._process_frame(*data.pop())
-    #                 progress.update()
-    #                 yield (
-    #                     "Processing remaining MDA frames: "
-    #                     f"{progress.n / progress.total * 100:.2f}%."
-    #                 )
-    #             except PermissionError:
-    #                 pass
 
     def _update_viewer_status(self, text: str) -> None:
         """Update the viewer status bar."""
@@ -329,8 +303,8 @@ def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
 
     sub_seq_axis: list | None = None
     for p in sequence.stage_positions:
-        if p.sequence:  # type: ignore
-            sub_seq_axis = list(p.sequence.used_axes)  # type: ignore
+        if p.sequence:
+            sub_seq_axis = list(p.sequence.used_axes)
             break
 
     if sub_seq_axis:
@@ -382,9 +356,9 @@ def _determine_sequence_layers(
 
     if pos_sequence:
         for p in sequence.stage_positions:
-            if not p.sequence:  # type: ignore
+            if not p.sequence:
                 continue
-            pos_g_shape = p.sequence.sizes["g"]  # type: ignore
+            pos_g_shape = p.sequence.sizes["g"]
             index = axis_labels.index("g")
             layer_shape[index] = max(layer_shape[index], pos_g_shape)
 
