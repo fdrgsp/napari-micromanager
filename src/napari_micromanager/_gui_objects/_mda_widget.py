@@ -154,12 +154,12 @@ class MultiDWidget(MDAWidget):
             self._save_groupbox.isChecked()
             and not self._save_groupbox._directory.text()
         ):
-            warnings.warn("Select a directory to save the data.")
+            warnings.warn("Select a directory to save the data.", stacklevel=2)
             return
 
         if not Path(self._save_groupbox._directory.text()).exists():
             # TODO: ask to create the directory if it does not exist
-            warnings.warn("The selected directory does not exist.")
+            warnings.warn("The selected directory does not exist.", stacklevel=2)
             return
 
         if (

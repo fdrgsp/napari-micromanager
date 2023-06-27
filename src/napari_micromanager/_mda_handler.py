@@ -252,21 +252,21 @@ class _NapariMDAHandler:
         # multi thread on zarr is possible because I set the zarr array
         # synchronizer to ThreadSynchronizer()
         self._deck = list(self._deck)  # type: ignore
-        chunk_size = len(self._deck) // 30
+        chunk_size = len(self._deck) // 20
         chunk_index = 0
         while self._deck:
             # if not a list but a deque, I cannot select ranges of elements
             # so I'm using a for loop
-            # chunk = []
-            # for _ in range(chunk_size):
-            #     try:
-            #         chunk.append(self._deck.pop())
-            #     except IndexError:
-            #         break
-            chunk, self._deck = (
-                self._deck[:chunk_size],  # type: ignore
-                self._deck[chunk_size:],  # type: ignore
-            )
+            chunk = []
+            for _ in range(chunk_size):
+                try:
+                    chunk.append(self._deck.pop())
+                except IndexError:
+                    break
+            # chunk, self._deck = (
+            #     self._deck[:chunk_size],  # type: ignore
+            #     self._deck[chunk_size:],  # type: ignore
+            # )
             create_worker(
                 self._process_remaining_frames,
                 chunk,
