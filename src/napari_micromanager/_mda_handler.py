@@ -119,12 +119,10 @@ class _NapariMDAHandler:
             tmp = tempfile.TemporaryDirectory()
             dtype = f"uint{self._mmc.getImageBitDepth()}"
             # create the zarr array and add it to the viewer
-            # z = zarr.open(
-            z = zarr.open_array(
+            z = zarr.open(
                 str(tmp.name),
                 shape=shape + yx_shape,
                 dtype=dtype,
-                synchronizer=zarr.ThreadSynchronizer(),
             )
             fname = meta.file_name if meta.should_save else "Exp"
             self._create_empty_image_layer(z, f"{fname}_{id_}", sequence, **kwargs)
@@ -183,18 +181,14 @@ class _NapariMDAHandler:
         # get info about the layer we need to update
         _id, im_idx, layer_name = _id_idx_layer(event)
 
-        # update the zarr array backing the layer
         t = time.perf_counter()
+        # update the zarr array backing the layer
         self._tmp_arrays[_id][0][im_idx] = image
-        # print()
-        # print("TO ZARR", time.perf_counter() - t)
 
         if self._mda_running:
             self._time_while_running.append(time.perf_counter() - t)
         else:
             self._time_after_running.append(time.perf_counter() - t)
-
-        # self._add_stage_pos_metadata(layer_name, im_idx)
 
         return layer_name, im_idx
 
@@ -217,76 +211,31 @@ class _NapariMDAHandler:
             cs[a] = v
         self.viewer.dims.current_step = cs
 
-    # def _on_mda_finished(self, sequence: MDASequence) -> None:
-    #     self.t = time.perf_counter()
-    #     self._mda_running = False
-    #     # creating a new thread and not connecting self._io_t
-    #     # '"finished": self._process_remaining_frames' because it will block the gui
-    #     # until all frames are processed. This way the gui is free and we can
-    #     # also show the progress in the viewer status bar.
-    #     create_worker(
-    #         self._process_remaining_frames,
-    #         _start_thread=True,
-    #         _connect={"yielded": self._update_viewer_status, "finished": self._end},
-    #     )
-
-    # def _process_remaining_frames(self) -> Generator[str, None, None]:
-    #     """Process any remaining frames after the MDA has finished."""
-    #     with tqdm(
-    #         total=len(self._deck),
-    #         unit="frames",
-    #         desc="Processing remaining MDA frames"
-    #     ) as progress:
-    #         while self._deck:
-    #             self._process_frame(*self._deck.pop())
-    #             progress.update()
-    #             yield (
-    #                 "Processing remaining MDA frames: "
-    #                 f"{progress.n / progress.total * 100:.2f}%."
-    #             )
-
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self.t = time.perf_counter()
         self._mda_running = False
+        # creating a new thread and not connecting self._io_t
+        # '"finished": self._process_remaining_frames' because it will block the gui
+        # until all frames are processed. This way the gui is free and we can
+        # also show the progress in the viewer status bar. For slow acquisitions
+        # (non sequenced as in core.startSequenceAcquisition) this is ok, for fast
+        # acquisitions is far too slow!
+        create_worker(
+            self._process_remaining_frames,
+            _start_thread=True,
+            _connect={
+                "yielded": self._update_viewer_status,
+                "finished": self._end,  # to be removed
+            },
+        )
 
-        # multi thread on zarr is possible because I set the zarr array
-        # synchronizer to ThreadSynchronizer()
-        self._deck = list(self._deck)  # type: ignore
-        chunk_size = len(self._deck) // 20
-        chunk_index = 0
-        while self._deck:
-            # if not a list but a deque, I cannot select ranges of elements
-            # so I'm using a for loop
-            chunk = []
-            for _ in range(chunk_size):
-                try:
-                    chunk.append(self._deck.pop())
-                except IndexError:
-                    break
-            # chunk, self._deck = (
-            #     self._deck[:chunk_size],  # type: ignore
-            #     self._deck[chunk_size:],  # type: ignore
-            # )
-            create_worker(
-                self._process_remaining_frames,
-                chunk,
-                chunk_index,
-                _start_thread=True,
-                _connect={"yielded": self._update_viewer_status, "finished": self._end},
-            )
-            chunk_index += 1
-
-    def _process_remaining_frames(
-        self, data: list, index: int
-    ) -> Generator[str, None, None]:
+    def _process_remaining_frames(self) -> Generator[str, None, None]:
         """Process any remaining frames after the MDA has finished."""
         with tqdm(
-            total=len(data),
-            unit="frames",
-            desc=f"Processing remaining MDA frames (chunk {index})",
+            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
         ) as progress:
-            while data:
-                self._process_frame(*data.pop())
+            while self._deck:
+                self._process_frame(*self._deck.pop())
                 progress.update()
                 yield (
                     "Processing remaining MDA frames: "
@@ -295,28 +244,25 @@ class _NapariMDAHandler:
 
     def _end(self) -> None:
         print("________________")
-        print(np.mean(self._time_while_running))
-        print(np.mean(self._time_after_running))
-        print(time.perf_counter() - self.t)
+        print(
+            "zarr assagnment WHILE running",
+            "images:",
+            len(self._time_while_running),
+            "mean time",
+            np.mean(self._time_while_running),
+        )
+        print(
+            "zarr assagnment AFTER running",
+            "images:",
+            len(self._time_after_running),
+            "mean time",
+            np.mean(self._time_after_running),
+        )
+        print("TOTAL zarr assagnment time AFTER running", time.perf_counter() - self.t)
 
     def _update_viewer_status(self, text: str) -> None:
         """Update the viewer status bar."""
         self.viewer.status = text
-
-    def _add_stage_pos_metadata(self, layer_name: str, image_idx: tuple) -> None:
-        """Add positions info to layer metadata.
-
-        This info is used in the `_mouse_right_click` method.
-        """
-        layer = self.viewer.layers[layer_name]
-        x, y = self._mmc.getXPosition(), self._mmc.getYPosition()
-        z = self._mmc.getZPosition()
-        info = (image_idx, x, y, z)
-
-        try:
-            layer.metadata["positions"].append(info)
-        except KeyError:
-            layer.metadata["positions"] = [info]
 
     def _create_empty_image_layer(
         self,
