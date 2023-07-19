@@ -218,9 +218,7 @@ class _NapariMDAHandler:
         # creating a new thread and not connecting self._io_t
         # '"finished": self._process_remaining_frames' because it will block the gui
         # until all frames are processed. This way the gui is free and we can
-        # also show the progress in the viewer status bar. For slow acquisitions
-        # (non sequenced as in core.startSequenceAcquisition) this is ok, for fast
-        # acquisitions is far too slow!
+        # also show the progress in the viewer status bar.
         create_worker(
             self._process_remaining_frames,
             _start_thread=True,
