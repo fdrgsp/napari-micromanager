@@ -123,6 +123,7 @@ class _NapariMDAHandler:
                 str(tmp.name),
                 shape=shape + yx_shape,
                 dtype=dtype,
+                chunks=tuple([1] * len(shape) + yx_shape),  # VERY IMPORTANT FOR SPEED!
             )
             fname = meta.file_name if meta.should_save else "Exp"
             self._create_empty_image_layer(z, f"{fname}_{id_}", sequence, **kwargs)

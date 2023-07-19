@@ -37,7 +37,7 @@ class FastTimeSequence(PMDAEngine):
         event : MDAEvent
             The event to use for the Hardware config
         """
-        update_event = {}  # to update the event in case of any autofocus correction
+        # update_event = {}  # to update the event in case of any autofocus correction
 
         if event.channel is not None:
             self._mmc.setConfig(event.channel.group, event.channel.config)
@@ -51,20 +51,21 @@ class FastTimeSequence(PMDAEngine):
             self._mmc.setXYPosition(x, y)
 
         if event.z_pos is not None:
-            if event.autofocus is None:  # type: ignore
-                self._mmc.setZPosition(event.z_pos)
-            else:
-                z_af_device, z_af_pos = event.autofocus  # type: ignore
-                z_after_af = self._execute_autofocus(z_af_device, z_af_pos)
-                self._mmc.setZPosition(z_after_af)
-                update_event = {"z_pos": z_after_af}
+            self._mmc.setZPosition(event.z_pos)
+            # if event.autofocus is None:  # type: ignore
+            #     self._mmc.setZPosition(event.z_pos)
+            # else:
+            #     z_af_device, z_af_pos = event.autofocus  # type: ignore
+            #     z_after_af = self._execute_autofocus(z_af_device, z_af_pos)
+            #     self._mmc.setZPosition(z_after_af)
+            #     update_event = {"z_pos": z_after_af}
 
-                # TODO: maybe here we want to set the autofocus engaged and locked
-                # so it will stay on for the rest of the sequence. If so, maybe we need
-                # disable it before running self._execute_autofocus(...).
+            # TODO: maybe here we want to set the autofocus engaged and locked
+            # so it will stay on for the rest of the sequence. If so, maybe we need
+            # disable it before running self._execute_autofocus(...).
 
-        if update_event:
-            logger.info(f"Update event: {event.copy(update=update_event)}")
+        # if update_event:
+        #     logger.info(f"Update event: {event.copy(update=update_event)}")
 
         self._mmc.waitForSystem()
 
@@ -94,11 +95,11 @@ class FastTimeSequence(PMDAEngine):
                 self._mmc.mda.events.frameReady.emit(
                     img[0], self._update_event(event, img_idx)
                 )
-                # logger.info(
-                #     f"event: {self._update_event(event, img_idx)},"
-                #     f"image n: {img_idx}, "
-                #     f"elapsed_time: {img[1]['ElapsedTime-ms']}"
-                # )
+                logger.info(
+                    f"event: {self._update_event(event, img_idx)},"
+                    f"image n: {img_idx}, "
+                    f"elapsed_time: {img[1]['ElapsedTime-ms']}"
+                )
                 data_indexes.append(img_idx)
 
         self._mmc.stopSequenceAcquisition()
