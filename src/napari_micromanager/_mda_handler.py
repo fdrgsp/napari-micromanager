@@ -139,7 +139,10 @@ class _NapariMDAHandler:
         self._io_t = create_worker(
             self._watch_mda,
             _start_thread=True,
-            _connect={"yielded": self._update_viewer_dims},
+            _connect={
+                "yielded": self._update_viewer_dims,
+                "finished": self._process_remaining_frames
+            },
         )
 
         self._time_while_running: list = []
@@ -163,6 +166,11 @@ class _NapariMDAHandler:
                 yield layer_name, im_idx
             else:
                 time.sleep(0.1)
+    
+    def _process_remaining_frames(self) -> Generator[str, None, None]:
+        """Process any remaining frames after the MDA has finished."""
+        while self._deck:
+            self._process_frame(*self._deck.pop())
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
@@ -215,55 +223,6 @@ class _NapariMDAHandler:
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self.t = time.perf_counter()
         self._mda_running = False
-        # creating a new thread and not connecting self._io_t
-        # '"finished": self._process_remaining_frames' because it will block the gui
-        # until all frames are processed. This way the gui is free and we can
-        # also show the progress in the viewer status bar. For slow acquisitions
-        # (non sequenced as in core.startSequenceAcquisition) this is ok, for fast
-        # acquisitions is far too slow!
-        create_worker(
-            self._process_remaining_frames,
-            _start_thread=True,
-            _connect={
-                "yielded": self._update_viewer_status,
-                "finished": self._end,  # to be removed
-            },
-        )
-
-    def _process_remaining_frames(self) -> Generator[str, None, None]:
-        """Process any remaining frames after the MDA has finished."""
-        with tqdm(
-            total=len(self._deck), unit="frames", desc="Processing remaining MDA frames"
-        ) as progress:
-            while self._deck:
-                self._process_frame(*self._deck.pop())
-                progress.update()
-                yield (
-                    "Processing remaining MDA frames: "
-                    f"{progress.n / progress.total * 100:.2f}%."
-                )
-
-    def _end(self) -> None:
-        print("________________")
-        print(
-            "zarr assagnment WHILE running",
-            "images:",
-            len(self._time_while_running),
-            "mean time",
-            np.mean(self._time_while_running),
-        )
-        print(
-            "zarr assagnment AFTER running",
-            "images:",
-            len(self._time_after_running),
-            "mean time",
-            np.mean(self._time_after_running),
-        )
-        print("TOTAL zarr assagnment time AFTER running", time.perf_counter() - self.t)
-
-    def _update_viewer_status(self, text: str) -> None:
-        """Update the viewer status bar."""
-        self.viewer.status = text
 
     def _create_empty_image_layer(
         self,
