@@ -12,6 +12,7 @@ from superqt.utils import create_worker, ensure_main_thread
 
 from ._mda_meta import SEQUENCE_META_KEY, SequenceMeta
 from ._saving import save_sequence
+from ._util import get_axis_labels
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -134,6 +135,9 @@ class _NapariMDAHandler:
         # set axis_labels after adding the images to ensure that the dims exist
         self.viewer.dims.axis_labels = axis_labels
 
+        # init index will always be less than any event index
+        self._largest_idx: tuple[int, ...] = (-1,)
+
         self._deck = deque()
         self._mda_running = True
         self._io_t = create_worker(
@@ -143,6 +147,9 @@ class _NapariMDAHandler:
             # NOTE: once we have a proper writer, we can add here:
             # "finished": self._process_remaining_frames
         )
+
+        # Set the viewer slider on the first layer frame
+        self._reset_viewer_dims()
 
         # resume acquisition after zarr layer(s) is(are) added
         self._mmc.mda.toggle_pause()
@@ -200,6 +207,11 @@ class _NapariMDAHandler:
             cs[a] = v
         self.viewer.dims.current_step = cs
 
+    @ensure_main_thread  # type: ignore [misc]
+    def _reset_viewer_dims(self) -> None:
+        """Reset the viewer dims to the first image."""
+        self.viewer.dims.current_step = [0] * len(self.viewer.dims.current_step)
+
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
 
@@ -215,10 +227,11 @@ class _NapariMDAHandler:
         # have the sequence argument, it will not be called by `_on_mda_finished` but we
         # can link it to the self._io_t.finished signal ("finished": self._process_
         # remaining_frames) and the saving code below will be removed.
+        self._reset_viewer_dims()
         while self._deck:
             self._process_frame(*self._deck.pop())
 
-        # to remove whne using proper writer
+        # to remove when using proper writer
         if (meta := sequence.metadata.get(SEQUENCE_META_KEY)) is not None:
             sequence = cast("ActiveMDASequence", sequence)
             save_sequence(sequence, self.viewer.layers, meta)
@@ -272,20 +285,9 @@ class _NapariMDAHandler:
         )
 
 
-def _get_axis_labels(sequence: MDASequence) -> tuple[list[str], bool]:
-    """Get the axis labels using only axes that are present in events."""
-    # axis main sequence
-    main_seq_axis = list(sequence.used_axes)
-    if not sequence.stage_positions:
-        return main_seq_axis, False
-    # axes from sub sequences
-    sub_seq_axis: list = []
-    for p in sequence.stage_positions:
-        if p.sequence is not None:
-            sub_seq_axis.extend(
-                [ax for ax in p.sequence.used_axes if ax not in main_seq_axis]
-            )
-    return main_seq_axis + sub_seq_axis, bool(sub_seq_axis)
+def _has_sub_sequences(sequence: MDASequence) -> bool:
+    """Return True if any stage positions have a sub sequence."""
+    return any(p.sequence is not None for p in sequence.stage_positions)
 
 
 def _determine_sequence_layers(
@@ -325,11 +327,11 @@ def _determine_sequence_layers(
     # each item is a tuple of (id, shape, layer_metadata)
     _layer_info: list[tuple[str, list[int], dict[str, Any]]] = []
 
-    axis_labels, pos_sequence = _get_axis_labels(sequence)
+    axis_labels = get_axis_labels(sequence)
 
     layer_shape = [sequence.sizes[k] or 1 for k in axis_labels]
 
-    if pos_sequence:
+    if _has_sub_sequences(sequence):
         for p in sequence.stage_positions:
             if not p.sequence:
                 continue
@@ -337,6 +339,7 @@ def _determine_sequence_layers(
             index = axis_labels.index("g")
             layer_shape[index] = max(layer_shape[index], pos_g_shape)
 
+    # in split channels mode, we need to create a layer for each channel
     if meta.split_channels:
         c_idx = axis_labels.index("c")
         axis_labels.pop(c_idx)
@@ -374,7 +377,7 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
     """
     meta = cast("SequenceMeta", event.sequence.metadata.get(SEQUENCE_META_KEY))
 
-    axis_order, pos_sequence = _get_axis_labels(event.sequence)
+    axis_order = get_axis_labels(event.sequence)
 
     suffix = ""
     prefix = meta.file_name if meta.should_save else "Exp"
@@ -391,7 +394,7 @@ def _id_idx_layer(event: ActiveMDAEvent) -> tuple[str, tuple[int, ...], str]:
         try:
             im_idx += (event.index[k],)
         # if axis not in event.index
-        # e.g. if we have bot a position sequence grid and a single position
+        # e.g. if we have both a position sequence grid and a single position
         except KeyError:
             im_idx += (0,)
 

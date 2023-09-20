@@ -26,4 +26,4 @@ class IlluminationWidget(PropertiesWidget):
             mmcore=mmcore,
         )
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
