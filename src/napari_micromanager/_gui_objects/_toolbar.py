@@ -10,6 +10,7 @@ from pymmcore_widgets import (
     ChannelGroupWidget,
     ChannelWidget,
     ConfigurationWidget,
+    ConfigWizard,
     DefaultCameraExposureWidget,
     GroupPresetTableWidget,
     LiveButton,
@@ -226,8 +227,29 @@ class MMToolBar(QToolBar):
 class ConfigToolBar(MMToolBar):
     def __init__(self, parent: QWidget) -> None:
         super().__init__("Configuration", parent)
-        self.addSubWidget(ConfigurationWidget())
+        self.addSubWidget(ConfigurationWidgetWithWizard())
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+
+class ConfigurationWidgetWithWizard(ConfigurationWidget):
+    def __init__(
+        self, parent: QWidget | None = None, mmcore: CMMCorePlus | None = None
+    ) -> None:
+        super().__init__(parent=parent, mmcore=mmcore)
+        self._wdg = ConfigurationWidget()
+        self._wizard = ConfigWizard(parent=self)
+        btn = QPushButton()
+        btn.setToolTip("Open Micro-Manager Configuration Wizard.")
+        btn.setIcon(icon(MDI6.wizard_hat, color=(0, 255, 0)))
+        btn.clicked.connect(self._show_wizard)
+        self.layout().addWidget(btn)
+
+    def _show_wizard(self) -> None:
+        """Show wizard or raise it if already shown."""
+        if self._wizard.isVisible():
+            self._wizard.raise_()
+        else:
+            self._wizard.show()
 
 
 class ObjectivesToolBar(MMToolBar):
