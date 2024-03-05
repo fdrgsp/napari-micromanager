@@ -22,7 +22,7 @@ class SegmentNeurons:
         t_index = event.index.get("t")
         # perform segmentation every first timepoint
         if t_index is not None and t_index == 0:
-            print("     PREFORM IMAGE SEGMENTATION")
+            print("     PERFORM IMAGE SEGMENTATION")
             create_worker(
                 self._segment_image,
                 image,
