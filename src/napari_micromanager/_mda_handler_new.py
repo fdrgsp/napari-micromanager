@@ -129,3 +129,5 @@ class _Handler(OMEZarrWriter):
         """Finish the acquisition."""
         super().sequenceFinished(sequence)
         self._mda_running = False
+        # reset the sliders position to the first step
+        self.viewer.dims.current_step = [0] * len(self.viewer.dims.current_step)
