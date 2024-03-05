@@ -12,7 +12,7 @@ class SegmentNeurons:
 
         self._mmc.mda.events.sequenceStarted.connect(self._on_sequence_started)
         self._mmc.mda.events.frameReady.connect(self._on_frame_ready)
-        self._mmc.mda.events.sequenceFinished.connect(self._on_sequence_ended)
+        self._mmc.mda.events.sequenceFinished.connect(self._on_sequence_finished)
 
     def _on_sequence_started(self, sequence: useq.MDASequence) -> None:
         print("\nSEQUENCE STARTED")
@@ -30,7 +30,7 @@ class SegmentNeurons:
                 _connect={"finished": self._segmentation_finished},
             )
 
-    def _on_sequence_ended(self, sequence: useq.MDASequence) -> None:
+    def _on_sequence_finished(self, sequence: useq.MDASequence) -> None:
         print("\nSEQUENCE FINISHED")
 
     def _segment_image(self, image: np.ndarray) -> None:
