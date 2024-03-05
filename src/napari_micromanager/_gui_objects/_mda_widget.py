@@ -34,7 +34,8 @@ class MultiDWidget(MDAWidget):
         time_layout.setContentsMargins(10, 10, 10, 10)
         ch_layout = cast("QVBoxLayout", self.channels.layout())
         ch_layout.setContentsMargins(10, 10, 10, 10)
-        ch_layout.addWidget(self.checkBox_split_channels)
+        # temporary remove it until we figure out how to split the channels in handler
+        # ch_layout.addWidget(self.checkBox_split_channels)
 
     def value(self) -> MDASequence:
         """Return the current value of the widget."""
