@@ -38,25 +38,31 @@ class _Handler(OMEZarrWriter):
     def sequenceStarted(self, sequence: MDASequence) -> None:
         """Start the acquisition."""
         self._mda_running = True
-        self._reset()
+        self._reset_group()
         super().sequenceStarted(sequence)
 
-        # get filename from sequence metadata
-        if meta := cast(dict, sequence.metadata.get(PYMMCW_METADATA_KEY, {})):
-            self._fname = cast(str, meta.get("save_name"))
-            if self._fname:
-                # remove extension
-                self._fname = self._fname.rsplit(".", 1)[0]  # ['test.ome', 'tiff']
-                if self._fname.endswith(".ome"):
-                    self._fname = self._fname.replace(".ome", "")
-            else:
-                self._fname = EXP
+        self._fname = self._get_filename_form_meatdata(sequence)
 
-    def _reset(self) -> None:
+    def _get_filename_form_meatdata(self, sequence: MDASequence) -> str:
+        """Get the filename from the sequence metadata."""
+        if meta := cast(dict, sequence.metadata.get(PYMMCW_METADATA_KEY, {})):
+            fname = cast(str, meta.get("save_name", ""))
+            if fname:
+                # remove extension
+                fname = fname.rsplit(".", 1)[0]  # ['test.ome', 'tiff']
+                if fname.endswith(".ome"):
+                    fname = fname.replace(".ome", "") or EXP
+            else:
+                fname = EXP
+
+            return fname
+
+        return EXP
+
+    def _reset_group(self) -> None:
         """Reset the handler to a clean state."""
         self._group = zarr.group()
         self.position_arrays.clear()
-        self._fname = EXP
 
     def frameReady(self, frame: ndarray, event: MDAEvent, meta: dict) -> None:
         """Update the viewer with the current acquisition."""
@@ -73,11 +79,7 @@ class _Handler(OMEZarrWriter):
             return
 
         # get all layers with sequence uid metadata
-        layers_uid_meta = [
-            layer.metadata.get("sequence_uid")
-            for layer in self.viewer.layers
-            if layer.metadata.get("sequence_uid") is not None
-        ]
+        layers_uid_meta = self._get_layers_uids()
 
         # if the current sequence uid is not in the layers metadata, add the image
         if self.current_sequence.uid not in layers_uid_meta:
@@ -95,19 +97,23 @@ class _Handler(OMEZarrWriter):
 
         # update the slider position
         elif self._mda_running:
-            cs = list(self.viewer.dims.current_step)
-            index = tuple(event.index[k] for k in self.position_sizes[p_index])
-            for a, v in enumerate(index):
-                cs[a] = v
-            self.viewer.dims.current_step = cs
+            self._update_sliders_position(event, p_index)
 
-    # this will be necessary when we manage to add the split channels feature
-    # def _get_layer_blending(self) -> str:
-    #     """Get the blending mode for the layer."""
-    #     if not self.current_sequence:
-    #         return "opaque"
-    #     if meta := self.current_sequence.metadata.get(SEQUENCE_META_KEY, {}):
-    #         return "additive" if meta.get("split_channels", False) else "opaque"
+    def _get_layers_uids(self) -> list[str]:
+        """Get the list of uids from the layers metadata."""
+        return [
+            layer.metadata.get("sequence_uid")
+            for layer in self.viewer.layers
+            if layer.metadata.get("sequence_uid") is not None
+        ]
+
+    def _update_sliders_position(self, event: MDAEvent, p_index: int) -> None:
+        """Update the sliders position."""
+        cs = list(self.viewer.dims.current_step)
+        index = tuple(event.index[k] for k in self.position_sizes[p_index])
+        for a, v in enumerate(index):
+            cs[a] = v
+        self.viewer.dims.current_step = cs
 
     def _get_scale(self, fname: str) -> list[float]:
         """Get the scale for the layer."""
@@ -131,3 +137,11 @@ class _Handler(OMEZarrWriter):
         self._mda_running = False
         # reset the sliders position to the first step
         self.viewer.dims.current_step = [0] * len(self.viewer.dims.current_step)
+
+    # this will be necessary when we manage to add the split channels feature
+    # def _get_layer_blending(self) -> str:
+    #     """Get the blending mode for the layer."""
+    #     if not self.current_sequence:
+    #         return "opaque"
+    #     if meta := self.current_sequence.metadata.get(SEQUENCE_META_KEY, {}):
+    #         return "additive" if meta.get("split_channels", False) else "opaque"
