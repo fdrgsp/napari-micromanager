@@ -9,8 +9,6 @@ from pymmcore_plus.mda.handlers import OMEZarrWriter
 from pymmcore_widgets.useq_widgets._mda_sequence import PYMMCW_METADATA_KEY
 from useq import MDAEvent, MDASequence
 
-from napari_micromanager._mda_meta import SEQUENCE_META_KEY  # to be removed
-
 POS_PREFIX = "p"
 EXP = "MDA"
 
@@ -86,7 +84,7 @@ class _Handler(OMEZarrWriter):
             self.viewer.add_image(
                 self.position_arrays[key],
                 name=layer_name,
-                blending=self._get_layer_blending(),
+                blending="opaque",  # self._get_layer_blending().fix for split channels
                 metadata={"sequence_uid": self.current_sequence.uid},
                 scale=self._get_scale(key),
             )
@@ -103,14 +101,13 @@ class _Handler(OMEZarrWriter):
                 cs[a] = v
             self.viewer.dims.current_step = cs
 
-    def _get_layer_blending(self) -> str:
-        """Get the blending mode for the layer."""
-        if not self.current_sequence:
-            return "opaque"
-        if meta := self.current_sequence.metadata.get(SEQUENCE_META_KEY, {}):
-            return "additive" if meta.get("split_channels", False) else "opaque"
-        else:
-            return "opaque"
+    # this will be necessary when we manage to add the split channels feature
+    # def _get_layer_blending(self) -> str:
+    #     """Get the blending mode for the layer."""
+    #     if not self.current_sequence:
+    #         return "opaque"
+    #     if meta := self.current_sequence.metadata.get(SEQUENCE_META_KEY, {}):
+    #         return "additive" if meta.get("split_channels", False) else "opaque"
 
     def _get_scale(self, fname: str) -> list[float]:
         """Get the scale for the layer."""
