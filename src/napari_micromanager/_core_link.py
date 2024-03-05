@@ -9,7 +9,7 @@ from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import QObject, Qt, QTimerEvent
 from superqt.utils import ensure_main_thread
 
-from ._mda_handler import _NapariMDAHandler
+from ._mda_handler_new import _Handler
 
 if TYPE_CHECKING:
     import napari.viewer
@@ -29,8 +29,10 @@ class CoreViewerLink(QObject):
         super().__init__(parent)
         self._mmc = core or CMMCorePlus.instance()
         self.viewer = viewer
-        self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
+        # self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
         self._live_timer_id: int | None = None
+
+        self._handler = _Handler(viewer, self._mmc)
 
         # Add all core connections to this list.  This makes it easy to disconnect
         # from core when this widget is closed.
@@ -49,14 +51,16 @@ class CoreViewerLink(QObject):
             with contextlib.suppress(TypeError, RuntimeError):
                 signal.disconnect(slot)
         # Clean up temporary files we opened.
-        self._mda_handler._cleanup()
+        # self._mda_handler._cleanup()
+        self._handler._cleanup()
 
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         self._update_viewer()
 
     def _image_snapped(self) -> None:
         # If we are in the middle of an MDA, don't update the preview viewer.
-        if not self._mda_handler._mda_running:
+        # if not self._mda_handler._mda_running:
+        if not self._handler._mda_running:
             self._update_viewer(self._mmc.getImage())
 
     def _start_live(self) -> None:
