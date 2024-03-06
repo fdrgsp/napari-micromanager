@@ -68,10 +68,10 @@ class _Handler(OMEZarrWriter):
 
     def frameReady(self, frame: ndarray, event: MDAEvent, meta: dict) -> None:
         """Update the viewer with the current acquisition."""
+        super().frameReady(frame, event, meta)
+
         if not self.current_sequence:
             return
-
-        super().frameReady(frame, event, meta)
 
         p_index = event.index.get("p", 0)
         key = f"{POS_PREFIX}{p_index}"
