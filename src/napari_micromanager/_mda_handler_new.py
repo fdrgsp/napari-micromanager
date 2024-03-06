@@ -97,8 +97,7 @@ class _Handler(OMEZarrWriter):
             ]
 
         # update the slider position
-        elif self._mda_running:
-            self._update_sliders_position(event, p_index)
+        self._update_sliders_position(event, p_index)
 
     def _get_layers_meta(self) -> list[tuple[UUID, str]]:
         """Get the list of uids from the layers metadata."""
