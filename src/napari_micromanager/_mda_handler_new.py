@@ -1,5 +1,6 @@
 import contextlib
 from typing import cast
+from uuid import UUID
 
 import napari.viewer
 import zarr
@@ -80,15 +81,15 @@ class _Handler(OMEZarrWriter):
             return
 
         # get all layers with sequence uid metadata
-        layers_uid_meta = self._get_layers_uids()
+        layers_meta = self._get_layers_mets()
 
         # if the current sequence uid is not in the layers metadata, add the image
-        if self.current_sequence.uid not in layers_uid_meta:
+        if (self.current_sequence.uid, key) not in layers_meta:
             self.viewer.add_image(
                 self.position_arrays[key],
                 name=layer_name,
                 blending="opaque",  # self._get_layer_blending().fix for split channels
-                metadata={"sequence_uid": self.current_sequence.uid},
+                metadata={"sequence_uid": self.current_sequence.uid, "key": key},
                 scale=self._get_scale(key),
             )
             self.viewer.dims.axis_labels = self.position_arrays[key].attrs[
@@ -102,12 +103,13 @@ class _Handler(OMEZarrWriter):
         elif self._mda_running:
             self._update_sliders_position(event, p_index)
 
-    def _get_layers_uids(self) -> list[str]:
+    def _get_layers_mets(self) -> list[tuple[UUID, str]]:
         """Get the list of uids from the layers metadata."""
         return [
-            layer.metadata.get("sequence_uid")
+            (layer.metadata.get("sequence_uid"), layer.metadata.get("key"))
             for layer in self.viewer.layers
             if layer.metadata.get("sequence_uid") is not None
+            and layer.metadata.get("key") is not None
         ]
 
     def _update_sliders_position(self, event: MDAEvent, p_index: int) -> None:
