@@ -95,9 +95,6 @@ class _Handler(OMEZarrWriter):
             self.viewer.dims.axis_labels = self.position_arrays[key].attrs[
                 "_ARRAY_DIMENSIONS"
             ]
-            # NOTE: Maybe we also need to find a way to change
-            # the visibility of the sliders and the axis labels when we click on a
-            # specific layer.
 
         # update the slider position
         elif self._mda_running:
