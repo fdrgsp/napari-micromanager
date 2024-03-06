@@ -90,8 +90,10 @@ class _Handler(OMEZarrWriter):
                 metadata={"sequence_uid": self.current_sequence.uid},
                 scale=self._get_scale(key),
             )
-            # TODO: add axis label to sliders. we can get them from the zarr attrs
-            # _ARRAY_DIMENSIONS. NOTE: Maybe we also need to find a way to change
+            self.viewer.dims.axis_labels = self.position_arrays[key].attrs[
+                "_ARRAY_DIMENSIONS"
+            ]
+            # NOTE: Maybe we also need to find a way to change
             # the visibility of the sliders and the axis labels when we click on a
             # specific layer.
 
