@@ -81,7 +81,7 @@ class _Handler(OMEZarrWriter):
             return
 
         # get all layers with sequence uid metadata
-        layers_meta = self._get_layers_mets()
+        layers_meta = self._get_layers_meta()
 
         # if the current sequence uid is not in the layers metadata, add the image
         if (self.current_sequence.uid, key) not in layers_meta:
@@ -100,7 +100,7 @@ class _Handler(OMEZarrWriter):
         elif self._mda_running:
             self._update_sliders_position(event, p_index)
 
-    def _get_layers_mets(self) -> list[tuple[UUID, str]]:
+    def _get_layers_meta(self) -> list[tuple[UUID, str]]:
         """Get the list of uids from the layers metadata."""
         return [
             (layer.metadata.get("sequence_uid"), layer.metadata.get("key"))
