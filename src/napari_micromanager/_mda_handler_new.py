@@ -20,6 +20,7 @@ class _Handler(OMEZarrWriter):
         self._mmc = mmcore or CMMCorePlus.instance()
         self.viewer = viewer
 
+        # TODO: add the possibility to set either memory or store
         self._group: zarr.Group = zarr.group()
         self._mda_running: bool = False
 
