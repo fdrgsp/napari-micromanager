@@ -398,14 +398,3 @@ class _SeparatorWidget(QWidget):
         painter = QPainter(self)
         painter.setPen(QPen(Qt.GlobalColor.gray, 1, Qt.PenStyle.SolidLine))
         painter.drawLine(self.rect().topLeft(), self.rect().topRight())
-
-
-if __name__ == "__main__":
-    from qtpy.QtWidgets import QApplication
-
-    app = QApplication([])
-
-    win = ArduinoLedControl()
-    win.show()
-
-    app.exec()
