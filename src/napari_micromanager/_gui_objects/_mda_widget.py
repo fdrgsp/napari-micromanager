@@ -191,6 +191,3 @@ class MultiDWidget(MDAWidget):
             QMessageBox.StandardButton.Ok,
         )
         return
-
-    # TODO:
-    # - in pyproject.toml point to the correct branch of pymmcore_plus
