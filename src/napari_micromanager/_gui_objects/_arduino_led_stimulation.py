@@ -75,11 +75,10 @@ class ArduinoLedControl(QDialog):
         pin_lbl = QLabel("Arduino LED Pin:")
         pin_lbl.setSizePolicy(FIXED)
         self._led_pin_info = QLineEdit(PIN)  # default to 'd:3:p'
-
         # layout
         detect_gp_layout = QGridLayout(detect_board)
         detect_gp_layout.setContentsMargins(10, 10, 10, 10)
-        detect_gp_layout.setSpacing(10)
+        detect_gp_layout.setSpacing(5)
         detect_gp_layout.addWidget(port_lbl, 0, 0)
         detect_gp_layout.addWidget(self._board_port, 0, 1)
         detect_gp_layout.addWidget(self._detect_btn, 0, 2)
@@ -120,7 +119,7 @@ class ArduinoLedControl(QDialog):
         # layout
         frame_gp_layout = QGridLayout(frame_group)
         frame_gp_layout.setContentsMargins(10, 10, 10, 10)
-        frame_gp_layout.setSpacing(10)
+        frame_gp_layout.setSpacing(5)
         frame_gp_layout.addWidget(initial_delay_lbl, 0, 0)
         frame_gp_layout.addWidget(self._initial_delay_spin, 0, 1)
         frame_gp_layout.addWidget(interval_lbl, 1, 0)
@@ -163,7 +162,7 @@ class ArduinoLedControl(QDialog):
         # layout
         led_gp_layout = QGridLayout(led_group)
         led_gp_layout.setContentsMargins(10, 10, 10, 10)
-        led_gp_layout.setSpacing(10)
+        led_gp_layout.setSpacing(5)
         led_gp_layout.addWidget(led_start_pwr_lbl, 0, 0)
         led_gp_layout.addWidget(self._led_start_power, 0, 1)
         led_gp_layout.addWidget(led_power_increment_lbl, 1, 0)
@@ -189,12 +188,17 @@ class ArduinoLedControl(QDialog):
         # button box (using QPushButton instead of QDialogButtonBox to avoid the focus)
         ok_btn = QPushButton("OK")
         ok_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        ok_btn.clicked.connect(self.accept)
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        ok_btn.clicked.connect(self.accept)
         cancel_btn.clicked.connect(self.reject)
+
+        ok_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
+        cancel_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
+
         # layout
         btns_layout = QHBoxLayout()
+        btns_layout.setSpacing(10)
         btns_layout.addWidget(connection_info)
         btns_layout.addStretch()
         btns_layout.addWidget(cancel_btn)
