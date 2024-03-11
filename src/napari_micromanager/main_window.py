@@ -15,10 +15,10 @@ from ._core_link import CoreViewerLink
 from ._gui_objects._toolbar import MicroManagerToolbar
 
 if TYPE_CHECKING:
+
     from pathlib import Path
 
     from pymmcore_plus.core.events._protocol import PSignalInstance
-
 
 # this is very verbose
 logging.getLogger("napari.loader").setLevel(logging.WARNING)
@@ -55,6 +55,10 @@ class MainWindow(MicroManagerToolbar):
         self.destroyed.connect(self._cleanup)
         atexit.register(self._cleanup)
 
+        # load layout
+        self._load_layout()
+
+        # load config file
         if config is not None:
             try:
                 self._mmc.loadSystemConfiguration(config)
