@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TypedDict, cast
 
+from fonticon_mdi6 import MDI6
 from pyfirmata2 import Arduino
-from qtpy.QtCore import Qt
+from pyfirmata2.pyfirmata2 import Pin
+from qtpy.QtCore import QSize, Qt
 from qtpy.QtGui import QPainter, QPaintEvent, QPen
 from qtpy.QtWidgets import (
     QDialog,
@@ -19,28 +21,27 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from superqt.fonticon import icon
 
-if TYPE_CHECKING:
-    from typing import TypedDict
 
-    from pyfirmata2.pyfirmata2 import Pin
-
-    class StimulationValues(TypedDict):
-        arduino_port: str
-        arduino_board: str
-        arduino_led: Pin
-        initial_delay: int
-        interval: int
-        num_pulses: int
-        led_start_power: int
-        led_power_increment: int
-        led_pulse_duration: float
-        pulse_on_frame: dict[int, int]
+class StimulationValues(TypedDict):
+    arduino_board: Arduino
+    arduino_port: str
+    arduino_led_pin: Pin
+    initial_delay: int
+    interval: int
+    num_pulses: int
+    led_start_power: int
+    led_power_increment: int
+    led_pulse_duration: float
+    pulse_on_frame: dict[int, int]
 
 
 FIXED = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 PIN = "d:3:p"
-TIMEPOINTS_TXT = "(To be set in the MDA Time Tab)"
+TIMEPOINTS_TXT = "(set in the MDA Time Tab)"
+GREEN = "#00FF00"
+RED = "#C33"
 
 
 class ArduinoLedControl(QDialog):
@@ -49,9 +50,9 @@ class ArduinoLedControl(QDialog):
 
         self.setWindowTitle("Arduino LED Control")
 
-        self._arduino_board: Arduino = None
-        self._led_on_frames: list[int] = []
+        self._arduino_board: Arduino | None = None
         self._led_pin: Pin | None = None
+        self._led_on_frames: list[int] = []
         self._led_power_used: list[int] = []
 
         main_layout = QVBoxLayout(self)
@@ -62,8 +63,8 @@ class ArduinoLedControl(QDialog):
         detect_board = QGroupBox("Arduino Board")
         port_lbl = QLabel("Arduino Port:")
         port_lbl.setSizePolicy(FIXED)
-        self._board_com = QLineEdit()
-        self._board_com.setPlaceholderText("Autodetect")
+        self._board_port = QLineEdit()
+        self._board_port.setPlaceholderText("Autodetect")
         self._detect_btn = QPushButton("Detect")
         self._detect_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._detect_btn.setToolTip("Click to detect the board. If no ")
@@ -76,7 +77,7 @@ class ArduinoLedControl(QDialog):
         detect_gp_layout.setContentsMargins(10, 10, 10, 10)
         detect_gp_layout.setSpacing(10)
         detect_gp_layout.addWidget(port_lbl, 0, 0)
-        detect_gp_layout.addWidget(self._board_com, 0, 1)
+        detect_gp_layout.addWidget(self._board_port, 0, 1)
         detect_gp_layout.addWidget(self._detect_btn, 0, 2)
         detect_gp_layout.addWidget(_board_label, 1, 0)
         detect_gp_layout.addWidget(self._board_name, 1, 1, 1, 2)
@@ -174,8 +175,15 @@ class ArduinoLedControl(QDialog):
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         ok_btn.clicked.connect(self.accept)
         cancel_btn.clicked.connect(self.reject)
+        # connection indicator labels
+        self._arduino_connected_icon = QLabel()
+        self._arduino_connected_icon.setSizePolicy(FIXED)
+        self._arduino_connected_text = QLabel()
+        self._arduino_connected_text.setSizePolicy(FIXED)
         # layout
         btns_layout = QHBoxLayout()
+        btns_layout.addWidget(self._arduino_connected_icon)
+        btns_layout.addWidget(self._arduino_connected_text)
         btns_layout.addStretch()
         btns_layout.addWidget(cancel_btn)
         btns_layout.addWidget(ok_btn)
@@ -201,14 +209,16 @@ class ArduinoLedControl(QDialog):
         # set the fixed height for the dialog
         self.setFixedHeight(self.minimumSizeHint().height())
 
+        self._enable(False)
+
     # ________________________Public Methods________________________
 
     def value(self) -> StimulationValues:
         """Return the values set in the dialog."""
         return {
-            "arduino_port": self._board_com.text(),
-            "arduino_board": self._arduino_board.name if self._arduino_board else None,
-            "arduino_led": self._led_pin,
+            "arduino_board": self._arduino_board or None,
+            "arduino_port": self._board_port.text(),
+            "arduino_led_pin": self._led_pin,
             "initial_delay": self._initial_delay_spin.value(),
             "interval": self._interval_spin.value(),
             "num_pulses": self._num_pulses_spin.value(),
@@ -218,15 +228,19 @@ class ArduinoLedControl(QDialog):
             "pulse_on_frame": self._get_pulse_on_frame(),
         }
 
-    def setValues(self, values: StimulationValues | dict) -> None:
+    def setValue(self, values: StimulationValues | dict) -> None:
         """Set the values in the dialog.
 
         Note that "pulse_on_frame" is not necessary to be set in the values dictionary
         as it is calculated from the other values. If provided, it will be ignored.
         """
-        self._board_com.setText(values.get("arduino_port", ""))
-        self._board_name.setText(values.get("arduino_board", ""))
-        self._led_pin = values.get("arduino_led", None)
+        arduino_board = values.get("arduino_board", "")
+        if isinstance(arduino_board, Arduino):
+            arduino_board = arduino_board.name
+        self._board_name.setText(arduino_board)
+
+        self._board_port.setText(values.get("arduino_port", ""))
+        self._led_pin = values.get("arduino_led_pin", "")
         self._initial_delay_spin.setValue(values.get("initial_delay", 0))
         self._interval_spin.setValue(values.get("interval", 0))
         self._num_pulses_spin.setValue(values.get("num_pulses", 0))
@@ -237,6 +251,15 @@ class ArduinoLedControl(QDialog):
         self._on_led_values_changed()
 
     # ________________________Private Methods________________________
+
+    def _enable(self, state: bool) -> None:
+        lbl_icon = MDI6.check_bold if state else MDI6.close_octagon_outline
+        lbl_icon_size = QSize(20, 20) if state else QSize(30, 30)
+        lbl_icon_color = GREEN if state else RED
+        text = "Arduino Connected!" if state else "Arduino not Connected!"
+        pixmap = icon(lbl_icon, color=lbl_icon_color).pixmap(lbl_icon_size)
+        self._arduino_connected_icon.setPixmap(pixmap)
+        self._arduino_connected_text.setText(text)
 
     def _get_pulse_on_frame(self) -> dict[int, int]:
         """Return the pulse_on_frame dictionary.
@@ -252,7 +275,7 @@ class ArduinoLedControl(QDialog):
     def _detect_arduino_board(self) -> None:
         """Detect the Arduino board and update the GUI."""
         # if the port is empty, try to autodetect the board
-        if not self._board_com.text():
+        if not self._board_port.text():
             try:
                 self._arduino_board = Arduino(Arduino.AUTODETECT)
                 self._update_arduino_board_info()
@@ -264,7 +287,7 @@ class ArduinoLedControl(QDialog):
         # if the port is specified, try to detect the board on the specified port
         else:
             try:
-                self._arduino_board = Arduino(self._board_com.text())
+                self._arduino_board = Arduino(self._board_port.text())
                 self._update_arduino_board_info()
             except Exception:
                 return self._show_critical_messagebox(
@@ -273,18 +296,28 @@ class ArduinoLedControl(QDialog):
 
     def _update_arduino_board_info(self) -> None:
         """Update the GUI with the detected Arduino board info."""
-        self._led_pin = self._arduino_board.get_pin(PIN)
+        if self._arduino_board is None:
+            self._reset()
+            return
+        self._led_pin = cast(Pin, self._arduino_board.get_pin(PIN))
+        self._led_pin.write(0.0)
         self._board_name.setText(self._arduino_board.name)
         # str(self._arduino_board) -> "Board{0.name} on {0.sp.port}".format(self)
         port = str(self._arduino_board).split("on")[-1].replace(" ", "")
-        self._board_com.setText(port)
+        self._board_port.setText(port)
+        self._enable(True)
 
-    def _show_critical_messagebox(self, message: str) -> None:
-        """Show a critical message box with the given message."""
+    def _reset(self) -> None:
+        """Reset to the initial state."""
         self._arduino_board = None
         self._led_pin = None
         self._board_name.setText("")
-        self._board_com.clear()
+        self._board_port.clear()
+        self._enable(False)
+
+    def _show_critical_messagebox(self, message: str) -> None:
+        """Show a critical message box with the given message."""
+        self._reset()
         QMessageBox.critical(
             self, "Arduino Board Detection Failed", message, buttons=QMessageBox.Ok
         )
@@ -311,14 +344,17 @@ class ArduinoLedControl(QDialog):
             # Add 1 to account for the duration of the pulse
             fr += self._interval_spin.value() + 1
 
-        # update the tooltip of the timepoints field with the list of frames before
-        # which the led will be turned on
-        stim_after_frame = (
-            [str(f - 1) for f in self._led_on_frames]
-            if self._interval_spin.value() > 0
-            else "N/A"
-        )
-        self._timepoints.setToolTip(f"Pulse After Frame: {stim_after_frame}")
+        pulse_on_timepoint = [str(f) for f in self._led_on_frames]
+        self._timepoints.setToolTip(f"Pulse On Timepoint: {pulse_on_timepoint}")
+
+        # # update the tooltip of the timepoints field with the list of frames before
+        # # which the led will be turned on
+        # stim_after_frame = (
+        #     [str(f - 1) for f in self._led_on_frames]
+        #     if self._interval_spin.value() > 0
+        #     else "N/A"
+        # )
+        # self._timepoints.setToolTip(f"Pulse After Frame: {stim_after_frame}")
 
     def _on_led_values_changed(self) -> None:
         """Update the led power info."""
