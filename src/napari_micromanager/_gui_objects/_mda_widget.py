@@ -175,9 +175,9 @@ class MultiDWidget(MDAWidget):
 
     def _show_critical_led_message(self) -> None:
         msg = (
-            "You've selected to enable Arduino LED Stimulationfor this "
+            "You've selected to enable 'Arduino LED Stimulation' for this "
             "experiment, but an error occurred while trying to communicate "
-            "with the Arduino. Verify that the device is connected and "
+            "with the Arduino. Please, verify that the device is connected and "
             "try again."
         )
         QMessageBox.critical(
