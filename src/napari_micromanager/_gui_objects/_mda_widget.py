@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from fonticon_mdi6 import MDI6
 from pymmcore_widgets.mda import MDAWidget
-from qtpy.QtCore import QSize
 from qtpy.QtWidgets import (
     QCheckBox,
     QGroupBox,
@@ -16,7 +14,6 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from superqt.fonticon import icon
 
 from napari_micromanager._util import NMM_METADATA_KEY
 
@@ -40,8 +37,6 @@ class ArduinoLedWidget(QGroupBox):
         self._arduino_led_control = ArduinoLedControl(self)
 
         self._settings_btn = QPushButton("Arduino LED Settings...")
-        self._settings_btn.setIcon(icon(MDI6.cog))
-        self._settings_btn.setIconSize(QSize(25, 25))
         self._settings_btn.setSizePolicy(FIXED)
         self._settings_btn.clicked.connect(self._show_settings)
 
@@ -57,8 +52,8 @@ class ArduinoLedWidget(QGroupBox):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
         layout.addWidget(self._enable_led)
-        layout.addStretch(1)
         layout.addWidget(self._settings_btn)
+        layout.addStretch(1)
 
     def value(self) -> StimulationValues | dict:
         """Return the current value of the widget."""
@@ -103,7 +98,6 @@ class MultiDWidget(MDAWidget):
 
         self._arduino_led_wdg = ArduinoLedWidget(self)
         cbox_layout = cast(QVBoxLayout, self.layout().itemAt(3))
-        # cbox_layout.insertWidget(2, _SeparatorWidget())
         cbox_layout.insertWidget(2, self._arduino_led_wdg)
 
     def value(self) -> MDASequence:
@@ -189,4 +183,6 @@ class MultiDWidget(MDAWidget):
         )
         return
 
-    # TODO: fix save and load MDA because the Arduino object is not serializable
+    # TODO:
+    # disallow if multi channel
+    # fix save and load MDA because the Arduino object is not serializable

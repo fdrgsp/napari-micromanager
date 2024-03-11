@@ -168,6 +168,18 @@ class ArduinoLedControl(QDialog):
         led_gp_layout.addWidget(_led_powers_lbl, 4, 0)
         led_gp_layout.addWidget(self._led_pwrs, 4, 1)
 
+        # connection indicator labels
+        connection_info = QWidget()
+        connection_info_layout = QHBoxLayout(connection_info)
+        connection_info_layout.setSpacing(0)
+        connection_info_layout.setContentsMargins(0, 0, 0, 0)
+        self._arduino_connected_icon = QLabel()
+        self._arduino_connected_icon.setSizePolicy(FIXED)
+        self._arduino_connected_text = QLabel()
+        self._arduino_connected_text.setSizePolicy(FIXED)
+        connection_info_layout.addWidget(self._arduino_connected_icon)
+        connection_info_layout.addWidget(self._arduino_connected_text)
+
         # button box (using QPushButton instead of QDialogButtonBox to avoid the focus)
         ok_btn = QPushButton("OK")
         ok_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -175,15 +187,9 @@ class ArduinoLedControl(QDialog):
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         ok_btn.clicked.connect(self.accept)
         cancel_btn.clicked.connect(self.reject)
-        # connection indicator labels
-        self._arduino_connected_icon = QLabel()
-        self._arduino_connected_icon.setSizePolicy(FIXED)
-        self._arduino_connected_text = QLabel()
-        self._arduino_connected_text.setSizePolicy(FIXED)
         # layout
         btns_layout = QHBoxLayout()
-        btns_layout.addWidget(self._arduino_connected_icon)
-        btns_layout.addWidget(self._arduino_connected_text)
+        btns_layout.addWidget(connection_info)
         btns_layout.addStretch()
         btns_layout.addWidget(cancel_btn)
         btns_layout.addWidget(ok_btn)
