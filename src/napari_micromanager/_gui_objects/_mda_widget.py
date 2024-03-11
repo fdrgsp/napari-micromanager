@@ -150,20 +150,14 @@ class MultiDWidget(MDAWidget):
         if self._arduino_led_wdg._enable_led.isChecked():
             led = self._arduino_led_wdg._arduino_led_control._led_pin
             if led is None:
-                self._show_led_message("LED Pin not set.")
+                self._show_critical_led_message()
                 return
             else:
                 try:
                     led.write(0.0)
                 except Exception as e:
                     print(e)
-                    msg = (
-                        "You've selected to enable Arduino LED Stimulationfor this "
-                        "experiment, but an error occurred while trying to communicate "
-                        "with the Arduino. Verify that the device is connected and "
-                        "try again."
-                    )
-                    self._show_led_message(msg)
+                    self._show_critical_led_message()
                     return
 
         sequence = self.value()
@@ -179,7 +173,13 @@ class MultiDWidget(MDAWidget):
         # run the MDA experiment asynchronously
         self._mmc.run_mda(sequence, output=save_path)
 
-    def _show_led_message(self, msg: str) -> None:
+    def _show_critical_led_message(self) -> None:
+        msg = (
+            "You've selected to enable Arduino LED Stimulationfor this "
+            "experiment, but an error occurred while trying to communicate "
+            "with the Arduino. Verify that the device is connected and "
+            "try again."
+        )
         QMessageBox.critical(
             self,
             "Arduino Error",
