@@ -307,7 +307,16 @@ class ArduinoLedControl(QDialog):
         if self._arduino_board is None:
             self._reset()
             return
-        self._led_pin = cast(Pin, self._arduino_board.get_pin(PIN))
+
+        try:
+            self._led_pin = cast(
+                Pin, self._arduino_board.get_pin(self._led_pin_info.text())
+            )
+        except Exception:
+            return self._show_critical_messagebox(
+                "Unable to detect the LED Pin on the specified Arduino Board."
+            )
+
         self._led_pin.write(0.0)
         self._board_name.setText(self._arduino_board.name)
         # str(self._arduino_board) -> "Board{0.name} on {0.sp.port}".format(self)
