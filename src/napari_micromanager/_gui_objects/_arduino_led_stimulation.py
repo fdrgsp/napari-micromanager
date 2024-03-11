@@ -25,9 +25,9 @@ from superqt.fonticon import icon
 
 
 class StimulationValues(TypedDict):
-    arduino_board: Arduino
+    arduino_board: str
     arduino_port: str
-    arduino_led_pin: Pin
+    arduino_led_pin: str
     initial_delay: int
     interval: int
     num_pulses: int
@@ -57,10 +57,10 @@ class ArduinoLedControl(QDialog):
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(25)
 
         # GROUP - to detect the arduino board
-        detect_board = QGroupBox("Arduino Board")
+        detect_board = QGroupBox("Arduino")
         port_lbl = QLabel("Arduino Port:")
         port_lbl.setSizePolicy(FIXED)
         self._board_port = QLineEdit()
@@ -69,9 +69,13 @@ class ArduinoLedControl(QDialog):
         self._detect_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._detect_btn.setToolTip("Click to detect the board. If no ")
         self._detect_btn.clicked.connect(self._detect_arduino_board)
-        _board_label = QLabel("Arduino Board:")
+        board_label = QLabel("Arduino Board:")
         self._board_name = QLineEdit()
         self._board_name.setReadOnly(True)
+        pin_lbl = QLabel("Arduino LED Pin:")
+        pin_lbl.setSizePolicy(FIXED)
+        self._led_pin_info = QLineEdit(PIN)  # default to 'd:3:p'
+
         # layout
         detect_gp_layout = QGridLayout(detect_board)
         detect_gp_layout.setContentsMargins(10, 10, 10, 10)
@@ -79,8 +83,10 @@ class ArduinoLedControl(QDialog):
         detect_gp_layout.addWidget(port_lbl, 0, 0)
         detect_gp_layout.addWidget(self._board_port, 0, 1)
         detect_gp_layout.addWidget(self._detect_btn, 0, 2)
-        detect_gp_layout.addWidget(_board_label, 1, 0)
+        detect_gp_layout.addWidget(board_label, 1, 0)
         detect_gp_layout.addWidget(self._board_name, 1, 1, 1, 2)
+        detect_gp_layout.addWidget(pin_lbl, 2, 0)
+        detect_gp_layout.addWidget(self._led_pin_info, 2, 1, 1, 2)
 
         # GROUP - to set on which frames to turn on the LED
         frame_group = QGroupBox("Stimulation Frames")
@@ -222,9 +228,9 @@ class ArduinoLedControl(QDialog):
     def value(self) -> StimulationValues:
         """Return the values set in the dialog."""
         return {
-            "arduino_board": self._arduino_board or None,
+            "arduino_board": self._arduino_board.name if self._arduino_board else "",
             "arduino_port": self._board_port.text(),
-            "arduino_led_pin": self._led_pin,
+            "arduino_led_pin": self._led_pin_info.text(),
             "initial_delay": self._initial_delay_spin.value(),
             "interval": self._interval_spin.value(),
             "num_pulses": self._num_pulses_spin.value(),
@@ -240,13 +246,9 @@ class ArduinoLedControl(QDialog):
         Note that "pulse_on_frame" is not necessary to be set in the values dictionary
         as it is calculated from the other values. If provided, it will be ignored.
         """
-        arduino_board = values.get("arduino_board", "")
-        if isinstance(arduino_board, Arduino):
-            arduino_board = arduino_board.name
-        self._board_name.setText(arduino_board)
-
+        self._board_name.setText(values.get("arduino_board", ""))
         self._board_port.setText(values.get("arduino_port", ""))
-        self._led_pin = values.get("arduino_led_pin", "")
+        self._led_pin_info = values.get("arduino_led_pin", "")
         self._initial_delay_spin.setValue(values.get("initial_delay", 0))
         self._interval_spin.setValue(values.get("interval", 0))
         self._num_pulses_spin.setValue(values.get("num_pulses", 0))
@@ -336,10 +338,12 @@ class ArduinoLedControl(QDialog):
         if not self._num_pulses_spin.value():
             return
 
-        # get total timepoints that should be set in the MDA time tab. It includes
-        # the snap events as well as the led stimulation events
-        timepoints = self._initial_delay_spin.value() + (
-            (self._interval_spin.value() or 1) * self._num_pulses_spin.value()
+        # get total timepoints that should be set in the MDA time tab
+        timepoints = (
+            self._initial_delay_spin.value()
+            + ((self._interval_spin.value() or 1) * self._num_pulses_spin.value())
+            + self._interval_spin.value()
+            - 1
         )
         self._timepoints.setText(f"{timepoints} {TIMEPOINTS_TXT}")
 

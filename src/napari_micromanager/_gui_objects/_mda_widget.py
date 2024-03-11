@@ -141,18 +141,27 @@ class MultiDWidget(MDAWidget):
             return
 
         # this is just to make sure that the Arduino and the Pin are available
+        # we also set which Arduino and which Pin are being used
+        self._arduino_led_wdg.hide()
         if self._arduino_led_wdg._enable_led.isChecked():
+            arduino = self._arduino_led_wdg._arduino_led_control._arduino_board
             led = self._arduino_led_wdg._arduino_led_control._led_pin
-            if led is None:
+            if arduino is None or led is None:
                 self._show_critical_led_message()
                 return
-            else:
-                try:
-                    led.write(0.0)
-                except Exception as e:
-                    print(e)
-                    self._show_critical_led_message()
-                    return
+            try:
+                led.write(0.0)
+                self._mmc.mda.engine.setArduinoBoard(arduino)
+                self._mmc.mda.engine.setArduinoLedPin(led)
+            except Exception as e:
+                self._mmc.mda.engine.setArduinoBoard(None)
+                self._mmc.mda.engine.setArduinoLedPin(None)
+                print(e)
+                self._show_critical_led_message()
+                return
+        else:
+            self._mmc.mda.engine.setArduinoBoard(None)
+            self._mmc.mda.engine.setArduinoLedPin(None)
 
         sequence = self.value()
 
@@ -184,6 +193,4 @@ class MultiDWidget(MDAWidget):
         return
 
     # TODO:
-    # disallow if multi channel
-    # fix save and load MDA because the Arduino object is not serializable
-    # in pyproject.toml point to the correct branch of pymmcore_plus
+    # - in pyproject.toml point to the correct branch of pymmcore_plus
