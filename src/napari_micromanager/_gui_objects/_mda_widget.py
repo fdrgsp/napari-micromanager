@@ -186,3 +186,4 @@ class MultiDWidget(MDAWidget):
     # TODO:
     # disallow if multi channel
     # fix save and load MDA because the Arduino object is not serializable
+    # in pyproject.toml point to the correct branch of pymmcore_plus
