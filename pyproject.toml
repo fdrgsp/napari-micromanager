@@ -43,6 +43,7 @@ dependencies = [
     "tifffile",
     "useq-schema >=0.4.1",
     "zarr",
+    "pyfirmata2"
 ]
 
 # extras
