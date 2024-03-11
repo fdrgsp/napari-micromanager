@@ -34,6 +34,8 @@ class ArduinoLedWidget(QGroupBox):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent=parent)
 
+        self.setTitle("Arduino")
+
         self._arduino_led_control = ArduinoLedControl(self)
 
         self._settings_btn = QPushButton("Arduino LED Settings...")
@@ -49,7 +51,7 @@ class ArduinoLedWidget(QGroupBox):
         self._arduino_connected_text.setSizePolicy(FIXED)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
         layout.addWidget(self._enable_led)
         layout.addWidget(self._settings_btn)
@@ -97,8 +99,7 @@ class MultiDWidget(MDAWidget):
         ch_layout.addWidget(self.checkBox_split_channels)
 
         self._arduino_led_wdg = ArduinoLedWidget(self)
-        cbox_layout = cast(QVBoxLayout, self.layout().itemAt(3))
-        cbox_layout.insertWidget(2, self._arduino_led_wdg)
+        self.layout().insertWidget(3, self._arduino_led_wdg)
 
     def value(self) -> MDASequence:
         """Return the current value of the widget."""
@@ -142,7 +143,7 @@ class MultiDWidget(MDAWidget):
 
         # this is just to make sure that the Arduino and the Pin are available
         # we also set which Arduino and which Pin are being used
-        self._arduino_led_wdg.hide()
+        self._arduino_led_wdg._arduino_led_control.hide()
         if self._arduino_led_wdg._enable_led.isChecked():
             arduino = self._arduino_led_wdg._arduino_led_control._arduino_board
             led = self._arduino_led_wdg._arduino_led_control._led_pin
@@ -178,10 +179,9 @@ class MultiDWidget(MDAWidget):
 
     def _show_critical_led_message(self) -> None:
         msg = (
-            "You've selected to enable 'Arduino LED Stimulation' for this "
-            "experiment, but an error occurred while trying to communicate "
-            "with the Arduino. Please, verify that the device is connected and "
-            "try again."
+            "'Arduino LED Stimulation' is selected but an error occurred while trying "
+            "to communicate with the Arduino. \nPlease, verify that the device is "
+            "connected and try again."
         )
         QMessageBox.critical(
             self,

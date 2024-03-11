@@ -308,6 +308,7 @@ class ArduinoLedControl(QDialog):
             self._reset()
             return
 
+        # make sure the led pin is available
         try:
             self._led_pin = cast(
                 Pin, self._arduino_board.get_pin(self._led_pin_info.text())
@@ -336,7 +337,7 @@ class ArduinoLedControl(QDialog):
         """Show a critical message box with the given message."""
         self._reset()
         QMessageBox.critical(
-            self, "Arduino Board Detection Failed", message, buttons=QMessageBox.Ok
+            self, "Arduino Board Error", message, buttons=QMessageBox.Ok
         )
         return
 
