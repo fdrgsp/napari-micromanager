@@ -192,7 +192,6 @@ class ArduinoLedControl(QDialog):
         cancel_btn = QPushButton("Cancel")
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         cancel_btn.clicked.connect(self.reject)
-
         ok_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
         cancel_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
 
