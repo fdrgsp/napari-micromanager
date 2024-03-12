@@ -25,7 +25,6 @@ from superqt.fonticon import icon
 
 
 class StimulationValues(TypedDict):
-    arduino_board: str
     arduino_port: str
     arduino_led_pin: str
     initial_delay: int
@@ -69,9 +68,6 @@ class ArduinoLedControl(QDialog):
         self._detect_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._detect_btn.setToolTip("Click to detect the board. If no ")
         self._detect_btn.clicked.connect(self._detect_arduino_board)
-        board_label = QLabel("Arduino Board:")
-        self._board_name = QLineEdit()
-        self._board_name.setReadOnly(True)
         pin_lbl = QLabel("Arduino LED Pin:")
         pin_lbl.setSizePolicy(FIXED)
         self._led_pin_info = QLineEdit()
@@ -83,10 +79,8 @@ class ArduinoLedControl(QDialog):
         detect_gp_layout.addWidget(port_lbl, 0, 0)
         detect_gp_layout.addWidget(self._board_port, 0, 1)
         detect_gp_layout.addWidget(self._detect_btn, 0, 2)
-        detect_gp_layout.addWidget(board_label, 1, 0)
-        detect_gp_layout.addWidget(self._board_name, 1, 1, 1, 2)
-        detect_gp_layout.addWidget(pin_lbl, 2, 0)
-        detect_gp_layout.addWidget(self._led_pin_info, 2, 1, 1, 2)
+        detect_gp_layout.addWidget(pin_lbl, 1, 0)
+        detect_gp_layout.addWidget(self._led_pin_info, 1, 1, 1, 2)
 
         # GROUP - to set on which frames to turn on the LED
         frame_group = QGroupBox("Stimulation Frames")
@@ -232,7 +226,6 @@ class ArduinoLedControl(QDialog):
     def value(self) -> StimulationValues:
         """Return the values set in the dialog."""
         return {
-            "arduino_board": self._arduino_board.name if self._arduino_board else "",
             "arduino_port": self._board_port.text(),
             "arduino_led_pin": self._led_pin_info.text(),
             "initial_delay": self._initial_delay_spin.value(),
@@ -250,7 +243,6 @@ class ArduinoLedControl(QDialog):
         Note that "pulse_on_frame" is not necessary to be set in the values dictionary
         as it is calculated from the other values. If provided, it will be ignored.
         """
-        self._board_name.setText(values.get("arduino_board", ""))
         self._board_port.setText(values.get("arduino_port", ""))
         self._led_pin_info.setText(values.get("arduino_led_pin", ""))
         self._initial_delay_spin.setValue(values.get("initial_delay", 0))
@@ -323,7 +315,6 @@ class ArduinoLedControl(QDialog):
             )
 
         self._led_pin.write(0.0)
-        self._board_name.setText(self._arduino_board.name)
         # str(self._arduino_board) -> "Board{0.name} on {0.sp.port}".format(self)
         port = str(self._arduino_board).split("on")[-1].replace(" ", "")
         self._board_port.setText(port)
@@ -333,7 +324,6 @@ class ArduinoLedControl(QDialog):
         """Reset to the initial state."""
         self._arduino_board = None
         self._led_pin = None
-        self._board_name.setText("")
         self._board_port.clear()
         self._enable(False)
 
