@@ -74,7 +74,8 @@ class ArduinoLedControl(QDialog):
         self._board_name.setReadOnly(True)
         pin_lbl = QLabel("Arduino LED Pin:")
         pin_lbl.setSizePolicy(FIXED)
-        self._led_pin_info = QLineEdit(PIN)  # default to 'd:3:p'
+        self._led_pin_info = QLineEdit()
+        self._led_pin_info.setText(PIN)  # default to 'd:3:p'
         # layout
         detect_gp_layout = QGridLayout(detect_board)
         detect_gp_layout.setContentsMargins(10, 10, 10, 10)
@@ -251,7 +252,7 @@ class ArduinoLedControl(QDialog):
         """
         self._board_name.setText(values.get("arduino_board", ""))
         self._board_port.setText(values.get("arduino_port", ""))
-        self._led_pin_info = values.get("arduino_led_pin", "")
+        self._led_pin_info.setText(values.get("arduino_led_pin", ""))
         self._initial_delay_spin.setValue(values.get("initial_delay", 0))
         self._interval_spin.setValue(values.get("interval", 0))
         self._num_pulses_spin.setValue(values.get("num_pulses", 0))
@@ -356,7 +357,6 @@ class ArduinoLedControl(QDialog):
             self._initial_delay_spin.value()
             + ((self._interval_spin.value() or 1) * self._num_pulses_spin.value())
             + self._interval_spin.value()
-            - 1
         )
         self._timepoints.setText(f"{timepoints} {TIMEPOINTS_TXT}")
 
