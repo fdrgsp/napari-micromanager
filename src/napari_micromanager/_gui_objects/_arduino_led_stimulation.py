@@ -216,9 +216,6 @@ class ArduinoLedControl(QDialog):
         ]:
             lbl.setFixedSize(num_pulses_lbl.minimumSizeHint())
 
-        # set the fixed height for the dialog
-        self.setFixedHeight(self.minimumSizeHint().height())
-
         self._enable(False)
 
     # ________________________Public Methods________________________
