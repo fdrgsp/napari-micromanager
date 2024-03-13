@@ -38,7 +38,7 @@ class ArduinoLedWidget(QGroupBox):
 
         self._arduino_led_control = ArduinoLedControl(self)
 
-        self._settings_btn = QPushButton("Arduino LED Settings...")
+        self._settings_btn = QPushButton("Arduino Settings...")
         self._settings_btn.setSizePolicy(FIXED)
         self._settings_btn.clicked.connect(self._show_settings)
 
@@ -99,7 +99,8 @@ class MultiDWidget(MDAWidget):
         ch_layout.addWidget(self.checkBox_split_channels)
 
         self._arduino_led_wdg = ArduinoLedWidget(self)
-        self.layout().insertWidget(3, self._arduino_led_wdg)
+        self.layout().insertWidget(4, self._arduino_led_wdg)
+        self.layout().insertStretch(5, 1)
 
     def value(self) -> MDASequence:
         """Return the current value of the widget."""
