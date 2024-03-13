@@ -56,7 +56,7 @@ class ArduinoLedControl(QDialog):
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(25)
+        main_layout.setSpacing(5)
 
         # GROUP - to detect the arduino board
         detect_board = QGroupBox("Arduino")
@@ -74,7 +74,7 @@ class ArduinoLedControl(QDialog):
         self._led_pin_info.setText(PIN)  # default to 'd:3:p'
         # layout
         detect_gp_layout = QGridLayout(detect_board)
-        detect_gp_layout.setContentsMargins(10, 10, 10, 10)
+        detect_gp_layout.setContentsMargins(10, 15, 10, 10)
         detect_gp_layout.setSpacing(5)
         detect_gp_layout.addWidget(port_lbl, 0, 0)
         detect_gp_layout.addWidget(self._board_port, 0, 1)
@@ -113,7 +113,7 @@ class ArduinoLedControl(QDialog):
         self._timepoints.setReadOnly(True)
         # layout
         frame_gp_layout = QGridLayout(frame_group)
-        frame_gp_layout.setContentsMargins(10, 10, 10, 10)
+        frame_gp_layout.setContentsMargins(10, 15, 10, 10)
         frame_gp_layout.setSpacing(5)
         frame_gp_layout.addWidget(initial_delay_lbl, 0, 0)
         frame_gp_layout.addWidget(self._initial_delay_spin, 0, 1)
@@ -156,7 +156,7 @@ class ArduinoLedControl(QDialog):
         self._led_pwrs.setStyleSheet("border: 0")
         # layout
         led_gp_layout = QGridLayout(led_group)
-        led_gp_layout.setContentsMargins(10, 10, 10, 10)
+        led_gp_layout.setContentsMargins(10, 15, 10, 10)
         led_gp_layout.setSpacing(5)
         led_gp_layout.addWidget(led_start_pwr_lbl, 0, 0)
         led_gp_layout.addWidget(self._led_start_power, 0, 1)
