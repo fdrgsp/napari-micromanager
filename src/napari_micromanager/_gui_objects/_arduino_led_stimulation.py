@@ -308,7 +308,6 @@ class ArduinoLedControl(QDialog):
                 self._arduino_board = Arduino(Arduino.AUTODETECT)
                 self._update_arduino_board_info()
             except Exception:
-                self._reset()
                 return self._show_critical_messagebox(
                     "Unable to Autodetect the Arduino Board. \nPlease insert the port "
                     "manually in the 'Arduino Port' field."
@@ -319,7 +318,6 @@ class ArduinoLedControl(QDialog):
                 self._arduino_board = Arduino(self._board_port.text())
                 self._update_arduino_board_info()
             except Exception:
-                self._reset()
                 return self._show_critical_messagebox(
                     "Unable to detect the Arduino Board on the specified port."
                 )
@@ -336,7 +334,6 @@ class ArduinoLedControl(QDialog):
                 Pin, self._arduino_board.get_pin(self._led_pin_info.text())
             )
         except Exception:
-            self._reset()
             return self._show_critical_messagebox(
                 "Unable to detect the LED Pin on the specified Arduino Board."
             )
@@ -354,6 +351,8 @@ class ArduinoLedControl(QDialog):
 
     def _show_critical_messagebox(self, message: str) -> None:
         """Show a critical message box with the given message."""
+        self._reset()
+        self._enable(False)
         QMessageBox.critical(
             self, "Arduino Board Error", message, buttons=QMessageBox.Ok
         )

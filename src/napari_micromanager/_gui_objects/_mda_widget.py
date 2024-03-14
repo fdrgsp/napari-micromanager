@@ -184,6 +184,7 @@ class MultiDWidget(MDAWidget):
             led = self._arduino_led_wdg.ledPin()
             if arduino is None or led is None or not self._test_arduino_connection(led):
                 self._set_arduino_props(None, None)
+                self._arduino_led_wdg._arduino_led_control._enable(False)
                 self._show_critical_led_message(CRITICAL_MSG)
                 return
 
