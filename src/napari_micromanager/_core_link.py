@@ -10,8 +10,7 @@ from qtpy.QtCore import QObject, Qt, QTimerEvent
 from superqt.utils import ensure_main_thread
 
 from ._mda_handler import _NapariMDAHandler
-
-# from ._segment_neurons import SegmentNeurons
+from ._segment_neurons import SegmentNeurons
 
 if TYPE_CHECKING:
     import napari.viewer
@@ -34,7 +33,7 @@ class CoreViewerLink(QObject):
         self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
         self._live_timer_id: int | None = None
 
-        # self._segment_neurons = SegmentNeurons(self._mmc)
+        self._segment_neurons = SegmentNeurons(self._mmc)
 
         # Add all core connections to this list.  This makes it easy to disconnect
         # from core when this widget is closed.
