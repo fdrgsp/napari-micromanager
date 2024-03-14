@@ -29,6 +29,15 @@ GREEN = "#00FF00"
 RED = "#C33"
 FIXED = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 STIMULATION = "stimulation"
+CRITICAL_MSG = (
+    "'Arduino LED Stimulation' is selected but an error occurred while trying "
+    "to communicate with the Arduino. \nPlease, verify that the device is "
+    "connected and try again."
+)
+POWER_EXCEEDED_MSG = (
+    "The maximum power of the LED has been exceeded. \nPlease, reduce "
+    "the power and try again."
+)
 
 
 class ArduinoLedWidget(QGroupBox):
@@ -67,6 +76,10 @@ class ArduinoLedWidget(QGroupBox):
     def ledPin(self) -> int | None:
         """Return the current LED Pin object."""
         return self._arduino_led_control.ledPin()
+
+    def is_max_power_exceeded(self) -> bool:
+        """Return True if the maximum power of the LED has been exceeded."""
+        return self._arduino_led_control.is_max_power_exceeded()
 
     def value(self) -> StimulationValues | dict:
         """Return the current value of the widget."""
@@ -153,20 +166,28 @@ class MultiDWidget(MDAWidget):
         ):
             return
 
-        # this is just to make sure that the Arduino and the Pin are available.
-        # we also set which Arduino and which Pin the MDA engine should use.
+        # Arduino checks___________________________________
+        #  hide the Arduino LED control widget if visible
         self._arduino_led_wdg._arduino_led_control.hide()
         if not self._arduino_led_wdg._enable_led.isChecked():
-            self._disable_arduino_board()
+            self._set_arduino_props(None, None)
         else:
+            # check if power exceeded
+            if self._arduino_led_wdg.is_max_power_exceeded():
+                self._set_arduino_props(None, None)
+                self._show_critical_led_message(POWER_EXCEEDED_MSG)
+                return
+
+            # check if the Arduino and the LED pin are available
             arduino = self._arduino_led_wdg.board()
             led = self._arduino_led_wdg.ledPin()
             if arduino is None or led is None or not self._test_arduino_connection(led):
-                self._disable_arduino_board()
-                self._show_critical_led_message()
+                self._set_arduino_props(None, None)
+                self._show_critical_led_message(CRITICAL_MSG)
                 return
 
-            self._enable_arduino_board(arduino, led)
+            # enable the Arduino board and the LED pin in the MDA engine
+            self._set_arduino_props(arduino, led)
 
         sequence = self.value()
 
@@ -181,12 +202,7 @@ class MultiDWidget(MDAWidget):
         # run the MDA experiment asynchronously
         self._mmc.run_mda(sequence, output=save_path)
 
-    def _disable_arduino_board(self) -> None:
-        """Disable the Arduino board and the LED pin in the MDA engine."""
-        self._mmc.mda.engine.setArduinoBoard(None)
-        self._mmc.mda.engine.setArduinoLedPin(None)
-
-    def _enable_arduino_board(self, arduino: Arduino, led: Pin) -> None:
+    def _set_arduino_props(self, arduino: Arduino | None, led: Pin | None) -> None:
         """Enable the Arduino board and the LED pin in the MDA engine."""
         self._mmc.mda.engine.setArduinoBoard(arduino)
         self._mmc.mda.engine.setArduinoLedPin(led)
@@ -199,11 +215,6 @@ class MultiDWidget(MDAWidget):
         except Exception:
             return False
 
-    def _show_critical_led_message(self) -> None:
-        msg = (
-            "'Arduino LED Stimulation' is selected but an error occurred while trying "
-            "to communicate with the Arduino. \nPlease, verify that the device is "
-            "connected and try again."
-        )
+    def _show_critical_led_message(self, msg: str) -> None:
         QMessageBox.critical(self, "Arduino Error", msg, QMessageBox.StandardButton.Ok)
         return
