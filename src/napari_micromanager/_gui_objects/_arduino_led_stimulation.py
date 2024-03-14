@@ -110,8 +110,9 @@ class ArduinoLedControl(QDialog):
         separator = _SeparatorWidget()
         # total number of frames
         time_points_lbl = QLabel("TimePoints:")
-        self._timepoints_lbl = QLabel()
-        self._timepoints_lbl.setMaximumWidth(MAX_LBL_WIDTH)
+        self._timepoints = QLineEdit()
+        self._timepoints.setReadOnly(True)
+        self._timepoints.setStyleSheet("border: 0")
         # layout
         frame_gp_layout = QGridLayout(frame_group)
         frame_gp_layout.setContentsMargins(10, 15, 10, 10)
@@ -124,7 +125,7 @@ class ArduinoLedControl(QDialog):
         frame_gp_layout.addWidget(self._num_pulses_spin, 2, 1)
         frame_gp_layout.addWidget(separator, 3, 0, 1, 2)
         frame_gp_layout.addWidget(time_points_lbl, 4, 0)
-        frame_gp_layout.addWidget(self._timepoints_lbl, 4, 1)
+        frame_gp_layout.addWidget(self._timepoints, 4, 1)
 
         # GROUP - to set the led power
         led_group = QGroupBox("LED")
@@ -152,17 +153,20 @@ class ArduinoLedControl(QDialog):
         separator = _SeparatorWidget()
         # led info
         _led_powers_lbl = QLabel("Power(s):")
-        self._led_pwrs_lbl = QLabel()
-        self._led_pwrs_lbl.setMaximumWidth(MAX_LBL_WIDTH)
+        self._led_pwrs = QLineEdit()
+        self._led_pwrs.setReadOnly(True)
+        self._led_pwrs.setStyleSheet("border: 0")
         self._led_pwrs_icon_lbl = QLabel()
         self._led_pwrs_icon_lbl.setSizePolicy(FIXED)
         self._led_pwrs_icon_lbl.setPixmap(
             icon(MDI6.alert_outline, color=RED).pixmap(QSize(25, 25))
         )
-        self._led_pwrs_lbl.setFixedHeight(
-            self._led_pwrs_icon_lbl.minimumSizeHint().height()
-        )
         self._led_pwrs_icon_lbl.hide()
+
+        # set linedit height to the same as the icon label
+        fixed_height = self._led_pwrs_icon_lbl.minimumSizeHint().height()
+        self._led_pwrs.setFixedHeight(fixed_height)
+        self._timepoints.setFixedHeight(fixed_height)
 
         # layout
         led_gp_layout = QGridLayout(led_group)
@@ -176,7 +180,7 @@ class ArduinoLedControl(QDialog):
         led_gp_layout.addWidget(self._pulse_duration_spin, 2, 1, 1, 2)
         led_gp_layout.addWidget(separator, 3, 0, 1, 3)
         led_gp_layout.addWidget(_led_powers_lbl, 4, 0)
-        led_gp_layout.addWidget(self._led_pwrs_lbl, 4, 1)
+        led_gp_layout.addWidget(self._led_pwrs, 4, 1)
         led_gp_layout.addWidget(self._led_pwrs_icon_lbl, 4, 2)
 
         # connection indicator labels
@@ -293,7 +297,7 @@ class ArduinoLedControl(QDialog):
         """
         # make sure that the led is not exceeding the max 100% power
         if not self._led_power_used:
-            return {"error": "LED max power exceeded!!!"}
+            return {"error": "Max power exceeded!!!"}
         return dict(zip(self._led_on_frames, self._led_power_used))
 
     def _detect_arduino_board(self) -> None:
@@ -368,7 +372,7 @@ class ArduinoLedControl(QDialog):
             + ((self._interval_spin.value() or 1) * self._num_pulses_spin.value())
             + self._interval_spin.value()
         )
-        self._timepoints_lbl.setText(f"{timepoints} {TIMEPOINTS_TXT}")
+        self._timepoints.setText(f"{timepoints} {TIMEPOINTS_TXT}")
 
         # get the frames in which the led will be turned on
         fr = self._initial_delay_spin.value()
@@ -378,7 +382,7 @@ class ArduinoLedControl(QDialog):
             fr += self._interval_spin.value() + 1
 
         pulse_on_timepoint = [str(f) for f in self._led_on_frames]
-        self._timepoints_lbl.setToolTip(f"Pulse On Timepoint: {pulse_on_timepoint}")
+        self._timepoints.setToolTip(f"Pulse On Timepoint: {pulse_on_timepoint}")
 
     def _on_led_values_changed(self) -> None:
         """Update the led power info."""
@@ -390,9 +394,9 @@ class ArduinoLedControl(QDialog):
             self._led_power_used.append(pwr)
             pwr = pwr + self._led_power_increment.value()
 
-        self._led_pwrs_lbl.setText(str(self._led_power_used))
+        self._led_pwrs.setText(str(self._led_power_used))
         self._led_pwrs_icon_lbl.hide()
-        self._led_pwrs_lbl.setToolTip(str(self._led_power_used))
+        self._led_pwrs.setToolTip(str(self._led_power_used))
 
         # check if the max power is not exceeded
         power_max = self._led_start_power.value() + (
@@ -402,7 +406,7 @@ class ArduinoLedControl(QDialog):
         if power_max > 100:
             self._led_power_used.clear()
             self._led_pwrs_icon_lbl.show()
-            self._led_pwrs_lbl.setText("LED max power exceeded!!!")
+            self._led_pwrs.setText("Max power exceeded!!!")
 
 
 class _SeparatorWidget(QWidget):
