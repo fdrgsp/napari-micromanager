@@ -41,6 +41,7 @@ PIN = "d:3:p"
 TIMEPOINTS_TXT = "(set in the MDA Time Tab)"
 GREEN = "#00FF00"
 RED = "#C33"
+MAX_LBL_WIDTH = 200
 
 
 class ArduinoLedControl(QDialog):
@@ -110,6 +111,7 @@ class ArduinoLedControl(QDialog):
         # total number of frames
         time_points_lbl = QLabel("TimePoints:")
         self._timepoints_lbl = QLabel()
+        self._timepoints_lbl.setMaximumWidth(MAX_LBL_WIDTH)
         # layout
         frame_gp_layout = QGridLayout(frame_group)
         frame_gp_layout.setContentsMargins(10, 15, 10, 10)
@@ -151,6 +153,7 @@ class ArduinoLedControl(QDialog):
         # led info
         _led_powers_lbl = QLabel("Power(s):")
         self._led_pwrs_lbl = QLabel()
+        self._led_pwrs_lbl.setMaximumWidth(MAX_LBL_WIDTH)
         self._led_pwrs_icon_lbl = QLabel()
         self._led_pwrs_icon_lbl.setSizePolicy(FIXED)
         self._led_pwrs_icon_lbl.setPixmap(
