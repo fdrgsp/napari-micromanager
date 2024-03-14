@@ -134,6 +134,7 @@ class MultiDWidget(MDAWidget):
         sequence.metadata[NMM_METADATA_KEY] = {
             "split_channels": split,
             STIMULATION: self._arduino_led_wdg.value(),
+            "PixelSizeUm": self._mmc.getPixelSizeUm(),
         }
         return sequence  # type: ignore[no-any-return]
 
