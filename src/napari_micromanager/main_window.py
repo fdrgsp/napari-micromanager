@@ -71,9 +71,6 @@ class MainWindow(MicroManagerToolbar):
         # load layout
         self._load_layout()
 
-        # TEMPORARY TO DEBUG
-        self._mmc.events.systemConfigurationLoaded.connect(self._set_seq)
-
         # Micro-Manager Hardware Configuration Wizard
         self._wiz: HardwareConfigWizard | None = None
 
@@ -150,54 +147,3 @@ class MainWindow(MicroManagerToolbar):
             current_cfg = self._mmc.systemConfigurationFile() or ""
             self._wiz.setField(SRC_CONFIG, current_cfg)
             self._wiz.show()
-
-    # TEMPORARY TO DEBUG
-    def _set_seq(self) -> None:
-        import useq
-
-        seq = useq.MDASequence(
-            metadata={
-                "pymmcore_widgets": {"version": "0.7.0"},
-                "napari_micromanager": {
-                    "split_channels": False,
-                    "stimulation": {
-                        "arduino_port": "COM4",
-                        "arduino_led_pin": "d:3:p",
-                        "initial_delay": 3,
-                        "interval": 3,
-                        "num_pulses": 3,
-                        "led_start_power": 50,
-                        "led_power_increment": 0,
-                        "led_pulse_duration": 500,
-                        "pulse_on_frame": {3: 50, 7: 50, 11: 50},
-                    },
-                },
-            },
-            axis_order=("t", "c"),
-            channels=(
-                useq.Channel(
-                    config="FITC",
-                    group="Channel",
-                    exposure=100.0,
-                    do_stack=True,
-                    z_offset=0.0,
-                    acquire_every=1,
-                    camera=None,
-                ),
-            ),
-            time_plan=useq.TIntervalLoops(
-                prioritize_duration=False,
-                interval=0,  # type: ignore
-                loops=15,
-            ),
-            autofocus_plan=useq.AxesBasedAF(
-                autofocus_device_name=None,
-                autofocus_motor_offset=100,
-                axes=("p",),
-            ),
-        )
-        with contextlib.suppress(Exception):
-            scroll = self.viewer.window._dock_widgets.get("MDA").widget()
-            scroll = scroll.children()[-1]
-            mda = scroll.widget()
-            mda.setValue(seq)
