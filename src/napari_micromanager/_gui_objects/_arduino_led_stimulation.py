@@ -195,23 +195,11 @@ class ArduinoLedControl(QDialog):
         connection_info_layout.addWidget(self._arduino_connected_icon)
         connection_info_layout.addWidget(self._arduino_connected_text)
 
-        # button box (using QPushButton instead of QDialogButtonBox to avoid the focus)
-        ok_btn = QPushButton("OK")
-        ok_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        cancel_btn.clicked.connect(self.reject)
-        ok_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
-        cancel_btn.setFixedWidth(cancel_btn.minimumSizeHint().width())
-
         # layout
         btns_layout = QHBoxLayout()
         btns_layout.setSpacing(10)
         btns_layout.addWidget(connection_info)
         btns_layout.addStretch()
-        btns_layout.addWidget(cancel_btn)
-        btns_layout.addWidget(ok_btn)
 
         # add all the widgets to the main layout
         main_layout.addWidget(detect_board)
