@@ -263,9 +263,6 @@ class MicroManagerToolbar(QMainWindow):
         dock_wdg.topLevelChanged.connect(self._save_layout)
         dock_wdg.dockLocationChanged.connect(self._save_layout)
 
-    def _on_dock_widget_changed(self) -> None:
-        """Start a saving threrad to save the layout if the thread is not running."""
-
     def _save_layout(self) -> None:
         """Save the napa-micromanager layout to a json file.
 
