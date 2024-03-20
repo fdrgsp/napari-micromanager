@@ -43,7 +43,15 @@ class MMStagesWidget(QWidget):
             return
         for stg in self._stage_wdgs:
             if action.text() == stg._name:
-                stg.hide() if stg.isVisible() else stg.show()
+                if stg.isVisible():
+                    # Count the number of visible widgets
+                    visible_count = sum(wdg.isVisible() for wdg in self._stage_wdgs)
+                    # If this is the only visible widget, don't hide it
+                    if visible_count <= 1:
+                        return
+                    stg.hide()
+                else:
+                    stg.show()
 
     def _on_cfg_loaded(self) -> None:
         self._clear()
