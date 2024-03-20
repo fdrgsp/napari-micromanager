@@ -42,7 +42,6 @@ class ArduinoEngine(MDAEngine):
         self._arduino_led_pin = arduino_led_pin
         self._exec_stimulation: dict[int, tuple[int, int]] = {}
 
-    # ===================== Arduino Properties =========================
     def setArduinoBoard(self, arduino_board: Arduino | None) -> None:
         """Set the Arduino board to use for LED stimulation."""
         self._arduino_board = arduino_board
@@ -50,8 +49,6 @@ class ArduinoEngine(MDAEngine):
     def setArduinoLedPin(self, arduino_led_pin: Pin | None) -> None:
         """Set the pin on the Arduino board to use for LED stimulation."""
         self._arduino_led_pin = arduino_led_pin
-
-    # ===================== Protocol Implementation =====================
 
     def setup_sequence(self, sequence: MDASequence) -> Mapping[str, Any]:
         """Setup the hardware for the entire sequence."""
