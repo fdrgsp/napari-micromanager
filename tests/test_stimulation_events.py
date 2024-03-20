@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock
 
-from napari_micromanager.engine._mmcore_engine import ArduinoEngine
+from napari_micromanager._engine._mmcore_engine import ArduinoEngine
 from pymmcore_plus import CMMCorePlus
 from useq import MDASequence
 
