@@ -39,6 +39,8 @@ class MMStagesWidget(QWidget):
 
     def contextMenuEvent(self, event: QMouseEvent) -> None:
         action = self._context_menu.exec_(self.mapToGlobal(event.pos()))
+        if action is None:
+            return
         for stg in self._stage_wdgs:
             if action.text() == stg._name:
                 stg.hide() if stg.isVisible() else stg.show()
