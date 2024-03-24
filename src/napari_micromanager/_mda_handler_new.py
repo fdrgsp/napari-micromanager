@@ -1,128 +1,146 @@
-import contextlib
+from pathlib import Path
 from typing import cast
-from uuid import UUID
 
-import napari.viewer
+import napari
+import numpy as np
+import useq
 import zarr
-from numpy import ndarray
+from napari.layers import Image
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda.handlers import OMEZarrWriter
+from pymmcore_plus.mda.handlers._ome_zarr_writer import POS_PREFIX
 from pymmcore_widgets.useq_widgets._mda_sequence import PYMMCW_METADATA_KEY
-from useq import MDAEvent, MDASequence
+from qtpy.QtCore import QObject
+from zarr.storage import TempStore
 
-POS_PREFIX = "p"
 EXP = "MDA"
 
 
-class _Handler(OMEZarrWriter):
-    def __init__(self, viewer: napari.viewer.Viewer, mmcore: CMMCorePlus | None = None):
-        super().__init__()
+class _Handler(QObject, OMEZarrWriter):
+    def __init__(
+        self,
+        parent: QObject | None = None,
+        *,
+        viewer: napari.Viewer,
+        mmcore: CMMCorePlus | None = None,
+        store: Path | TempStore | None = None,
+    ) -> None:
+        self._store = store or TempStore(suffix=".zarr", prefix="pymmcore_zarr_")
+
+        QObject.__init__(self, parent)
+        OMEZarrWriter.__init__(self)
 
         self._mmc = mmcore or CMMCorePlus.instance()
-        self.viewer = viewer
 
-        # TODO: add the possibility to set either memory or store
-        self._group: zarr.Group = zarr.group()
+        self._viewer = viewer
+
+        self._layer_name: str = EXP
+
         self._mda_running: bool = False
 
-        self._mmc.mda.events.sequenceStarted.connect(self.sequenceStarted)
-        self._mmc.mda.events.frameReady.connect(self.frameReady)
-        self._mmc.mda.events.sequenceFinished.connect(self.sequenceFinished)
+        # connections
+        ev = self._mmc.mda.events
+        ev.sequenceStarted.connect(self.sequenceStarted)
+        ev.frameReady.connect(self.frameReady)
+        ev.sequenceFinished.connect(self.sequenceFinished)
 
-        self._fname: str = EXP
+        self.destroyed.connect(self._disconnect)
 
-    def _cleanup(self) -> None:
-        with contextlib.suppress(TypeError, RuntimeError):
-            self._mmc.mda.events.sequenceStarted.disconnect(self.sequenceStarted)
-            self._mmc.mda.events.frameReady.disconnect(self.frameReady)
-            self._mmc.mda.events.sequenceFinished.disconnect(self.sequenceFinished)
+    def _disconnect(self) -> None:
+        """Disconnect the signals."""
+        ev = self._mmc.mda.events
+        ev.sequenceStarted.disconnect(self.sequenceStarted)
+        ev.frameReady.disconnect(self.frameReady)
+        ev.sequenceFinished.disconnect(self.sequenceFinished)
 
-    def sequenceStarted(self, sequence: MDASequence) -> None:
-        """Start the acquisition."""
+    def sequenceStarted(self, sequence: useq.MDASequence) -> None:
+        """On sequence started, simply store the sequence."""
         self._mda_running = True
-        self._reset_group()
+
+        # create a new group for the sequence within the same store by creating a
+        # subfolder named with the sequence uid
+        if isinstance(self._store, Path):
+            store = self._store / f"{sequence.uid}"
+        elif isinstance(self._store, TempStore):
+            store = Path(self._store.path) / f"{sequence.uid}"
+        else:
+            raise ValueError("store must be a `Path` or `TempStore`.")
+        self._group = zarr.group(store=store)
+
+        # clear the arrays and sizes
+        self.position_arrays.clear()
+        self.position_sizes.clear()
+
+        # get the filename from the metadata
+        self._layer_name = self._get_filename_from_metadata(sequence)
+
         super().sequenceStarted(sequence)
 
-        self._fname = self._get_filename_form_meatdata(sequence)
-
-    def _get_filename_form_meatdata(self, sequence: MDASequence) -> str:
+    def _get_filename_from_metadata(self, sequence: useq.MDASequence) -> str:
         """Get the filename from the sequence metadata."""
-        if meta := cast(dict, sequence.metadata.get(PYMMCW_METADATA_KEY, {})):
-            fname = cast(str, meta.get("save_name", ""))
-            if fname:
-                # remove extension
-                fname = fname.rsplit(".", 1)[0]  # ['test.ome', 'tiff']
-                if fname.endswith(".ome"):
-                    fname = fname.replace(".ome", "") or EXP
-            else:
-                fname = EXP
+        meta = cast(dict, sequence.metadata.get(PYMMCW_METADATA_KEY, {}))
+        fname = cast(str, meta.get("save_name", EXP))
+        # Remove extension
+        fname = fname.rsplit(".", maxsplit=1)[0].replace(".ome", "")
+        return fname or EXP
 
-            return fname
+    def frameReady(self, image: np.ndarray, event: useq.MDAEvent, meta: dict) -> None:
+        super().frameReady(image, event, meta)
 
-        return EXP
-
-    def _reset_group(self) -> None:
-        """Reset the handler to a clean state."""
-        self._group = zarr.group()
-        self.position_arrays.clear()
-
-    def frameReady(self, frame: ndarray, event: MDAEvent, meta: dict) -> None:
-        """Update the viewer with the current acquisition."""
-        super().frameReady(frame, event, meta)
-
-        if not self.current_sequence:
-            return
-
+        # get position index and key
         p_index = event.index.get("p", 0)
         key = f"{POS_PREFIX}{p_index}"
-        layer_name = f"{self._fname}_{key}"
 
-        if not self.position_arrays:
+        if key not in self.position_arrays or not self.current_sequence:
             return
 
-        # get all layers with sequence uid metadata
-        layers_meta = self._get_layers_meta()
+        # get the current layer
+        layer = self._get_layer()
 
-        # if the current sequence uid is not in the layers metadata, add the image
-        if (self.current_sequence.uid, key) not in layers_meta:
-            self.viewer.add_image(
-                self.position_arrays[key],
-                name=layer_name,
-                blending="opaque",  # self._get_layer_blending().fix for split channels
-                metadata={"sequence_uid": self.current_sequence.uid, "key": key},
-                scale=self._get_scale(key),
-            )
-            self.viewer.dims.axis_labels = self.position_arrays[key].attrs[
-                "_ARRAY_DIMENSIONS"
-            ]
+        # add new layer or update it if it exists
+        if layer is None:
+            self._add_new_layer(key)
+        else:
+            layer.data = self.position_arrays[key]
+            self._update_slider(event, p_index)
 
-        # update the slider position
-        self._update_sliders_position(event, p_index)
+    def _get_layer(self) -> Image | None:
+        """Get the layer if it has the same `uid` as the current sequence."""
+        if self.current_sequence is None:
+            return None
 
-    def _get_layers_meta(self) -> list[tuple[UUID, str]]:
-        """Get the list of uids from the layers metadata."""
-        return [
-            (layer.metadata.get("sequence_uid"), layer.metadata.get("key"))
-            for layer in self.viewer.layers
-            if layer.metadata.get("sequence_uid") is not None
-            and layer.metadata.get("key") is not None
-        ]
+        layer = next(
+            (
+                layer
+                for layer in self._viewer.layers
+                if layer.metadata.get("uid") == self.current_sequence.uid
+            ),
+            None,
+        )
+        return layer
 
-    def _update_sliders_position(self, event: MDAEvent, p_index: int) -> None:
-        """Update the sliders position."""
-        cs = list(self.viewer.dims.current_step)
-        index = tuple(event.index[k] for k in self.position_sizes[p_index])
-        for a, v in enumerate(index):
-            cs[a] = v
-        self.viewer.dims.current_step = cs
+    def _add_new_layer(self, key: str) -> None:
+        """Add a new layer to the viewer."""
+        if self.current_sequence is None:
+            return
 
-    def _get_scale(self, fname: str) -> list[float]:
+        data = self.position_arrays[key]
+        layer = self._viewer.add_image(data, name=f"{self._layer_name}_{key}")
+        layer.scale = self._get_scale(key)
+        self._viewer.dims.axis_labels = data.attrs["_ARRAY_DIMENSIONS"]
+        layer.metadata = {
+            "uid": self.current_sequence.uid,
+            "sequence": self.current_sequence,
+            "dims": data.attrs["_ARRAY_DIMENSIONS"],
+        }
+
+    def _get_scale(self, key: str) -> list[float]:
         """Get the scale for the layer."""
         if self.current_sequence is None:
             raise ValueError("Not a MDA sequence.")
 
         # add Z to layer scale
-        arr = self.position_arrays[fname]
+        arr = self.position_arrays[key]
         if (pix_size := self._mmc.getPixelSizeUm()) != 0:
             scale = [1.0] * (arr.ndim - 2) + [pix_size] * 2
             if (index := self.current_sequence.used_axes.find("z")) > -1:
@@ -132,17 +150,22 @@ class _Handler(OMEZarrWriter):
             scale = [1.0, 1.0]
         return scale
 
-    def sequenceFinished(self, sequence: MDASequence) -> None:
-        """Finish the acquisition."""
-        super().sequenceFinished(sequence)
-        self._mda_running = False
-        # reset the sliders position to the first step
-        self.viewer.dims.current_step = [0] * len(self.viewer.dims.current_step)
+    def _update_slider(self, event: useq.MDAEvent, p_index: int) -> None:
+        """Update the slider to the current position."""
+        index = tuple(event.index[k] for k in self.position_sizes[p_index])
+        cs = list(self._viewer.dims.current_step)
+        for a, v in enumerate(index):
+            cs[a] = v
+        self._viewer.dims.current_step = cs
 
-    # this will be necessary when we manage to add the split channels feature
-    # def _get_layer_blending(self) -> str:
-    #     """Get the blending mode for the layer."""
-    #     if not self.current_sequence:
-    #         return "opaque"
-    #     if meta := self.current_sequence.metadata.get(SEQUENCE_META_KEY, {}):
-    #         return "additive" if meta.get("split_channels", False) else "opaque"
+    def sequenceFinished(self, seq: useq.MDASequence) -> None:
+        """On sequence finished, clear the current sequence."""
+        self._mda_running = False
+
+        super().sequenceFinished(seq)
+
+        self._reset_viewer_dims()
+
+    def _reset_viewer_dims(self) -> None:
+        """Reset the viewer dims to the first image."""
+        self._viewer.dims.current_step = [0] * len(self._viewer.dims.current_step)

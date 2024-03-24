@@ -32,7 +32,7 @@ class CoreViewerLink(QObject):
         # self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
         self._live_timer_id: int | None = None
 
-        self._handler = _Handler(viewer, self._mmc)
+        self._handler = _Handler(self, viewer=viewer, mmcore=self._mmc)
 
         # Add all core connections to this list.  This makes it easy to disconnect
         # from core when this widget is closed.
