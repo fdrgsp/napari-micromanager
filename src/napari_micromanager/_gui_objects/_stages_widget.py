@@ -6,6 +6,8 @@ from qtpy.QtCore import QMimeData, Qt
 from qtpy.QtGui import QDrag, QDragEnterEvent, QDropEvent, QMouseEvent
 from qtpy.QtWidgets import QGroupBox, QHBoxLayout, QMenu, QSizePolicy, QWidget
 
+from ._kinesis_rotation_widget import KinesisRotationWidget
+
 STAGE_DEVICES = {DeviceType.Stage, DeviceType.XYStage}
 
 
@@ -70,10 +72,12 @@ class MMStagesWidget(QWidget):
             self._stage_wdgs.append(bx)
             bx.setLayout(QHBoxLayout())
             bx.setSizePolicy(sizepolicy)
-            bx.layout().addWidget(StageWidget(device=stage_dev))
+            if stage_dev == "KBD101_28252107":
+                bx.layout().addWidget(KinesisRotationWidget("KBD101_28252107"))
+            else:
+                bx.layout().addWidget(StageWidget(device=stage_dev))
             self.layout().addWidget(bx)
         self.resize(self.sizeHint())
-
         self._update_context_menu()
 
     def _clear(self) -> None:
