@@ -13,21 +13,10 @@ from pymmcore_widgets import (
     GroupPresetTableWidget,
     LiveButton,
     ObjectivesWidget,
+    PixelConfigurationWidget,
     PropertyBrowser,
     SnapButton,
 )
-
-from napari_micromanager._util import (
-    load_sys_config_dialog,
-    save_sys_config_dialog,
-)
-
-try:
-    # this was renamed
-    from pymmcore_widgets import ObjectivesPixelConfigurationWidget
-except ImportError:
-    from pymmcore_widgets import PixelSizeWidget as ObjectivesPixelConfigurationWidget
-
 from qtpy.QtCore import QEvent, QObject, QSize, Qt
 from qtpy.QtWidgets import (
     QDockWidget,
@@ -42,6 +31,11 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 from superqt.fonticon import icon
+
+from napari_micromanager._util import (
+    load_sys_config_dialog,
+    save_sys_config_dialog,
+)
 
 from ._illumination_widget import IlluminationWidget
 from ._mda_widget import MultiDWidget
@@ -83,7 +77,7 @@ DOCK_WIDGETS: Dict[str, Tuple[type[QWidget], str | None]] = {  # noqa: U006
     "Illumination Control": (IlluminationWidget, MDI6.lightbulb_on),
     "Stages Control": (MMStagesWidget, MDI6.arrow_all),
     "Camera ROI": (CameraRoiWidget, MDI6.crop),
-    "Pixel Size Table": (ObjectivesPixelConfigurationWidget, MDI6.ruler),
+    "Pixel Size Table": (PixelConfigurationWidget, MDI6.ruler),
     "MDA": (MultiDWidget, None),
 }
 

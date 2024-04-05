@@ -36,6 +36,9 @@ class MultiDWidget(MDAWidget):
         ch_layout.setContentsMargins(10, 10, 10, 10)
         ch_layout.addWidget(self.checkBox_split_channels)
 
+        self.z_plan.top.setMaximum(1000000)
+        self.z_plan.bottom.setMaximum(1000000)
+
     def value(self) -> MDASequence:
         """Return the current value of the widget."""
         # Overriding the value method to add the metadata necessary for the handler.
