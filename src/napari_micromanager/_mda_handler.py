@@ -58,6 +58,8 @@ class _NapariMDAHandler:
         self.viewer = viewer
         self._mda_running: bool = False
 
+        self._stage_scan: bool = False
+
         # mapping of id -> (zarr.Array, temporary directory) for each layer created
         self._tmp_arrays: dict[str, tuple[zarr.Array, tempfile.TemporaryDirectory]] = {}
         self._deck: deque[tuple[np.ndarray, MDAEvent]] = deque()
@@ -85,6 +87,12 @@ class _NapariMDAHandler:
     @ensure_main_thread  # type: ignore [misc]
     def _on_mda_started(self, sequence: MDASequence) -> None:
         """Create temp folder and block gui when mda starts."""
+        meta = sequence.metadata.get(NMM_METADATA_KEY)
+        self._stage_scan = bool(meta.get("stage_scan")) if meta else False
+
+        if self._stage_scan:
+            return
+
         # pause acquisition until zarr layer(s) are added
         self._mmc.mda.toggle_pause()  # TODO: can we remove this somewhow?
 
@@ -145,6 +153,9 @@ class _NapariMDAHandler:
 
     def _on_mda_frame(self, image: np.ndarray, event: MDAEvent) -> None:
         """Called on the `frameReady` event from the core."""
+        if self._stage_scan:
+            return
+
         self._deck.append((image, event))
 
     def _process_frame(
@@ -189,6 +200,10 @@ class _NapariMDAHandler:
 
     def _on_mda_finished(self, sequence: MDASequence) -> None:
         self._mda_running = False
+
+        if self._stage_scan:
+            return
+
         self._reset_viewer_dims()
         while self._deck:
             self._process_frame(*self._deck.pop())

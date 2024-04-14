@@ -10,6 +10,7 @@ from qtpy.QtCore import QObject, Qt, QTimerEvent
 from superqt.utils import ensure_main_thread
 
 from ._mda_handler import _NapariMDAHandler
+from ._stage_scan_handler import _StageScan
 
 if TYPE_CHECKING:
     import napari.viewer
@@ -30,6 +31,7 @@ class CoreViewerLink(QObject):
         self._mmc = core or CMMCorePlus.instance()
         self.viewer = viewer
         self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
+        self._stage_scan_handler = _StageScan(self._mmc, viewer)
         self._live_timer_id: int | None = None
 
         # Add all core connections to this list.  This makes it easy to disconnect
@@ -56,7 +58,10 @@ class CoreViewerLink(QObject):
 
     def _image_snapped(self) -> None:
         # If we are in the middle of an MDA, don't update the preview viewer.
-        if not self._mda_handler._mda_running:
+        if (
+            not self._mda_handler._mda_running
+            and not self._stage_scan_handler._mda_running
+        ):
             self._update_viewer(self._mmc.getImage())
 
     def _start_live(self) -> None:
@@ -77,8 +82,6 @@ class CoreViewerLink(QObject):
     def _update_viewer(self, data: np.ndarray | None = None) -> None:
         """Update viewer with the latest image from the circular buffer."""
         if data is None:
-            if self._mmc.getRemainingImageCount() == 0:
-                return
             try:
                 data = self._mmc.getLastImage()
             except (RuntimeError, IndexError):
