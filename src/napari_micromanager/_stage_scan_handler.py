@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
 import napari
 import zarr
 from qtpy.QtWidgets import QMessageBox
+from zarr.storage import TempStore
 
 from ._util import NMM_METADATA_KEY
 
@@ -34,6 +36,10 @@ class _StageScan:
         self._rows_cols: list[RowsCols] = []
 
         self._stage_scan: bool = False
+
+        self._store = TempStore(
+            suffix=".zarr", prefix="napari_micromanager_stage_scan_"
+        )
 
         self._mmc.mda.events.sequenceStarted.connect(self._on_sequence_started)
         self._mmc.mda.events.sequenceFinished.connect(self._on_sequence_finished)
@@ -79,7 +85,10 @@ class _StageScan:
         width = self._mmc.getImageWidth() * (cols + 1)
         height = self._mmc.getImageHeight() * (rows + 1)
 
+        store = Path(self._store.path) / f"{sequence.uid}.zarr"
+
         self._z = zarr.open(
+            store=store,
             shape=(ch, height, width),
             dtype=f"u{self._mmc.getBytesPerPixel()}",
             chunks=(1, self._mmc.getImageWidth(), self._mmc.getImageHeight()),
