@@ -87,6 +87,7 @@ class _NapariMDAHandler:
     @ensure_main_thread  # type: ignore [misc]
     def _on_mda_started(self, sequence: MDASequence) -> None:
         """Create temp folder and block gui when mda starts."""
+        self._mda_running = True
         meta = sequence.metadata.get(NMM_METADATA_KEY)
         self._stage_scan = bool(meta.get("stage_scan")) if meta else False
 
@@ -127,7 +128,6 @@ class _NapariMDAHandler:
         self._largest_idx: tuple[int, ...] = (-1,)
 
         self._deck = deque()
-        self._mda_running = True
         self._io_t = create_worker(
             self._watch_mda,
             _start_thread=True,

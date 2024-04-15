@@ -58,11 +58,9 @@ class CoreViewerLink(QObject):
 
     def _image_snapped(self) -> None:
         # If we are in the middle of an MDA, don't update the preview viewer.
-        if (
-            not self._mda_handler._mda_running
-            and not self._stage_scan_handler._mda_running
-        ):
-            self._update_viewer(self._mmc.getImage())
+        if self._mda_handler._mda_running or self._stage_scan_handler._mda_running:
+            return
+        self._update_viewer(self._mmc.getImage())
 
     def _start_live(self) -> None:
         interval = int(self._mmc.getExposure())

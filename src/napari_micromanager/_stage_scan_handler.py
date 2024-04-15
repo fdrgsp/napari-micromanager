@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import napari
 import zarr
+from qtpy.QtWidgets import QMessageBox
 
 from ._util import NMM_METADATA_KEY
 
@@ -39,6 +40,8 @@ class _StageScan:
         self._mmc.mda.events.frameReady.connect(self._on_frame_ready)
 
     def _on_sequence_started(self, sequence: useq.MDASequence) -> None:
+        self._mda_running = True
+
         meta = sequence.metadata.get(NMM_METADATA_KEY)
         self._stage_scan = bool(meta.get("stage_scan")) if meta else False
 
@@ -46,9 +49,11 @@ class _StageScan:
             return
 
         if sequence.grid_plan is None:
+            self._raise_stage_scan_sequence_error()
             return
 
         if len(sequence.stage_positions) > 1:
+            self._raise_stage_scan_sequence_error()
             return
 
         # if there is only one position but it has sub-sequence, we return
@@ -56,9 +61,8 @@ class _StageScan:
             len(sequence.stage_positions) == 1
             and sequence.stage_positions[0].sequence is not None
         ):
+            self._raise_stage_scan_sequence_error()
             return
-
-        self._mda_running = True
 
         ch = len(sequence.channels)
         grid = sequence.grid_plan
@@ -83,6 +87,22 @@ class _StageScan:
 
         self._layer = self._viewer.add_image(self._z, name="Scan")
         self._viewer.dims.axis_labels = ("c", "y", "x")
+
+    def _raise_stage_scan_sequence_error(self) -> None:
+        self._z = None
+        self._rows_cols.clear()
+        self._mmc.mda.cancel()
+        msg = (
+            "To use the 'Stage Scan' mode, the MDASequence must have a single- or a "
+            "multi-channel grid plan, it can have maximum one position "
+            "(with no sub-sequence) and no other dimension."
+        )
+        QMessageBox.critical(
+            self._viewer.window._qt_viewer,
+            "Stage Scan Error",
+            msg,
+            QMessageBox.StandardButton.Ok,
+        )
 
     def _on_sequence_finished(self, sequence: useq.MDASequence) -> None:
         self._mda_running = False
