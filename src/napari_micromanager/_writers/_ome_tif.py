@@ -60,8 +60,6 @@ class OMETifWriter(OMETiffWriter):
 
         fname = self._folder / f"{self._folder.name}{pos_name}{EXT}"
 
-        # create parent directories if they don't exist
-        # Path(fname).parent.mkdir(parents=True, exist_ok=True)
         # write empty file to disk
         imwrite(
             fname,
