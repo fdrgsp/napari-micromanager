@@ -32,6 +32,8 @@ class OMETifWriter(OMETiffWriter):
         super().__init__(filename)
 
         self._folder: Path = Path(self._filename.replace(EXT, ""))
+        # create a folder to store the OME-TIFF files
+        self._folder.mkdir(parents=True, exist_ok=True)
 
     def new_array(
         self, position_key: str, dtype: np.dtype, sizes: dict[str, int]
@@ -48,9 +50,6 @@ class OMETifWriter(OMETiffWriter):
 
         metadata: dict[str, Any] = self._sequence_metadata()
         metadata["axes"] = "".join(dims).upper()
-
-        # create a folder to store the OME-TIFF files
-        self._folder.mkdir(parents=True, exist_ok=True)
 
         # add the position key to the filename if there are multiple positions
         if (seq := self.current_sequence) and seq.sizes.get("p", 1) > 1:
