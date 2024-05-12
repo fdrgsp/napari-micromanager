@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 EXT = ".ome.tif"
 META = "_metadata.json"
-SEQ = "_sequence.json"
+SEQ = "_useq_MDASequence.json"
 
 
 class OMETifWriter(OMETiffWriter):
