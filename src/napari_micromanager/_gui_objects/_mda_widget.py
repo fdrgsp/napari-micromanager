@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (
 )
 
 from napari_micromanager._util import NMM_METADATA_KEY
+from napari_micromanager._writers._ome_tif import OMETifWriter
 from napari_micromanager._writers._tif_sequence_writer import TifSequenceWriter
 
 if TYPE_CHECKING:
@@ -108,8 +109,14 @@ class MultiDWidget(MDAWidget):
         else:
             save_path = None
 
+        # use internal OME-TIFF writer if selected
+        if save_path and any(
+            save_path.name.endswith(ext) for ext in [".ome.tif", ".ome.tiff"]
+        ):
+            save_path = OMETifWriter(save_path)
+
         # use internal tif sequence writer if selected
-        if save_path and not any(
+        elif save_path and not any(
             save_path.name.endswith(ext)
             for ext in [".ome.tif", ".ome.tiff", ".ome.zarr"]
         ):

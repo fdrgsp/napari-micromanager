@@ -83,7 +83,7 @@ class ArduinoEngine(MDAEngine):
             # skip if no autofocus device is found
             if not self._mmc.getAutoFocusDevice():
                 logger.warning("No autofocus device found. Cannot execute autofocus.")
-                return ()
+                return ()  #  type: ignore
 
             try:
                 # execute hardware autofocus
@@ -98,7 +98,7 @@ class ArduinoEngine(MDAEngine):
                 self._z_correction[p_idx] = new_correction + self._z_correction.get(
                     p_idx, 0.0
                 )
-            return ()
+            return ()  #  type: ignore
 
         # if the autofocus was engaged at the start of the sequence AND autofocus action
         # did not fail, re-engage it. NOTE: we need to do that AFTER the runner calls
