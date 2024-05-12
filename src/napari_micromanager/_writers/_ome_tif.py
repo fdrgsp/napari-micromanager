@@ -35,7 +35,16 @@ class OMETifWriter(OMETiffWriter):
         ext = ".ome.tif" if self._is_ome else ".tif"
         for position_key in reversed(list(self.frame_metadatas.keys())):
             base_path = self._filename.replace(ext, f"_{position_key}")
-            meta = {f"{Path(base_path).name}{ext}": self.frame_metadatas[position_key]}
+            meta = {
+                f"{Path(base_path).name}{ext}": {
+                    "metadata:": self.frame_metadatas[position_key],
+                    "sequence": (
+                        self.current_sequence.model_dump_json(exclude_unset=True)
+                        if self.current_sequence is not None
+                        else None
+                    ),
+                }
+            }
             with open(base_path + META, "w") as f:
                 formatted = json.dumps(meta, indent=2)
                 f.write(formatted)
