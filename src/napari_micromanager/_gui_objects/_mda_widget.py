@@ -150,24 +150,11 @@ class MultiDWidget(MDAWidget):
             (meta := sequence.metadata.get(PYMMCW_METADATA_KEY, {}))
             and (save_dir := meta.get("save_dir"))
             and (save_name := meta.get("save_name"))
-            and (file_format := meta.get("format"))
         ):
-            # if OME-TIFF, we remove the suffix so ww will check if the directory exists
-            # or not and increase the counter accordingly. This is because in this
-            # version of napatari-micromanager, the OMETifWriter will create the
-            # directory instead of saving the file directly.
-            is_ome_tif = "ome-tif" in file_format
-            if is_ome_tif:
-                # remove suffix
-                save_name = save_name.replace(".ome.tif", "")
-
             requested = (Path(save_dir) / str(save_name)).expanduser().resolve()
             next_path = self.get_next_available_path(requested)
 
             if next_path != requested:
-                # put back suffix to correctly trigger the save widget update
-                if is_ome_tif:
-                    next_path = Path(next_path).with_suffix(".ome.tif")
                 if update_widget:
                     self.save_info.setValue(next_path)
                     if update_metadata:

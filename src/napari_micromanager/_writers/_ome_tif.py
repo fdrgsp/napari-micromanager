@@ -31,7 +31,7 @@ class OMETifWriter(OMETiffWriter):
     def __init__(self, filename: Path | str) -> None:
         super().__init__(filename)
 
-        self._folder: Path = Path(self._filename.replace(EXT, ""))
+        self._folder: Path = Path(self._filename)
         # create a folder to store the OME-TIFF files
         self._folder.mkdir(parents=True, exist_ok=True)
 
