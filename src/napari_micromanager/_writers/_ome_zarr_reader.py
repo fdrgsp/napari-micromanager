@@ -98,7 +98,7 @@ class OMEZarrReader:
         """Return the mapping of well to position."""
         return self._well_to_pos
 
-    def get_positions_keys(self) -> list[str]:
+    def array_keys(self) -> list[str]:
         """Return the array position keys.
 
         Each position is stored as a separate array in the zarr file and the key is the
