@@ -64,9 +64,10 @@ class TensorZarrReader:
     ) -> None:
         """Write the data for the given axis to a tiff file.
 
-        NOTE: if provided, 'axis_and_index' can only have one axis, e.g. {'p': 1}. If
-        'axis_and_index' is None, the data will be saved as a tiff file for each
+        If 'axis_and_index' is None, the data will be saved as a tiff file for each
         position, if any, or as a single tiff file.
+
+        NOTE: if provided, 'axis_and_index' can only have one axis, e.g. {'p': 1}.
         """
         from tifffile import imwrite
 
