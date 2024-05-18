@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any
 
 import zarr
+from tqdm import tqdm
 from useq import MDASequence
 from zarr import Array
 
@@ -32,6 +33,54 @@ class TensorZarrReader:
         except KeyError:
             return None
 
+    # ______________________Public Methods______________________
+
+    def get_axis_data_and_metadata(
+        self, axis_and_index: dict[str, int]
+    ) -> tuple[Array, list[dict[str, Any]]]:
+        """Return the data for the given axis and its metadata.
+
+        NOTE: Only one axis is allowed, e.g. {'p': 1}
+        """
+        ((axis, index),) = axis_and_index.items()
+
+        data = self._get_axis_data(axis, index)
+
+        meta = self.zarr.attrs.get("frame_metadatas")
+        if meta is None:
+            return data, []
+
+        axis_meta = []
+        for i in self.zarr.attrs["frame_metadatas"]:
+            event = i["Event"]
+            event_index = event["index"]
+            if axis in event_index and index == event_index.get(axis):
+                axis_meta.append(i)
+
+        return data, axis_meta
+
+    def write_tiff(
+        self, path: str | Path, axis_and_index: dict[str, int] | None = None
+    ) -> None:
+        """Write the data for the given axis to a tiff file.
+
+        NOTE: if provided, 'axis_and_index' can only have one axis, e.g. {'p': 1}. If
+        'axis_and_index' is None, the data will be saved as a tiff file for each
+        position, if any, or as a single tiff file.
+        """
+        from tifffile import imwrite
+
+        # TODO: FIX ME!!! make ome-tiff
+
+        if axis_and_index is None:
+            self._save_all_as_tiff(path)
+            return
+
+        data, _ = self.get_axis_data_and_metadata(axis_and_index)
+        imwrite(path, data, imagej=True)
+
+    # ______________________Private Methods______________________
+
     def _create_axis_tuple(self, axis: str) -> int:
         """Create a tuple with the correct slice for the given axis."""
         if self.sequence is None:
@@ -42,16 +91,9 @@ class TensorZarrReader:
 
         return self.sequence.axis_order.index(axis)
 
-    def get_axis_data(self, axis_and_index: dict[str, int]) -> Array:
-        """Return the data for the given axis.
-
-        NOTE: Only one axis is allowed, e.g. {'p': 1}
-        """
-        if len(axis_and_index.keys()) != 1:
-            raise ValueError("Only one axis is allowed, e.g. {'p': 1}!")
-
-        # get axis and index (e.g. axis_and_index = {"p": 1} -> axis = "p", index = 1)
-        (axis,), (index,) = axis_and_index.keys(), axis_and_index.values()
+    def _get_axis_data(self, axis: str, index: int) -> Array:
+        """Return the data for the given axis."""
+        # e.g. axis = "p", index = 1)
         # get the correct tuple for the axis (e.g. axis_index = 1)
         axis_index = self._create_axis_tuple(axis)
         # get the correct tuple for the axis
@@ -64,25 +106,25 @@ class TensorZarrReader:
         # return the data for the given axis
         return self.zarr[tuple(axis_tuple)]
 
-    def get_axis_data_and_metadata(
-        self, axis_and_index: dict[str, int]
-    ) -> tuple[Array, list[dict[str, Any]]]:
-        """Return the data for the given axis and its metadata.
+    def _save_all_as_tiff(self, path: str | Path) -> None:
+        """Save the zarr file to a tiff file.
 
-        NOTE: Only one axis is allowed, e.g. {'p': 1}
+        If the MDASequence has positions, save each position as a tiff file. Otherwise,
+        save the zarr data as a single tiff file.
         """
-        data = self.get_axis_data(axis_and_index)
+        from tifffile import imwrite
 
-        meta = self.zarr.attrs.get("frame_metadatas")
-        if meta is None:
-            return self.get_axis_data(axis_and_index), []
+        # TODO: FIX ME!!! make ome-tiff
 
-        axis_meta = []
-        (axis,), (index,) = axis_and_index.keys(), axis_and_index.values()
-        for i in self.zarr.attrs["frame_metadatas"]:
-            event = i["Event"]
-            event_index = event["index"]
-            if axis in event_index and index == event_index.get(axis):
-                axis_meta.append(i)
+        if self.sequence is None:
+            raise ValueError("No MDASequence found in the metadata.")
 
-        return data, axis_meta
+        if pos := len(self.sequence.stage_positions):
+            with tqdm(total=pos) as pbar:
+                for i in range(pos):
+                    data, _ = self.get_axis_data_and_metadata({"p": i})
+                    imwrite(Path(path) / f"p{i}.tif", data, imagej=True)
+                    pbar.update(1)
+
+        else:
+            imwrite(path, self.zarr, imagej=True)
