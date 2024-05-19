@@ -61,6 +61,19 @@ class TensorZarrReader:
 
         If 'axis' or 'index' is None, the data will be saved as a tiff file for each
         position, if any, or as a single tiff file.
+
+        Parameters
+        ----------
+        path : str | Path
+            The path to save the tiff file. If 'axis' or 'index' is None, the path
+            should be a directory. Otherwise, the path should be a file (ending in
+            '.tif').
+        axis : str | None, optional
+            The axis to save as a tiff file. If None, save all positions as tiff files.
+            Default is None.
+        index : int | None, optional
+            The index of the axis to save as a tiff file. If None, save all positions as
+            tiff files. Default is None.
         """
         from tifffile import imwrite
 
