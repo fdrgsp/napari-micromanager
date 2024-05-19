@@ -36,14 +36,9 @@ class TensorZarrReader:
     # ______________________Public Methods______________________
 
     def get_axis_data_and_metadata(
-        self, axis_and_index: dict[str, int]
+        self, axis: str, index: int
     ) -> tuple[Array, list[dict[str, Any]]]:
-        """Return the data for the given axis and its metadata.
-
-        NOTE: Only one axis is allowed, e.g. {'p': 1}
-        """
-        ((axis, index),) = axis_and_index.items()
-
+        """Return the data for the given axis and its metadata."""
         data = self._get_axis_data(axis, index)
 
         meta = self.zarr.attrs.get("frame_metadatas")
@@ -60,25 +55,24 @@ class TensorZarrReader:
         return data, axis_meta
 
     def write_tiff(
-        self, path: str | Path, axis_and_index: dict[str, int] | None = None
+        self, path: str | Path, axis: str | None = None, index: int | None = None
     ) -> None:
         """Write the data for the given axis to a tiff file.
 
-        If 'axis_and_index' is None, the data will be saved as a tiff file for each
+        If 'axis' or 'index' is None, the data will be saved as a tiff file for each
         position, if any, or as a single tiff file.
-
-        NOTE: if provided, 'axis_and_index' can only have one axis, e.g. {'p': 1}.
         """
         from tifffile import imwrite
 
         # TODO: FIX ME!!! make ome-tiff
 
-        if axis_and_index is None:
+        if axis is None or index is None:
             self._save_all_as_tiff(path)
             return
 
-        data, _ = self.get_axis_data_and_metadata(axis_and_index)
-        imwrite(path, data, imagej=True)
+        data, _ = self.get_axis_data_and_metadata(axis, index)
+        imj = len(data.shape) <= 5
+        imwrite(path, data, imagej=imj)
 
     # ______________________Private Methods______________________
 
@@ -123,9 +117,10 @@ class TensorZarrReader:
         if pos := len(self.sequence.stage_positions):
             with tqdm(total=pos) as pbar:
                 for i in range(pos):
-                    data, _ = self.get_axis_data_and_metadata({"p": i})
+                    data, _ = self.get_axis_data_and_metadata("p", i)
                     imwrite(Path(path) / f"p{i}.tif", data, imagej=True)
                     pbar.update(1)
 
         else:
-            imwrite(path, self.zarr, imagej=True)
+            imj = len(self.zarr.shape) <= 5
+            imwrite(path, self.zarr, imagej=imj)
