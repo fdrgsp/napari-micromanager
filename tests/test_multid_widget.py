@@ -2,19 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from napari_micromanager._gui_objects._mda_widget import MultiDWidget
-from napari_micromanager._util import NMM_METADATA_KEY
 from pymmcore_plus.mda import MDAEngine
 from useq import MDASequence
+
+from napari_micromanager._gui_objects._mda_widget import MultiDWidget
+from napari_micromanager._util import NMM_METADATA_KEY
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from napari_micromanager.main_window import MainWindow
     from pytestqt.qtbot import QtBot
 
+    from napari_micromanager.main_window import MainWindow
 
-def test_main_window_mda(main_window: MainWindow):
+
+def test_main_window_mda(main_window: MainWindow) -> None:
     assert not main_window.viewer.layers
 
     mda = MDASequence(
@@ -31,6 +33,16 @@ def test_main_window_mda(main_window: MainWindow):
     layer_meta = main_window.viewer.layers[0].metadata.get(NMM_METADATA_KEY)
     keys = ["useq_sequence", "uid"]
     assert all(key in layer_meta for key in keys)
+
+
+def test_main_window_mda_rgb(main_window: MainWindow) -> None:
+    main_window._mmc.setProperty("Camera", "PixelType", "32bitRGB")
+    main_window._mmc.setProperty("Camera", "Mode", "Color Test Pattern")
+    assert not main_window.viewer.layers
+
+    mda = MDASequence(time_plan={"loops": 4, "interval": 0.01}, channels=["DAPI"])
+    main_window._mmc.mda.run(mda)
+    assert main_window.viewer.layers[-1].data.shape == (4, 1, 512, 512, 3)
 
 
 def test_saving_mda(
