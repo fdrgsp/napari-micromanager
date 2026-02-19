@@ -10,18 +10,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-def _has_py_devices(cfg_path: str) -> bool:
-    """Return True if the .cfg file contains #py pyDevice lines."""
-    try:
-        with open(cfg_path) as f:
-            return any(
-                line.strip().startswith("#py pyDevice")
-                for line in f
-            )
-    except OSError:
-        return False
-
-
 def main(args: Sequence[str] | None = None) -> None:
     """Create a napari viewer and add the MicroManager plugin to it."""
     if args is None:
@@ -43,14 +31,7 @@ def main(args: Sequence[str] | None = None) -> None:
     from napari_micromanager.main_window import MainWindow
 
     viewer = napari.Viewer()
-
-    config = parsed_args.config
-    if config is not None and _has_py_devices(config):
-        from pymmcore_plus.experimental.unicore import UniMMCore
-        import pymmcore_plus.core._mmcore_plus as _core_mod
-        _core_mod._instance = UniMMCore()
-
-    win = MainWindow(viewer, config=config)
+    win = MainWindow(viewer, config=parsed_args.config)
     dw = viewer.window.add_dock_widget(win, name="MicroManager", area="top")
     if hasattr(dw, "_close_btn"):
         dw._close_btn = False

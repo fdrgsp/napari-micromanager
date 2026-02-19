@@ -11,30 +11,6 @@ if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
 
 
-def test_has_py_devices_true(tmp_path: Path) -> None:
-    """Returns True when the cfg contains #py pyDevice lines."""
-    from napari_micromanager.__main__ import _has_py_devices
-
-    cfg = tmp_path / "test.cfg"
-    cfg.write_text("#py pyDevice,Camera,mymodule,MyCamera\n")
-    assert _has_py_devices(str(cfg)) is True
-
-
-def test_has_py_devices_false(tmp_path: Path) -> None:
-    """Returns False for a standard cfg with no #py lines."""
-    from napari_micromanager.__main__ import _has_py_devices
-
-    cfg = tmp_path / "test.cfg"
-    cfg.write_text("# Standard config\nDevice,Camera,DemoCamera,DCam\n")
-    assert _has_py_devices(str(cfg)) is False
-
-
-def test_has_py_devices_missing_file() -> None:
-    """Returns False (no crash) when the file does not exist."""
-    from napari_micromanager.__main__ import _has_py_devices
-
-    assert _has_py_devices("/nonexistent/path.cfg") is False
-
 
 def test_main_window_core_injection(qtbot: QtBot) -> None:
     """MainWindow accepts an injected core and uses it as the singleton."""

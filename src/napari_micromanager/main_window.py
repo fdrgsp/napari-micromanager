@@ -34,13 +34,19 @@ class MainWindow(MicroManagerToolbar):
         config: str | Path | None = None,
         core: CMMCorePlus | None = None,
     ) -> None:
-        super().__init__(viewer)
+        import pymmcore_plus.core._mmcore_plus as _core_mod
 
-        # Allow injection of a custom core (e.g. UniMMCore for #py cfg files).
-        # Install into the singleton so all downstream code sees it.
         if core is not None:
-            import pymmcore_plus.core._mmcore_plus as _core_mod
+            # Explicit injection (e.g. from CLI or programmatic use).
             _core_mod._instance = core
+        elif _core_mod._instance is None:
+            # No singleton yet — install UniMMCore before super().__init__() so
+            # that toolbar widgets calling CMMCorePlus.instance() get UniMMCore,
+            # enabling #py pyDevice cfg files to be loaded via the GUI.
+            from pymmcore_plus.experimental.unicore import UniMMCore
+            _core_mod._instance = UniMMCore()
+
+        super().__init__(viewer)
 
         # get global CMMCorePlus instance
         self._mmc = CMMCorePlus.instance()
