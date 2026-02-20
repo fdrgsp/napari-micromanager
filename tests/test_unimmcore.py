@@ -5,11 +5,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-import pytest
-
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
-
 
 
 def test_main_window_core_injection(qtbot: QtBot) -> None:

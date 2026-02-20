@@ -44,6 +44,7 @@ class MainWindow(MicroManagerToolbar):
             # that toolbar widgets calling CMMCorePlus.instance() get UniMMCore,
             # enabling #py pyDevice cfg files to be loaded via the GUI.
             from pymmcore_plus.experimental.unicore import UniMMCore
+
             _core_mod._instance = UniMMCore()
 
         super().__init__(viewer)
