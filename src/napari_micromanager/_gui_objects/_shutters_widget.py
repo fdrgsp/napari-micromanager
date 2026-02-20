@@ -45,9 +45,9 @@ class MMShuttersWidget(QWidget):
 
         for idx, shutter in enumerate(shutters_devs):
             if idx == len(shutters_devs) - 1:
-                s = ShuttersWidget(shutter)
+                s = ShuttersWidget(shutter, mmcore=self._mmc)
             else:
-                s = ShuttersWidget(shutter, autoshutter=False)
+                s = ShuttersWidget(shutter, autoshutter=False, mmcore=self._mmc)
             s.button_text_open = shutter
             s.button_text_closed = shutter
             self.layout().addWidget(s)

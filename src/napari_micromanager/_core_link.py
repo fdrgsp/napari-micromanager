@@ -46,6 +46,12 @@ class CoreViewerLink(QObject):
             signal.connect(slot)
 
     def cleanup(self) -> None:
+        # Stop live acquisition if running
+        self._stop_live()
+        with contextlib.suppress(Exception):
+            if self._mmc.isSequenceRunning():
+                self._mmc.stopSequenceAcquisition()
+
         for signal, slot in self._connections:
             with contextlib.suppress(TypeError, RuntimeError):
                 signal.disconnect(slot)

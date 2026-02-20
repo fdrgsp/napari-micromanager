@@ -25,7 +25,7 @@ class MMStagesWidget(QWidget):
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        self._mmc = CMMCorePlus.instance()
+        self._mmc = mmcore or CMMCorePlus.instance()
         self._on_cfg_loaded()
         self._mmc.events.systemConfigurationLoaded.connect(self._on_cfg_loaded)
 
@@ -45,7 +45,7 @@ class MMStagesWidget(QWidget):
                 continue
             bx.setLayout(QHBoxLayout())
             bx.setSizePolicy(sizepolicy)
-            bx.layout().addWidget(StageWidget(device=stage_dev))
+            bx.layout().addWidget(StageWidget(device=stage_dev, mmcore=self._mmc))
             self.layout().addWidget(bx)
         self.resize(self.sizeHint())
 

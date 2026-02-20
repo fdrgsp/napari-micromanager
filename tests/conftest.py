@@ -10,6 +10,7 @@ import napari
 import pytest
 import useq
 from pymmcore_plus import CMMCorePlus
+from pymmcore_plus.experimental.unicore import UniMMCore
 
 from napari_micromanager._util import NMM_METADATA_KEY
 from napari_micromanager.main_window import MainWindow
@@ -20,11 +21,14 @@ if TYPE_CHECKING:
 # Prevent ipykernel debug logs from causing formatting errors in pytest
 logging.getLogger("ipykernel.inprocess.ipkernel").setLevel(logging.ERROR)
 
+_CORE_CLASSES = [CMMCorePlus, UniMMCore]
+_CORE_IDS = ["CMMCorePlus", "UniMMCore"]
 
-# to create a new CMMCorePlus() for every test
-@pytest.fixture
-def core(monkeypatch: pytest.MonkeyPatch) -> CMMCorePlus:
-    new_core = CMMCorePlus()
+
+# to create a new CMMCorePlus/UniMMCore for every test
+@pytest.fixture(params=_CORE_CLASSES, ids=_CORE_IDS)
+def core(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> CMMCorePlus:
+    new_core = request.param()
     config_path = str(Path(__file__).parent / "test_config.cfg")
     new_core.loadSystemConfiguration(config_path)
     monkeypatch.setattr("pymmcore_plus.core._mmcore_plus._instance", new_core)
