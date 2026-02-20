@@ -118,7 +118,7 @@ class MainWindow(MicroManagerToolbar):
 
         original = self._mmc.loadSystemConfiguration
 
-        def _auto_detect_load(path: str) -> None:
+        def _auto_detect_load(path: str | Path) -> None:
             needs_unicore = _cfg_has_py_devices(path)
             is_unicore = isinstance(self._mmc, UniMMCore)
 
@@ -133,7 +133,7 @@ class MainWindow(MicroManagerToolbar):
 
             original(path)
 
-        self._mmc.loadSystemConfiguration = _auto_detect_load  # type: ignore[method-assign]
+        self._mmc.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
 
     def _cleanup(self) -> None:
         for signal, slot in self._connections:
