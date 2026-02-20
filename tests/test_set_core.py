@@ -10,15 +10,13 @@ from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.experimental.unicore import UniMMCore
 
 from napari_micromanager.main_window import MainWindow
+from tests.conftest import _unicore_roi_works
 
 if TYPE_CHECKING:
     import napari
     from pytestqt.qtbot import QtBot
 
 CONFIG = str(Path(__file__).parent / "test_config.cfg")
-
-# Re-use the conftest check for UniMMCore getROI support.
-from tests.conftest import _unicore_roi_works
 
 _unicore_xfail = pytest.mark.xfail(
     not _unicore_roi_works,
@@ -91,7 +89,9 @@ _SWAP_COMBOS = [
     pytest.param(
         UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus", marks=_unicore_xfail
     ),
-    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail),
+    pytest.param(
+        UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail
+    ),
 ]
 
 
