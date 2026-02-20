@@ -53,7 +53,9 @@ _CORE_PARAMS = [
 
 # to create a new CMMCorePlus/UniMMCore for every test
 @pytest.fixture(params=_CORE_PARAMS)
-def core(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> CMMCorePlus:
+def core(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> CMMCorePlus:
     new_core = request.param()
     config_path = str(Path(__file__).parent / "test_config.cfg")
     new_core.loadSystemConfiguration(config_path)
