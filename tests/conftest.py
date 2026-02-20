@@ -21,15 +21,39 @@ if TYPE_CHECKING:
 # Prevent ipykernel debug logs from causing formatting errors in pytest
 logging.getLogger("ipykernel.inprocess.ipkernel").setLevel(logging.ERROR)
 
-_CORE_CLASSES = [CMMCorePlus, UniMMCore]
-_CORE_IDS = ["CMMCorePlus", "UniMMCore"]
+# Check whether the installed UniMMCore supports getROI (needed by MDA / snap).
+# This was added on pymmcore-plus main but not yet in a pip release.
+_unicore_roi_works = True
+try:
+    _test_core = UniMMCore()
+    _cfg = str(Path(__file__).parent / "test_config.cfg")
+    _test_core.loadSystemConfiguration(_cfg)
+    _test_core.getROI()
+except NotImplementedError:
+    _unicore_roi_works = False
+finally:
+    del _test_core, _cfg
+
+_CORE_PARAMS = [
+    pytest.param(CMMCorePlus, id="CMMCorePlus"),
+    pytest.param(
+        UniMMCore,
+        id="UniMMCore",
+        marks=[]
+        if _unicore_roi_works
+        else [
+            pytest.mark.xfail(
+                reason="UniMMCore getROI not implemented in this pymmcore-plus version",
+                strict=False,
+            )
+        ],
+    ),
+]
 
 
 # to create a new CMMCorePlus/UniMMCore for every test
-@pytest.fixture(params=_CORE_CLASSES, ids=_CORE_IDS)
-def core(
-    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
-) -> CMMCorePlus:
+@pytest.fixture(params=_CORE_PARAMS)
+def core(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest) -> CMMCorePlus:
     new_core = request.param()
     config_path = str(Path(__file__).parent / "test_config.cfg")
     new_core.loadSystemConfiguration(config_path)
