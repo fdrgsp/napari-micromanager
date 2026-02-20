@@ -248,7 +248,7 @@ def _clear_layout(layout: QHBoxLayout) -> None:
     while layout.count():
         if item := layout.takeAt(0):
             if wdg := item.widget():
-                wdg.setParent(None)  # type: ignore [call-overload]
+                wdg.setParent(None)
                 wdg.deleteLater()
 
 

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pytestqt.qtbot import QtBot
 
 

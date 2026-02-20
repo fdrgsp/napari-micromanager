@@ -12,6 +12,7 @@ from pymmcore_plus.experimental.unicore import UniMMCore
 from napari_micromanager.main_window import MainWindow
 
 if TYPE_CHECKING:
+    import napari
     from pytestqt.qtbot import QtBot
 
 CONFIG = str(Path(__file__).parent / "test_config.cfg")

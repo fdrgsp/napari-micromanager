@@ -133,7 +133,7 @@ class MainWindow(MicroManagerToolbar):
 
             original(path)
 
-        self._mmc.loadSystemConfiguration = _auto_detect_load
+        self._mmc.loadSystemConfiguration = _auto_detect_load  # type: ignore[method-assign]
 
     def _cleanup(self) -> None:
         for signal, slot in self._connections:
