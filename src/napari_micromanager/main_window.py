@@ -25,6 +25,15 @@ logging.getLogger("napari.loader").setLevel(logging.WARNING)
 logging.getLogger("in_n_out").setLevel(logging.WARNING)
 
 
+def _cfg_has_py_devices(path: str | Path) -> bool:
+    """Return True if the cfg file contains ``#py`` device lines."""
+    try:
+        with open(path) as f:
+            return any(line.strip().startswith("#py") for line in f)
+    except (FileNotFoundError, OSError):
+        return False
+
+
 class MainWindow(MicroManagerToolbar):
     """The main napari-micromanager widget that gets added to napari."""
 
@@ -40,19 +49,12 @@ class MainWindow(MicroManagerToolbar):
             # Explicit injection (e.g. from CLI or programmatic use).
             _core_mod._instance = core
         elif _core_mod._instance is None:
-            # No singleton yet — install UniMMCore before super().__init__() so
-            # that toolbar widgets calling CMMCorePlus.instance() get UniMMCore,
-            # enabling #py pyDevice cfg files to be loaded via the GUI.
-            from pymmcore_plus.experimental.unicore import UniMMCore
+            _core_mod._instance = CMMCorePlus()
 
-            _core_mod._instance = UniMMCore()
-
-        super().__init__(viewer)
-
-        # get global CMMCorePlus instance
-        self._mmc = CMMCorePlus.instance()
+        super().__init__(viewer, mmcore=CMMCorePlus.instance())
         # this object mediates the connection between the viewer and core events
         self._core_link = CoreViewerLink(viewer, self._mmc, self)
+        self._wrap_load_system_configuration()
 
         # some remaining connections related to widgets ... TODO: unify with superclass
         self._connections: list[tuple[PSignalInstance, Callable]] = [
@@ -77,6 +79,61 @@ class MainWindow(MicroManagerToolbar):
             except FileNotFoundError:
                 # don't crash if the user passed an invalid config
                 warn(f"Config file {config} not found. Nothing loaded.", stacklevel=2)
+
+    def set_core(self, core: CMMCorePlus) -> None:
+        """Disconnect old core, install new one, reconnect everything."""
+        import pymmcore_plus.core._mmcore_plus as _core_mod
+
+        # Guard: refuse if MDA is running
+        if self._core_link._mda_handler._mda_running:
+            raise RuntimeError("Cannot swap core while MDA is running.")
+
+        # 1. Disconnect old core and destroy old link
+        old_link = self._core_link
+        old_link.cleanup()
+        old_link.setParent(None)
+        old_link.deleteLater()
+
+        # 2. Install new core as singleton
+        _core_mod._instance = core
+        self._mmc = core
+
+        # 3. Reconnect CoreViewerLink
+        self._core_link = CoreViewerLink(self.viewer, self._mmc, self)
+        self._wrap_load_system_configuration()
+
+        # 4. Rebuild toolbar widgets
+        self._rebuild_toolbars(self._mmc)
+
+        # 5. Close cached dock widgets (will be recreated with new core)
+        self._close_all_dock_widgets()
+
+        # 6. Update napari console
+        if console := getattr(self.viewer.window._qt_viewer, "console", None):
+            console.push({"mmcore": self._mmc})
+
+    def _wrap_load_system_configuration(self) -> None:
+        """Monkey-patch loadSystemConfiguration to auto-detect #py cfg files."""
+        from pymmcore_plus.experimental.unicore import UniMMCore
+
+        original = self._mmc.loadSystemConfiguration
+
+        def _auto_detect_load(path: str) -> None:
+            needs_unicore = _cfg_has_py_devices(path)
+            is_unicore = isinstance(self._mmc, UniMMCore)
+
+            if needs_unicore and not is_unicore:
+                self.set_core(UniMMCore())
+                self._mmc.loadSystemConfiguration(path)
+                return
+            if not needs_unicore and is_unicore:
+                self.set_core(CMMCorePlus())
+                self._mmc.loadSystemConfiguration(path)
+                return
+
+            original(path)
+
+        self._mmc.loadSystemConfiguration = _auto_detect_load
 
     def _cleanup(self) -> None:
         for signal, slot in self._connections:
