@@ -79,16 +79,14 @@ _SWAP_COMBOS = [
     (UniMMCore, CMMCorePlus),
     (UniMMCore, UniMMCore),
 ]
-_SWAP_IDS = [
-    f"{a.__name__}->{b.__name__}" for a, b in _SWAP_COMBOS
-]
+_SWAP_IDS = [f"{a.__name__}->{b.__name__}" for a, b in _SWAP_COMBOS]
 
 
 @pytest.mark.parametrize(("old_cls", "new_cls"), _SWAP_COMBOS, ids=_SWAP_IDS)
 def test_set_core_snap_uses_new_core(
     qtbot: QtBot,
-    napari_viewer: "napari.Viewer",
-    monkeypatch: "pytest.MonkeyPatch",
+    napari_viewer: napari.Viewer,
+    monkeypatch: pytest.MonkeyPatch,
     old_cls: type,
     new_cls: type,
 ) -> None:
@@ -129,8 +127,8 @@ def test_set_core_snap_uses_new_core(
 
 def test_set_core_during_live_mode(
     qtbot: QtBot,
-    napari_viewer: "napari.Viewer",
-    monkeypatch: "pytest.MonkeyPatch",
+    napari_viewer: napari.Viewer,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Switching cores while live mode is running stops the old stream."""
     old_core = CMMCorePlus()
@@ -201,6 +199,7 @@ def test_set_core_refused_during_real_mda(
 # ---------------------------------------------------------------------------
 # Auto-detect #py cfg tests
 # ---------------------------------------------------------------------------
+
 
 def _write_py_cfg(tmp_path: Path) -> str:
     """Write a minimal #py cfg and its Python module, return cfg path."""
