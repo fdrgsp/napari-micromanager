@@ -89,9 +89,7 @@ _SWAP_COMBOS = [
     pytest.param(
         UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus", marks=_unicore_xfail
     ),
-    pytest.param(
-        UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail
-    ),
+    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail),
 ]
 
 
