@@ -34,20 +34,14 @@ except NotImplementedError:
 finally:
     del _test_core, _cfg
 
+_skip_unicore = pytest.mark.skipif(
+    not _unicore_roi_works,
+    reason="UniMMCore getROI not implemented in this pymmcore-plus version",
+)
+
 _CORE_PARAMS = [
     pytest.param(CMMCorePlus, id="CMMCorePlus"),
-    pytest.param(
-        UniMMCore,
-        id="UniMMCore",
-        marks=[]
-        if _unicore_roi_works
-        else [
-            pytest.mark.xfail(
-                reason="UniMMCore getROI not implemented in this pymmcore-plus version",
-                strict=False,
-            )
-        ],
-    ),
+    pytest.param(UniMMCore, id="UniMMCore", marks=_skip_unicore),
 ]
 
 

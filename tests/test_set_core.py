@@ -18,10 +18,9 @@ if TYPE_CHECKING:
 
 CONFIG = str(Path(__file__).parent / "test_config.cfg")
 
-_unicore_xfail = pytest.mark.xfail(
+_skip_unicore = pytest.mark.skipif(
     not _unicore_roi_works,
     reason="UniMMCore getROI not implemented in this pymmcore-plus version",
-    strict=False,
 )
 
 
@@ -84,12 +83,12 @@ def test_set_core_clears_dock_widgets(qtbot: QtBot, core: CMMCorePlus) -> None:
 _SWAP_COMBOS = [
     pytest.param(CMMCorePlus, CMMCorePlus, id="CMMCorePlus->CMMCorePlus"),
     pytest.param(
-        CMMCorePlus, UniMMCore, id="CMMCorePlus->UniMMCore", marks=_unicore_xfail
+        CMMCorePlus, UniMMCore, id="CMMCorePlus->UniMMCore", marks=_skip_unicore
     ),
     pytest.param(
-        UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus", marks=_unicore_xfail
+        UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus", marks=_skip_unicore
     ),
-    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail),
+    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_skip_unicore),
 ]
 
 
@@ -236,7 +235,7 @@ def _write_py_cfg(tmp_path: Path) -> str:
     return str(cfg_file)
 
 
-@_unicore_xfail
+@_skip_unicore
 def test_auto_detect_py_cfg_swaps_to_unicore(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -261,7 +260,7 @@ def test_auto_detect_py_cfg_swaps_to_unicore(
     assert "Shutter" in win._mmc.getLoadedDevices()
 
 
-@_unicore_xfail
+@_skip_unicore
 def test_auto_detect_standard_cfg_swaps_to_mmcore(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -280,7 +279,7 @@ def test_auto_detect_standard_cfg_swaps_to_mmcore(
     assert "Camera" in win._mmc.getLoadedDevices()
 
 
-@_unicore_xfail
+@_skip_unicore
 def test_auto_detect_no_swap_when_correct(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
