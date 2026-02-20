@@ -85,12 +85,13 @@ def test_set_core_clears_dock_widgets(qtbot: QtBot, core: CMMCorePlus) -> None:
 
 _SWAP_COMBOS = [
     pytest.param(CMMCorePlus, CMMCorePlus, id="CMMCorePlus->CMMCorePlus"),
-    pytest.param(CMMCorePlus, UniMMCore, id="CMMCorePlus->UniMMCore",
-                 marks=_unicore_xfail),
-    pytest.param(UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus",
-                 marks=_unicore_xfail),
-    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore",
-                 marks=_unicore_xfail),
+    pytest.param(
+        CMMCorePlus, UniMMCore, id="CMMCorePlus->UniMMCore", marks=_unicore_xfail
+    ),
+    pytest.param(
+        UniMMCore, CMMCorePlus, id="UniMMCore->CMMCorePlus", marks=_unicore_xfail
+    ),
+    pytest.param(UniMMCore, UniMMCore, id="UniMMCore->UniMMCore", marks=_unicore_xfail),
 ]
 
 
