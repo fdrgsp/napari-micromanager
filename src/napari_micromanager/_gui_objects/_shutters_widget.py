@@ -1,7 +1,6 @@
 from typing import Optional
 
 from pymmcore_plus import CMMCorePlus, DeviceType
-
 from pymmcore_widgets import ShuttersWidget
 from qtpy.QtWidgets import QHBoxLayout, QSizePolicy, QWidget
 
