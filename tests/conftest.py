@@ -21,27 +21,9 @@ if TYPE_CHECKING:
 # Prevent ipykernel debug logs from causing formatting errors in pytest
 logging.getLogger("ipykernel.inprocess.ipkernel").setLevel(logging.ERROR)
 
-# Check whether the installed UniMMCore supports getROI (needed by MDA / snap).
-# This was added on pymmcore-plus main but not yet in a pip release.
-_unicore_roi_works = True
-try:
-    _test_core = UniMMCore()
-    _cfg = str(Path(__file__).parent / "test_config.cfg")
-    _test_core.loadSystemConfiguration(_cfg)
-    _test_core.getROI()
-except NotImplementedError:
-    _unicore_roi_works = False
-finally:
-    del _test_core, _cfg
-
-_skip_unicore = pytest.mark.skipif(
-    not _unicore_roi_works,
-    reason="UniMMCore getROI not implemented in this pymmcore-plus version",
-)
-
 _CORE_PARAMS = [
     pytest.param(CMMCorePlus, id="CMMCorePlus"),
-    pytest.param(UniMMCore, id="UniMMCore", marks=_skip_unicore),
+    pytest.param(UniMMCore, id="UniMMCore"),
 ]
 
 
