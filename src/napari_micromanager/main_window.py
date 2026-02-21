@@ -25,8 +25,13 @@ logging.getLogger("napari.loader").setLevel(logging.WARNING)
 logging.getLogger("in_n_out").setLevel(logging.WARNING)
 
 
-def get_main_window() -> MainWindow:
-    """Return the MainWindow attached to the current napari viewer."""
+    """Return the MainWindow attached to the current napari viewer.
+    
+    Raises
+    ------
+    RuntimeError
+        If no napari viewer or  napari-micromanager MainWindow instance can be found
+    """
     viewer = napari.current_viewer()
     if viewer is None:
         raise RuntimeError("No active napari viewer found.")
