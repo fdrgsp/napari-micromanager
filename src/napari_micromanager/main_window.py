@@ -47,7 +47,13 @@ def get_main_window() -> MainWindow:
 
 
 def get_core() -> CMMCorePlus:
-    """Return the CMMCorePlus instance used by the active MainWindow."""
+    """Return the CMMCorePlus instance used by the active MainWindow.
+
+    Raises
+    ------
+    RuntimeError
+        If no napari viewer or napari-micromanager MainWindow instance can be found.
+    """
     return get_main_window().core
 
 
@@ -108,34 +114,45 @@ class MainWindow(MicroManagerToolbar):
         if self._core_link._mda_handler._mda_running:
             raise RuntimeError("Cannot swap core while MDA is running.")
 
-        # 1. Disconnect old core and destroy old link
+        # 1. Unwrap old core's loadSystemConfiguration
+        self._unwrap_load_system_configuration(self._mmc)
+
+        # 2. Disconnect old core and destroy old link
         old_link = self._core_link
         old_link.cleanup()
         old_link.setParent(None)
         old_link.deleteLater()
 
-        # 2. Install new core
+        # 3. Install new core
         self._mmc = core
 
-        # 3. Reconnect CoreViewerLink
+        # 4. Reconnect CoreViewerLink
         self._core_link = CoreViewerLink(self.viewer, self._mmc, self)
         self._wrap_load_system_configuration(self._mmc)
 
-        # 4. Rebuild toolbar widgets
+        # 5. Rebuild toolbar widgets
         self._rebuild_toolbars(self._mmc)
 
-        # 5. Close cached dock widgets (will be recreated with new core)
+        # 6. Close cached dock widgets (will be recreated with new core)
         self._close_all_dock_widgets()
 
-        # 6. Update napari console
+        # 7. Update napari console
         if console := getattr(self.viewer.window._qt_viewer, "console", None):
             console.push({"mmcore": self._mmc})
+
+    _ORIGINAL_LOAD_ATTR = "_nmm_original_loadSystemConfiguration"
 
     def _wrap_load_system_configuration(self, core: CMMCorePlus) -> None:
         """Monkey-patch loadSystemConfiguration to auto-detect #py cfg files."""
         from pymmcore_plus.experimental.unicore import UniMMCore
 
-        original = core.loadSystemConfiguration
+        # Restore original if previously wrapped (prevents double-wrap stacking)
+        original = getattr(core, self._ORIGINAL_LOAD_ATTR, None)
+        if original is None:
+            original = core.loadSystemConfiguration
+            setattr(core, self._ORIGINAL_LOAD_ATTR, original)
+        else:
+            core.loadSystemConfiguration = original  # type: ignore[method-assign]
 
         def _auto_detect_load(path: str | Path) -> None:
             needs_unicore = _cfg_has_py_devices(path)
@@ -154,7 +171,13 @@ class MainWindow(MicroManagerToolbar):
 
         core.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
 
+    def _unwrap_load_system_configuration(self, core: CMMCorePlus) -> None:
+        """Restore original loadSystemConfiguration if it was wrapped."""
+        if original := getattr(core, self._ORIGINAL_LOAD_ATTR, None):
+            core.loadSystemConfiguration = original  # type: ignore[method-assign]
+
     def _cleanup(self) -> None:
+        self._unwrap_load_system_configuration(self._mmc)
         for signal, slot in self._connections:
             with contextlib.suppress(TypeError, RuntimeError):
                 signal.disconnect(slot)
