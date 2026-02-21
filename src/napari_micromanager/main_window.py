@@ -41,20 +41,11 @@ class MainWindow(MicroManagerToolbar):
         self,
         viewer: napari.viewer.Viewer,
         config: str | Path | None = None,
-        core: CMMCorePlus | None = None,
     ) -> None:
-        import pymmcore_plus.core._mmcore_plus as _core_mod
-
-        if core is not None:
-            # Explicit injection (e.g. from CLI or programmatic use).
-            _core_mod._instance = core
-        elif _core_mod._instance is None:
-            _core_mod._instance = CMMCorePlus()
-
-        super().__init__(viewer, mmcore=CMMCorePlus.instance())
+        super().__init__(viewer)
         # this object mediates the connection between the viewer and core events
         self._core_link = CoreViewerLink(viewer, self._mmc, self)
-        self._wrap_load_system_configuration()
+        self._wrap_load_system_configuration(self._mmc)
 
         # some remaining connections related to widgets ... TODO: unify with superclass
         self._connections: list[tuple[PSignalInstance, Callable]] = [
@@ -100,7 +91,7 @@ class MainWindow(MicroManagerToolbar):
 
         # 3. Reconnect CoreViewerLink
         self._core_link = CoreViewerLink(self.viewer, self._mmc, self)
-        self._wrap_load_system_configuration()
+        self._wrap_load_system_configuration(self._mmc)
 
         # 4. Rebuild toolbar widgets
         self._rebuild_toolbars(self._mmc)
@@ -112,11 +103,11 @@ class MainWindow(MicroManagerToolbar):
         if console := getattr(self.viewer.window._qt_viewer, "console", None):
             console.push({"mmcore": self._mmc})
 
-    def _wrap_load_system_configuration(self) -> None:
+    def _wrap_load_system_configuration(self, core: CMMCorePlus) -> None:
         """Monkey-patch loadSystemConfiguration to auto-detect #py cfg files."""
         from pymmcore_plus.experimental.unicore import UniMMCore
 
-        original = self._mmc.loadSystemConfiguration
+        original = core.loadSystemConfiguration
 
         def _auto_detect_load(path: str | Path) -> None:
             needs_unicore = _cfg_has_py_devices(path)
@@ -133,7 +124,7 @@ class MainWindow(MicroManagerToolbar):
 
             original(path)
 
-        self._mmc.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
+        core.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
 
     def _cleanup(self) -> None:
         for signal, slot in self._connections:

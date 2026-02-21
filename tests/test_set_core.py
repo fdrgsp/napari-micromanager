@@ -18,15 +18,16 @@ if TYPE_CHECKING:
 CONFIG = str(Path(__file__).parent / "test_config.cfg")
 
 
-def _make_window(qtbot: QtBot, core: CMMCorePlus) -> MainWindow:
+@pytest.fixture
+def mock_main_window(qtbot: QtBot, core: CMMCorePlus) -> MainWindow:
     viewer = MagicMock()
     win = MainWindow(viewer)
     qtbot.addWidget(win)
     return win
 
 
-def test_set_core_swaps_singleton(qtbot: QtBot, core: CMMCorePlus) -> None:
-    win = _make_window(qtbot, core)
+def test_set_core_swaps_singleton(mock_main_window: MainWindow) -> None:
+    win = mock_main_window
     new_core = CMMCorePlus()
     new_core.loadSystemConfiguration(CONFIG)
 
@@ -36,8 +37,8 @@ def test_set_core_swaps_singleton(qtbot: QtBot, core: CMMCorePlus) -> None:
     assert CMMCorePlus.instance() is new_core
 
 
-def test_set_core_reconnects_core_link(qtbot: QtBot, core: CMMCorePlus) -> None:
-    win = _make_window(qtbot, core)
+def test_set_core_reconnects_core_link(mock_main_window: MainWindow) -> None:
+    win = mock_main_window
     new_core = CMMCorePlus()
     new_core.loadSystemConfiguration(CONFIG)
 
@@ -47,8 +48,8 @@ def test_set_core_reconnects_core_link(qtbot: QtBot, core: CMMCorePlus) -> None:
     assert win._core_link._mda_handler._mmc is new_core
 
 
-def test_set_core_refuses_during_mda(qtbot: QtBot, core: CMMCorePlus) -> None:
-    win = _make_window(qtbot, core)
+def test_set_core_refuses_during_mda(mock_main_window: MainWindow) -> None:
+    win = mock_main_window
     new_core = CMMCorePlus()
 
     # Simulate MDA running
@@ -58,8 +59,8 @@ def test_set_core_refuses_during_mda(qtbot: QtBot, core: CMMCorePlus) -> None:
         win.set_core(new_core)
 
 
-def test_set_core_clears_dock_widgets(qtbot: QtBot, core: CMMCorePlus) -> None:
-    win = _make_window(qtbot, core)
+def test_set_core_clears_dock_widgets(mock_main_window: MainWindow) -> None:
+    win = mock_main_window
 
     # Fake a cached dock widget
     mock_dock = MagicMock()
