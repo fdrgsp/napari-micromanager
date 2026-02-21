@@ -10,17 +10,19 @@ if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
 
 
-def test_main_window_core_injection(qtbot: QtBot) -> None:
-    """MainWindow accepts an injected core and uses it as the singleton."""
+def test_set_core_to_unicore(qtbot: QtBot) -> None:
+    """set_core() swaps to UniMMCore after construction."""
     from pymmcore_plus import CMMCorePlus
     from pymmcore_plus.experimental.unicore import UniMMCore
 
     from napari_micromanager.main_window import MainWindow
 
-    uni = UniMMCore()
     viewer = MagicMock()
-    win = MainWindow(viewer, core=uni)
+    win = MainWindow(viewer)
     qtbot.addWidget(win)
+
+    uni = UniMMCore()
+    win.set_core(uni)
 
     assert win._mmc is uni
     assert isinstance(CMMCorePlus.instance(), UniMMCore)

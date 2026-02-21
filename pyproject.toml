@@ -9,7 +9,7 @@ name = "napari-micromanager"
 description = "Micro-Manager GUI interface in napari."
 keywords = ["microscope", "micro-manager", "remote", "multi-processing"]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "BSD 3-Clause License" }
 authors = [
     { name = "Federico Gasparoli", email = "federico.gasparoli@gmail.com" },
