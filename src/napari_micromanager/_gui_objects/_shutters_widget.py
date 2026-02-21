@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pymmcore_plus import CMMCorePlus, DeviceType
+
 from pymmcore_widgets import ShuttersWidget
 from qtpy.QtWidgets import QHBoxLayout, QSizePolicy, QWidget
 
@@ -9,7 +10,7 @@ class MMShuttersWidget(QWidget):
     """Create shutter widget."""
 
     def __init__(
-        self, *, parent: Optional[QWidget] = None, mmcore: Optional[CMMCorePlus] = None
+        self, *, parent: Optional[QWidget] = None, mmcore: CMMCorePlus
     ) -> None:
         super().__init__(parent=parent)
 
@@ -19,7 +20,7 @@ class MMShuttersWidget(QWidget):
         sizepolicy_btn = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setSizePolicy(sizepolicy_btn)
 
-        self._mmc = mmcore or CMMCorePlus.instance()
+        self._mmc = mmcore
         self._mmc.events.systemConfigurationLoaded.connect(self._on_cfg_loaded)
         self._on_cfg_loaded()
 

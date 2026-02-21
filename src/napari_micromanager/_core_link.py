@@ -23,11 +23,11 @@ class CoreViewerLink(QObject):
     def __init__(
         self,
         viewer: napari.viewer.Viewer,
-        core: CMMCorePlus | None = None,
+        core: CMMCorePlus,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
-        self._mmc = core or CMMCorePlus.instance()
+        self._mmc = core
         self.viewer = viewer
         self._mda_handler = _NapariMDAHandler(self._mmc, viewer)
         self._live_timer_id: int | None = None

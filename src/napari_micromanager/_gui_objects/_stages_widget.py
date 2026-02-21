@@ -14,7 +14,7 @@ class MMStagesWidget(QWidget):
     """UI elements for stage control widgets."""
 
     def __init__(
-        self, *, parent: Optional[QWidget] = None, mmcore: Optional[CMMCorePlus] = None
+        self, *, parent: Optional[QWidget] = None, mmcore: CMMCorePlus
     ) -> None:
         super().__init__(parent=parent)
 
@@ -25,7 +25,7 @@ class MMStagesWidget(QWidget):
 
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
-        self._mmc = mmcore or CMMCorePlus.instance()
+        self._mmc = mmcore
         self._on_cfg_loaded()
         self._mmc.events.systemConfigurationLoaded.connect(self._on_cfg_loaded)
 
