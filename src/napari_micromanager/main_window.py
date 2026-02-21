@@ -24,14 +24,25 @@ if TYPE_CHECKING:
 logging.getLogger("napari.loader").setLevel(logging.WARNING)
 logging.getLogger("in_n_out").setLevel(logging.WARNING)
 
-_current_main_window: MainWindow | None = None
+
+def get_main_window() -> MainWindow:
+    """Return the MainWindow attached to the current napari viewer."""
+    viewer = napari.current_viewer()
+    if viewer is None:
+        raise RuntimeError("No active napari viewer found.")
+    try:
+        qt_window = viewer.window._qt_window
+    except AttributeError:
+        raise RuntimeError("Could not access napari Qt window.") from None
+    win: MainWindow | None = qt_window.findChild(MainWindow)
+    if win is None:
+        raise RuntimeError("No napari-micromanager MainWindow in this viewer.")
+    return win
 
 
 def get_core() -> CMMCorePlus:
     """Return the CMMCorePlus instance used by the active MainWindow."""
-    if _current_main_window is None:
-        raise RuntimeError("No napari-micromanager MainWindow is active.")
-    return _current_main_window.core
+    return get_main_window().core
 
 
 def _cfg_has_py_devices(path: str | Path) -> bool:
@@ -68,10 +79,6 @@ class MainWindow(MicroManagerToolbar):
         # add minmax dockwidget
         if "MinMax" not in getattr(self.viewer.window, "dock_widgets", []):
             self.viewer.window.add_dock_widget(self.minmax, name="MinMax", area="left")
-
-        # register as the active instance
-        global _current_main_window
-        _current_main_window = self
 
         # queue cleanup
         self.destroyed.connect(self._cleanup)
@@ -142,10 +149,6 @@ class MainWindow(MicroManagerToolbar):
         core.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
 
     def _cleanup(self) -> None:
-        global _current_main_window
-        if _current_main_window is self:
-            _current_main_window = None
-
         for signal, slot in self._connections:
             with contextlib.suppress(TypeError, RuntimeError):
                 signal.disconnect(slot)

@@ -50,6 +50,7 @@ def napari_viewer(qapp: Any) -> Iterator[napari.Viewer]:
 @pytest.fixture
 def main_window(core: CMMCorePlus, napari_viewer: napari.Viewer) -> MainWindow:
     win = MainWindow(viewer=napari_viewer)
+    napari_viewer.window.add_dock_widget(win, name="MainWindow")
     assert core == win._mmc
     return win
 

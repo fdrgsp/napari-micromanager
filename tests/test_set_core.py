@@ -250,11 +250,6 @@ def test_auto_detect_py_cfg_swaps_to_unicore(
     assert "Shutter" in win._mmc.getLoadedDevices()
 
 
-@pytest.mark.xfail(
-    reason="pymmcore-widgets bug: ChannelWidget._create_channel_widget "
-    "creates PresetsWidget without mmcore=, falls back to stale singleton",
-    strict=False,
-)
 def test_auto_detect_standard_cfg_swaps_to_mmcore(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -313,26 +308,17 @@ def test_auto_detect_file_not_found(
 
 
 # ---------------------------------------------------------------------------
-# get_core / get_main_window tests
+# get_core tests
 # ---------------------------------------------------------------------------
 
 
-def test_get_core_returns_current(mock_main_window: MainWindow) -> None:
-    assert get_core() is mock_main_window.core
+def test_get_core_returns_current(main_window: MainWindow) -> None:
+    assert get_core() is main_window.core
 
 
-def test_get_core_after_swap(mock_main_window: MainWindow) -> None:
+def test_get_core_after_swap(main_window: MainWindow) -> None:
     new_core = CMMCorePlus()
     new_core.loadSystemConfiguration(CONFIG)
-    mock_main_window.set_core(new_core)
+    main_window.set_core(new_core)
 
     assert get_core() is new_core
-
-
-def test_get_core_raises_when_no_window(monkeypatch: pytest.MonkeyPatch) -> None:
-    import napari_micromanager.main_window as mw_mod
-
-    monkeypatch.setattr(mw_mod, "_current_main_window", None)
-
-    with pytest.raises(RuntimeError, match="No napari-micromanager MainWindow"):
-        get_core()

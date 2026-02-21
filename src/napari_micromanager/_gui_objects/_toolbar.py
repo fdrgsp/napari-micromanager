@@ -269,7 +269,7 @@ class MMToolBar(QToolBar):
 
 
 class ConfigToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Configuration", parent)
         self._mmc = mmcore
         self._build()
@@ -285,7 +285,7 @@ class ConfigToolBar(MMToolBar):
 
 
 class ObjectivesToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Objectives", parent=parent)
         self._mmc = mmcore
         self._build()
@@ -301,7 +301,7 @@ class ObjectivesToolBar(MMToolBar):
 
 
 class ChannelsToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Channels", parent)
         self._mmc = mmcore
         self._build()
@@ -318,7 +318,7 @@ class ChannelsToolBar(MMToolBar):
 
 
 class ExposureToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Exposure", parent)
         self._mmc = mmcore
         self._build()
@@ -334,7 +334,7 @@ class ExposureToolBar(MMToolBar):
 
 
 class SnapLiveToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Snap Live", parent)
         self._mmc = mmcore
         self._build()
@@ -400,7 +400,7 @@ class ToolsToolBar(MMToolBar):
 
 
 class ShuttersToolBar(MMToolBar):
-    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus | None = None) -> None:
+    def __init__(self, parent: QWidget, *, mmcore: CMMCorePlus) -> None:
         super().__init__("Shutters", parent)
         self._mmc = mmcore
         self._build()

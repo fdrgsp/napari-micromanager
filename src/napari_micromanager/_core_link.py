@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Callable
 
 import napari
 import napari.layers
-from pymmcore_plus import CMMCorePlus
 from qtpy.QtCore import QObject, Qt, QTimerEvent
 from superqt.utils import ensure_main_thread
 
@@ -14,6 +13,7 @@ from ._mda_handler import _NapariMDAHandler
 if TYPE_CHECKING:
     import napari.viewer
     import numpy as np
+    from pymmcore_plus import CMMCorePlus
     from pymmcore_plus.core.events._protocol import PSignalInstance
 
 

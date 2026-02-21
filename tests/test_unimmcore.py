@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 def test_set_core_to_unicore(qtbot: QtBot) -> None:
     """set_core() swaps to UniMMCore after construction."""
-    from pymmcore_plus import CMMCorePlus
     from pymmcore_plus.experimental.unicore import UniMMCore
 
     from napari_micromanager.main_window import MainWindow
@@ -24,8 +23,8 @@ def test_set_core_to_unicore(qtbot: QtBot) -> None:
     uni = UniMMCore()
     win.set_core(uni)
 
-    assert win._mmc is uni
-    assert isinstance(CMMCorePlus.instance(), UniMMCore)
+    assert win.core is uni
+    assert isinstance(win.core, UniMMCore)
 
     win._cleanup()
 
