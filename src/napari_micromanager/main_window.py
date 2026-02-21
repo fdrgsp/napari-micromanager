@@ -24,6 +24,15 @@ if TYPE_CHECKING:
 logging.getLogger("napari.loader").setLevel(logging.WARNING)
 logging.getLogger("in_n_out").setLevel(logging.WARNING)
 
+_current_main_window: MainWindow | None = None
+
+
+def get_core() -> CMMCorePlus:
+    """Return the CMMCorePlus instance used by the active MainWindow."""
+    if _current_main_window is None:
+        raise RuntimeError("No napari-micromanager MainWindow is active.")
+    return _current_main_window.core
+
 
 def _cfg_has_py_devices(path: str | Path) -> bool:
     """Return True if the cfg file contains ``#py`` device lines."""
@@ -60,6 +69,10 @@ class MainWindow(MicroManagerToolbar):
         if "MinMax" not in getattr(self.viewer.window, "dock_widgets", []):
             self.viewer.window.add_dock_widget(self.minmax, name="MinMax", area="left")
 
+        # register as the active instance
+        global _current_main_window
+        _current_main_window = self
+
         # queue cleanup
         self.destroyed.connect(self._cleanup)
         atexit.register(self._cleanup)
@@ -71,10 +84,13 @@ class MainWindow(MicroManagerToolbar):
                 # don't crash if the user passed an invalid config
                 warn(f"Config file {config} not found. Nothing loaded.", stacklevel=2)
 
+    @property
+    def core(self) -> CMMCorePlus:
+        """The CMMCorePlus instance currently used by this window."""
+        return self._mmc
+
     def set_core(self, core: CMMCorePlus) -> None:
         """Disconnect old core, install new one, reconnect everything."""
-        import pymmcore_plus.core._mmcore_plus as _core_mod
-
         # Guard: refuse if MDA is running
         if self._core_link._mda_handler._mda_running:
             raise RuntimeError("Cannot swap core while MDA is running.")
@@ -85,8 +101,7 @@ class MainWindow(MicroManagerToolbar):
         old_link.setParent(None)
         old_link.deleteLater()
 
-        # 2. Install new core as singleton
-        _core_mod._instance = core
+        # 2. Install new core
         self._mmc = core
 
         # 3. Reconnect CoreViewerLink
@@ -127,6 +142,10 @@ class MainWindow(MicroManagerToolbar):
         core.loadSystemConfiguration = _auto_detect_load  # type: ignore[assignment,method-assign]
 
     def _cleanup(self) -> None:
+        global _current_main_window
+        if _current_main_window is self:
+            _current_main_window = None
+
         for signal, slot in self._connections:
             with contextlib.suppress(TypeError, RuntimeError):
                 signal.disconnect(slot)
