@@ -75,9 +75,7 @@ class MainWindow(MicroManagerToolbar):
         config: str | Path | None = None,
     ) -> None:
         super().__init__(viewer)
-        # this object mediates the connection between the viewer and core events
-        self._core_link = CoreViewerLink(viewer, self._mmc, self)
-        self._wrap_load_system_configuration(self._mmc)
+        self.set_core(self._mmc)
 
         # some remaining connections related to widgets ... TODO: unify with superclass
         self._connections: list[tuple[PSignalInstance, Callable]] = [
@@ -109,36 +107,31 @@ class MainWindow(MicroManagerToolbar):
         return self._mmc
 
     def set_core(self, core: CMMCorePlus) -> None:
-        """Disconnect old core, install new one, reconnect everything."""
+        """Install *core*, tearing down the previous one if present."""
+        old_link = getattr(self, "_core_link", None)
+
         # Guard: refuse if MDA is running
-        if self._core_link._mda_handler._mda_running:
+        if old_link is not None and old_link._mda_handler._mda_running:
             raise RuntimeError("Cannot swap core while MDA is running.")
 
-        # 1. Unwrap old core's loadSystemConfiguration
-        self._unwrap_load_system_configuration(self._mmc)
+        # Tear down old core (if any)
+        if old_link is not None:
+            self._unwrap_load_system_configuration(self._mmc)
+            old_link.cleanup()
+            old_link.setParent(None)
+            old_link.deleteLater()
 
-        # 2. Disconnect old core and destroy old link
-        old_link = self._core_link
-        old_link.cleanup()
-        old_link.setParent(None)
-        old_link.deleteLater()
-
-        # 3. Install new core
+        # Install new core
         self._mmc = core
-
-        # 4. Reconnect CoreViewerLink
         self._core_link = CoreViewerLink(self.viewer, self._mmc, self)
         self._wrap_load_system_configuration(self._mmc)
 
-        # 5. Rebuild toolbar widgets
-        self._rebuild_toolbars(self._mmc)
-
-        # 6. Close cached dock widgets (will be recreated with new core)
-        self._close_all_dock_widgets()
-
-        # 7. Update napari console
-        if console := getattr(self.viewer.window._qt_viewer, "console", None):
-            console.push({"mmcore": self._mmc})
+        # Rebuild UI (only needed when swapping, not on first init)
+        if old_link is not None:
+            self._rebuild_toolbars(self._mmc)
+            self._close_all_dock_widgets()
+            if console := getattr(self.viewer.window._qt_viewer, "console", None):
+                console.push({"mmcore": self._mmc})
 
     _ORIGINAL_LOAD_ATTR = "_nmm_original_loadSystemConfiguration"
 
