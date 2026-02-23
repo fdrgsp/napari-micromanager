@@ -116,10 +116,16 @@ class MainWindow(MicroManagerToolbar):
 
         # Tear down old core (if any)
         if old_link is not None:
-            self._unwrap_load_system_configuration(self._mmc)
+            old_core = self._mmc
+            self._unwrap_load_system_configuration(old_core)
             old_link.cleanup()
             old_link.setParent(None)
             old_link.deleteLater()
+            # Unload devices now so that if the old core is later
+            # garbage-collected, its __del__ has nothing dangerous to
+            # clean up (avoids access-violation crashes on Windows).
+            with contextlib.suppress(Exception):
+                old_core.unloadAllDevices()
 
         # Install new core
         self._mmc = core
